@@ -3,12 +3,35 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
+
+public enum Topography
+{
+    Plane,
+    Mountain,
+    Sea
+}
+class Province
+{
+    public int id;
+    public String name;
+    public long population;
+    public Topography topo;
+    public Province(int id, String name, long population, Topography topo)
+    {
+        // this -> instance의 id
+        this.id = id;
+        this.name = name;
+        this.population = population;
+        this.topo = topo;
+    }
+}
 public class SelectProvince : MonoBehaviour
 {
     public Camera cam;
     public Texture2D initTex;
     private Renderer hereRend;
     private bool isWorking;
+    Dictionary<Color32, Province> mapLookUpTable;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -18,12 +41,19 @@ public class SelectProvince : MonoBehaviour
         Texture2D clone = Instantiate(initTex);
         hereRend.materials[0].mainTexture = clone;
         clone.Apply();
-        Debug.Log("done");
+        Color32 c = new Color(0.220f, 0.980f, 0.980f, 1.000f);
+        Province seaProvince = new Province(0, "Sea", 530, Topography.Sea);
+        //Color32 -> Province
+        mapLookUpTable = new Dictionary<Color32, Province>
+        {
+            {c, seaProvince}
+        };
     }
 
     // Update is called once per frame
     void Update()
     {
+
         if (!isWorking)
         {
             
@@ -46,7 +76,31 @@ public class SelectProvince : MonoBehaviour
             Vector2 pixelUV = hit.textureCoord;
             pixelUV.x *= tex_1.width;
             pixelUV.y *= tex_1.height;
-            Color c = tex_1.GetPixel((int)pixelUV.x, (int)pixelUV.y);
+            // 지금 클릭한 텍스쳐의 픽셀컬러값
+            Color32 c = tex_1.GetPixel((int)pixelUV.x, (int)pixelUV.y);
+
+            Province a = null;
+            if (mapLookUpTable.TryGetValue(c, out a))
+            {
+                Debug.Log("Province found! id="+a.id + "\nname=" + a.name + "\npopulation=" + a.population);
+                switch (a.topo)
+                {
+                    case Topography.Mountain:
+                        Debug.Log("This is Mountain");
+                        break;
+                    case Topography.Plane:
+                        Debug.Log("This is Plane");
+                        break;
+                    case Topography.Sea:
+                        Debug.Log("This is Sea");
+                        break;
+                }
+            }
+            else
+            {
+                Debug.Log("not in table");
+            }
+
             Debug.Log(c);
             Queue<Vector2> q = new Queue<Vector2>();
             q.Enqueue(pixelUV);
@@ -57,7 +111,7 @@ public class SelectProvince : MonoBehaviour
             {
                 for (var j = 0; j < tex_1.width; j++)
                 {
-                    if (tex_1.GetPixel(i, j) == c)
+                    if (c.Equals((Color32)tex_1.GetPixel(i, j)))
                         tex_0.SetPixel(i, j, Color.black);
                 }
             }
