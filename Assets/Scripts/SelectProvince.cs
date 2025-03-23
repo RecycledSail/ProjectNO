@@ -4,35 +4,13 @@ using Unity.Mathematics;
 using UnityEngine;
 
 
-public enum Topography
-{
-    Plane,
-    Mountain,
-    Sea
-}
-class Province
-{
-    public int id;
-    public String name;
-    public long population;
-    public Topography topo;
-    public Province(int id, String name, long population, Topography topo)
-    {
-        // this -> instance의 id
-        this.id = id;
-        this.name = name;
-        this.population = population;
-        this.topo = topo;
-    }
-}
 public class SelectProvince : MonoBehaviour
 {
     public Camera cam;
     public Texture2D initTex;
     private Renderer hereRend;
     private bool isWorking;
-    Dictionary<Color32, Province> mapLookUpTable;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
     void Start()
     {
         //cam = GetComponent<Camera>();
@@ -41,13 +19,6 @@ public class SelectProvince : MonoBehaviour
         Texture2D clone = Instantiate(initTex);
         hereRend.materials[0].mainTexture = clone;
         clone.Apply();
-        Color32 c = new Color(0.220f, 0.980f, 0.980f, 1.000f);
-        Province seaProvince = new Province(0, "Sea", 530, Topography.Sea);
-        //Color32 -> Province
-        mapLookUpTable = new Dictionary<Color32, Province>
-        {
-            {c, seaProvince}
-        };
     }
 
     // Update is called once per frame
@@ -78,9 +49,10 @@ public class SelectProvince : MonoBehaviour
             pixelUV.y *= tex_1.height;
             // 지금 클릭한 텍스쳐의 픽셀컬러값
             Color32 c = tex_1.GetPixel((int)pixelUV.x, (int)pixelUV.y);
+            Debug.Log(c);
 
             Province a = null;
-            if (mapLookUpTable.TryGetValue(c, out a))
+            if (GlobalVariables.COLORTOPROVINCE.TryGetValue(c, out a))
             {
                 Debug.Log("Province found! id="+a.id + "\nname=" + a.name + "\npopulation=" + a.population);
                 switch (a.topo)
@@ -101,7 +73,7 @@ public class SelectProvince : MonoBehaviour
                 Debug.Log("not in table");
             }
 
-            Debug.Log(c);
+            
             Queue<Vector2> q = new Queue<Vector2>();
             q.Enqueue(pixelUV);
 
