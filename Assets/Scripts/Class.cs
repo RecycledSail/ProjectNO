@@ -16,17 +16,18 @@ public enum Topography
 public class Province
 {
     public int id { get; }
-    public String name { get;}
+    public string name { get;}
     public long population { get; set; }
     public Topography topo { get; }
-    
-    public Province(int id, String name, long population, Topography topo)
+    public Color32 color { get; }
+    public Province(int id, string name, long population, Topography topo, Color32 color)
     {
         // this -> instance¿« id
         this.id = id;
         this.name = name;
         this.population = population;
         this.topo = topo;
+        this.color = color;
     }
 
 }
@@ -34,10 +35,10 @@ public class Province
 public class Nation
 {
     public int id;
-    public String name { get; }
+    public string name { get; }
     public List<Province> provinces { get; set; }
     public long balance { get; set; }
-    public Nation(int id, String name)
+    public Nation(int id, string name)
     {
         this.id = id;
         this.name = name;

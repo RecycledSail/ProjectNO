@@ -19,9 +19,9 @@ public class GameManager : MonoBehaviour
     }
 
     // Users
-    public List<User> users;
-    public User player;
-    public bool paused = true;
+    public List<User> users { get; private set; }
+    public User player { get; private set; }
+    public bool paused { get; private set; } = true;
 
     private void Awake()
     {
@@ -35,24 +35,33 @@ public class GameManager : MonoBehaviour
         }
         
         DontDestroyOnLoad(gameObject);
+        
+        
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        GameManager.Instance.StartNewGame();
-        
+        users = new List<User>();
+        GameManager.Instance.StartNewGame("First");
+        paused = false;
+
     }
 
-    void StartNewGame()
+    void StartNewGame(string nationCode)
     {
-        users = new List<User>();
-
-        Nation First = GlobalVariables.NATIONS["First"];
-        Province Land = GlobalVariables.PROVINCES["Land"];
-        First.AddProvinces(Land);
-        First.balance = 53000;
-        player = new User(1, First);
-        paused = false;
+        int id = 0;
+        foreach(string nationStr in GlobalVariables.NATIONS.Keys)
+        {
+            Nation nation = GlobalVariables.NATIONS[nationStr];
+            foreach(string provinceStr in GlobalVariables.INITIAL_PROVINCES[nationStr])
+            {
+                Province province = GlobalVariables.PROVINCES[provinceStr];
+                nation.AddProvinces(province);
+            }
+            User user = new User(id++, nation);
+            if (nationStr == nationCode)
+                player = user;
+        }
     }
 
 }
