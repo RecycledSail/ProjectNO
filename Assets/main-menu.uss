@@ -1,0 +1,25 @@
+.panel {
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+    background-color: rgba(207, 202, 100, 0.46);
+    align-items: center;
+}
+
+.menu {
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(11, 10, 10, 0.64);
+    width: 437px;
+    max-height: 200px;
+    height: auto;
+    margin-top: 350px;
+    padding: 20px;
+    border-radius: 10px;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
+.unity-button {
+    width: 100%;
+    margin: 5px 0;
+}
