@@ -12,6 +12,7 @@ public class SelectProvince : MonoBehaviour
 {
     public Camera cam; // 화면을 비추는 카메라
     public Texture2D initTex; // 초기 텍스처
+    public NationUI NationUI;
     private Renderer hereRend; // 현재 오브젝트의 Renderer
     private bool isWorking; // 색칠 작업이 진행 중인지 여부
     private Color32 prevColor; // 이전에 선택한 색상
@@ -64,10 +65,51 @@ public class SelectProvince : MonoBehaviour
         // 마우스 클릭 여부를 확인하는 부분이 주석 처리되어 있음
         // if (!Input.GetMouseButton(0))
         //    return;
+        if (Input.GetMouseButton(0))
+        {
+            OpenNationUI();
+        }
 
         ColorProvince(); // 프로빈스 색칠 함수 호출
     }
 
+    void OpenNationUI()
+    {
+        RaycastHit hit;
+        // 마우스 클릭 위치에 Raycast를 쏴서 충돌이 있는지 확인
+        if (!Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit))
+            return;
+
+        Renderer rend = hit.transform.GetComponent<Renderer>();
+        MeshCollider meshCollider = hit.collider as MeshCollider;
+
+        // 충돌한 오브젝트에 유효한 텍스처가 있는지 확인
+        if (rend == null || rend.sharedMaterial == null || rend.sharedMaterial.mainTexture == null || meshCollider == null)
+            return;
+
+        isWorking = true;
+
+        // 클릭한 오브젝트의 텍스처 가져오기
+        Texture2D tex_0 = rend.materials[0].mainTexture as Texture2D; // 변경될 텍스처
+        Texture2D tex_1 = rend.materials[1].mainTexture as Texture2D; // 기준이 되는 텍스처
+
+        // 클릭한 위치의 UV 좌표를 가져와 픽셀 좌표로 변환
+        Vector2 pixelUV = hit.textureCoord;
+        pixelUV.x *= tex_1.width;
+        pixelUV.y *= tex_1.height;
+
+        // 클릭한 픽셀의 색상을 가져옴
+        Color32 c = tex_1.GetPixel((int)pixelUV.x, (int)pixelUV.y);
+
+        Province cur;
+        Debug.Log(c);
+        if (GlobalVariables.COLORTOPROVINCE.TryGetValue(c, out cur))
+        {
+            if(cur.nation != null)
+                NationUI.Instance.OpenNationUI(cur.nation);
+        }
+    }
+    
     /// <summary>
     /// 클릭한 위치의 프로빈스를 감지하고 색칠하는 함수
     /// </summary>

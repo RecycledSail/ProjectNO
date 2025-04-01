@@ -27,6 +27,7 @@ public class Province
     public long population { get; set; }
     public Topography topo { get; }
     public Color32 color { get; }
+    public Nation nation { get; set; } = null;
 
     /// <summary>
     /// Province 초기화
@@ -46,6 +47,20 @@ public class Province
         this.color = color;
     }
 
+    public void AddNation(Nation nation)
+    {
+        this.nation = nation;
+    }
+
+    public bool RemoveNation(Nation nation)
+    {
+        if (this.nation == nation)
+        {
+            this.nation = null;
+            return true;
+        }
+        else return false;
+    }
 }
 
 /// <summary>
@@ -92,6 +107,7 @@ public class Nation
         if (!HasProvinces(province))
         {
             provinces.Add(province);
+            province.AddNation(this);
             return true;
         }
         else return false;
@@ -105,7 +121,12 @@ public class Nation
     /// <returns>제거 가능하면 true, 아니면 false</returns>
     public bool RemoveProvinces(Province province)
     {
-        return provinces.Remove(province);
+        bool avail = provinces.Remove(province);
+        if (avail)
+        {
+            return province.RemoveNation(this);
+        }
+        else return false;
     }
 
     /// <summary>
