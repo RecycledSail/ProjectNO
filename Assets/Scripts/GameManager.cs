@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 /// <summary>
 /// 게임 전체를 총괄하는 싱글톤 GameManager 클래스입니다.
@@ -66,7 +67,10 @@ public class GameManager : MonoBehaviour
 
         // 날짜 진행 Coroutine 시작
         StartDayCycle();
+        // Start()에도 한 줄 추가
+        UpdateUIDate();
     }
+    
 
     /// <summary>
     /// 지정된 국가 코드를 플레이어로 설정하고, 게임을 초기화하는 메서드
@@ -119,6 +123,7 @@ public class GameManager : MonoBehaviour
                 year++;     // 연도 증가
             }
         }
+        UpdateUIDate(); // ← 추가
     }
 
     /// <summary>
@@ -198,4 +203,17 @@ public class GameManager : MonoBehaviour
     {
         return $"{year:D4}-{month:D2}-{day:D2}";
     }
+    [SerializeField] private TextMeshProUGUI dateText; 
+
+    private void UpdateUIDate() 
+    {
+    if (dateText != null)
+        dateText.text = GetCurrentDate();
+    }
+
+
+
+
+
+
 }
