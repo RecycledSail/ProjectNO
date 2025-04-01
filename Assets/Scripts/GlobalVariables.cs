@@ -1,18 +1,36 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// GlobalVariables 클래스는 게임 내 전역적으로 사용되는 데이터를 저장하는 정적 클래스입니다.
+/// 국가, 주(Province), 그리고 인접한 주 정보를 포함하고 있습니다.
+/// </summary>
 public static class GlobalVariables
 {
+    /// <summary>
+    /// 국가 정보를 저장하는 Dictionary
+    /// Key: 국가 이름, Value: Nation 객체
+    /// </summary>
     public static readonly Dictionary<string, Nation> NATIONS = new Dictionary<string, Nation>()
     {
         {"First", new Nation(1, "First") },
         {"Second", new Nation(2, "Second") }
     };
+
+    /// <summary>
+    /// 각 국가가 시작 시 소유하는 주 목록
+    /// Key: 국가 이름, Value: 주 이름 리스트
+    /// </summary>
     public static readonly Dictionary<string, List<string>> INITIAL_PROVINCES = new Dictionary<string, List<string>>()
     {
         {"First", new List<string>{"Red", "Green", "Grey" } },
         {"Second", new List<string>{"LightPink", "Pink", "Yellow"} }
     };
+
+    /// <summary>
+    /// 게임 내 모든 주 정보를 저장하는 Dictionary
+    /// Key: 주 이름, Value: Province 객체
+    /// </summary>
     public static readonly Dictionary<string, Province> PROVINCES = new Dictionary<string, Province>()
     {
         {"Red", new Province(1, "Red", 4555, Topography.Plane, new Color32(136, 0, 27, 255))},
@@ -23,6 +41,10 @@ public static class GlobalVariables
         {"Yellow", new Province(6, "Yellow", 3331, Topography.Plane, new Color32(255, 242, 0, 255)) }
     };
 
+    /// <summary>
+    /// 각 주와 인접한 주들의 정보를 저장하는 Dictionary
+    /// Key: 주 이름, Value: 인접한 주의 리스트
+    /// </summary>
     public static readonly Dictionary<string, List<Province>> ADJACENT_PROVINCES = new Dictionary<string, List<Province>>()
     {
         {"Red", new List<Province>{PROVINCES["Green"], PROVINCES["Yellow"], PROVINCES["Grey"] } },
@@ -33,6 +55,10 @@ public static class GlobalVariables
         {"Yellow", new List<Province>{PROVINCES["Red"], PROVINCES["LightPink"], PROVINCES["Grey"]}}
     };
 
+    /// <summary>
+    /// 각 색상에 대응하는 주 정보를 저장하는 Dictionary
+    /// Key: Color32 (각 주의 색상), Value: 해당하는 Province 객체
+    /// </summary>
     public static readonly Dictionary<Color32, Province> COLORTOPROVINCE = new Dictionary<Color32, Province>()
     {
         {new Color32(136, 0, 27, 255), PROVINCES["Red"]},

@@ -35,6 +35,7 @@ public class GameManager : MonoBehaviour
     public int day { get; private set; } = 1;
 
     // 게임에서 하루가 진행되는 실제 시간 간격(초 단위)
+    private int timeSpeed = 1;
     private float dayInterval = 1.0f;
 
     /// <summary>
@@ -67,10 +68,69 @@ public class GameManager : MonoBehaviour
 
         // 날짜 진행 Coroutine 시작
         StartDayCycle();
-        // Start()에도 한 줄 추가
-        UpdateUIDate();
     }
-    
+
+    /// <summary>
+    /// 매 프레임마다 호출되는 메서드
+    /// Space 키를 눌러서 일시정지 기능을 토글할 수 있도록 함
+    /// </summary>
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            TogglePause();
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            SetGameSpeed(1);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            SetGameSpeed(2);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            SetGameSpeed(4);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha4))
+        {
+            SetGameSpeed(8);
+        }
+    }
+
+    /// <summary>
+    /// 현재 배속을 반환해주는 메서드
+    /// </summary>
+    /// <returns>정지 중이면 0, 아니면 현재 배속</returns>
+    public int GetTimeSpeed()
+    {
+        return paused ? 0 : timeSpeed;
+    }
+
+    /// <summary>
+    /// 일시정지 상태를 토글하는 메서드
+    /// </summary>
+    public void TogglePause()
+    {
+        paused = !paused;
+        Debug.Log(paused ? "Game Paused" : "Game Resumed");
+    }
+
+
+    /// <summary>
+    /// 시간 배속을 토글하는 메서드
+    /// </summary>
+    /// <param name="speed">설정하려는 배속</param>
+    public void SetGameSpeed(int speed)
+    {
+        this.timeSpeed = speed;
+        dayInterval = 1.0f / this.timeSpeed;
+        if (paused)
+        {
+            TogglePause();
+        }
+        Debug.Log($"Game Speed Set to {speed}x");
+    }
 
     /// <summary>
     /// 지정된 국가 코드를 플레이어로 설정하고, 게임을 초기화하는 메서드
@@ -123,7 +183,6 @@ public class GameManager : MonoBehaviour
                 year++;     // 연도 증가
             }
         }
-        UpdateUIDate(); // ← 추가
     }
 
     /// <summary>
@@ -203,17 +262,4 @@ public class GameManager : MonoBehaviour
     {
         return $"{year:D4}-{month:D2}-{day:D2}";
     }
-    [SerializeField] private TextMeshProUGUI dateText; 
-
-    private void UpdateUIDate() 
-    {
-    if (dateText != null)
-        dateText.text = GetCurrentDate();
-    }
-
-
-
-
-
-
 }
