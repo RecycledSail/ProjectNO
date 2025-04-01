@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// SelectProvince 클래스는 마우스 클릭을 통해 특정 지역(Province)을 선택하고, 
@@ -12,20 +13,23 @@ public class SelectProvince : MonoBehaviour
 {
     public Camera cam; // 화면을 비추는 카메라
     public Texture2D initTex; // 초기 텍스처
-    public NationUI NationUI;
+
+
     private Renderer hereRend; // 현재 오브젝트의 Renderer
-    private bool isWorking; // 색칠 작업이 진행 중인지 여부
     private Color32 prevColor; // 이전에 선택한 색상
     private Stack<Color32> paintedColors; // 색칠한 색상들을 저장하는 스택
 
     // 각 색상에 해당하는 픽셀 좌표 리스트를 저장하는 딕셔너리
-    Dictionary<Color32, List<Vector2>> colorToVec2;
+    private Dictionary<Color32, List<Vector2>> colorToVec2;
+
+    // 클릭한 오브젝트의 텍스처 가져오기
+    private Texture2D tex_0; // 변경될 텍스처
+    private Texture2D tex_1; // 기준이 되는 텍스처
 
     void Start()
     {
         // Renderer 컴포넌트 가져오기
         hereRend = transform.GetComponent<Renderer>();
-        isWorking = false;
 
         // 초기 텍스처를 복제하여 사용 (원본을 변경하지 않기 위해)
         Texture2D clone = Instantiate(initTex);
@@ -58,6 +62,9 @@ public class SelectProvince : MonoBehaviour
         }
 
         prevColor = new Color32(0, 0, 0, 0); // 이전 색상 초기화
+
+        tex_0 = hereRend.materials[0].mainTexture as Texture2D; // 변경될 텍스처
+        tex_1 = hereRend.materials[1].mainTexture as Texture2D; // 기준이 되는 텍스처
     }
 
     void Update()
@@ -73,28 +80,36 @@ public class SelectProvince : MonoBehaviour
         ColorProvince(); // 프로빈스 색칠 함수 호출
     }
 
-    void OpenNationUI()
+    RaycastHit? HitRenderer()
     {
         RaycastHit hit;
         // 마우스 클릭 위치에 Raycast를 쏴서 충돌이 있는지 확인
         if (!Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit))
-            return;
+            return null;
+
 
         Renderer rend = hit.transform.GetComponent<Renderer>();
         MeshCollider meshCollider = hit.collider as MeshCollider;
 
         // 충돌한 오브젝트에 유효한 텍스처가 있는지 확인
-        if (rend == null || rend.sharedMaterial == null || rend.sharedMaterial.mainTexture == null || meshCollider == null)
+        if (rend != hereRend)
+            return null;
+
+        if (EventSystem.current.IsPointerOverGameObject())
+            return null;
+
+        return hit;
+    }
+
+    void OpenNationUI()
+    {
+        RaycastHit? hit = HitRenderer();
+        if (!hit.HasValue) {
             return;
-
-        isWorking = true;
-
-        // 클릭한 오브젝트의 텍스처 가져오기
-        Texture2D tex_0 = rend.materials[0].mainTexture as Texture2D; // 변경될 텍스처
-        Texture2D tex_1 = rend.materials[1].mainTexture as Texture2D; // 기준이 되는 텍스처
+        }
 
         // 클릭한 위치의 UV 좌표를 가져와 픽셀 좌표로 변환
-        Vector2 pixelUV = hit.textureCoord;
+        Vector2 pixelUV = hit.Value.textureCoord;
         pixelUV.x *= tex_1.width;
         pixelUV.y *= tex_1.height;
 
@@ -105,7 +120,7 @@ public class SelectProvince : MonoBehaviour
         Debug.Log(c);
         if (GlobalVariables.COLORTOPROVINCE.TryGetValue(c, out cur))
         {
-            if(cur.nation != null)
+            if (cur.nation != null)
                 NationUI.Instance.OpenNationUI(cur.nation);
         }
     }
@@ -115,26 +130,17 @@ public class SelectProvince : MonoBehaviour
     /// </summary>
     void ColorProvince()
     {
-        RaycastHit hit;
-        // 마우스 클릭 위치에 Raycast를 쏴서 충돌이 있는지 확인
-        if (!Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit))
+        RaycastHit? hit = HitRenderer();
+        if (!hit.HasValue)
+        {
+            RemoveColors();
+            prevColor = new Color32(0, 0, 0, 0); // 이전 색상 초기화
+            tex_0.Apply(); // 텍스처 변경 적용
             return;
-
-        Renderer rend = hit.transform.GetComponent<Renderer>();
-        MeshCollider meshCollider = hit.collider as MeshCollider;
-
-        // 충돌한 오브젝트에 유효한 텍스처가 있는지 확인
-        if (rend == null || rend.sharedMaterial == null || rend.sharedMaterial.mainTexture == null || meshCollider == null)
-            return;
-
-        isWorking = true;
-
-        // 클릭한 오브젝트의 텍스처 가져오기
-        Texture2D tex_0 = rend.materials[0].mainTexture as Texture2D; // 변경될 텍스처
-        Texture2D tex_1 = rend.materials[1].mainTexture as Texture2D; // 기준이 되는 텍스처
+        }
 
         // 클릭한 위치의 UV 좌표를 가져와 픽셀 좌표로 변환
-        Vector2 pixelUV = hit.textureCoord;
+        Vector2 pixelUV = hit.Value.textureCoord;
         pixelUV.x *= tex_1.width;
         pixelUV.y *= tex_1.height;
 
@@ -144,32 +150,34 @@ public class SelectProvince : MonoBehaviour
         // 이전에 클릭한 색상과 다르면 색칠 작업 수행
         if (!prevColor.Equals(c))
         {
-            List<Vector2> list;
-
-            // 이전에 칠했던 색상을 원래대로 되돌림
-            while (paintedColors.Count != 0)
-            {
-                Color32 painted = paintedColors.Pop();
-                if (colorToVec2.TryGetValue(painted, out list))
-                {
-                    foreach (Vector2 v in list)
-                    {
-                        tex_0.SetPixel((int)v.x, (int)v.y, painted);
-                    }
-                }
-            }
-
+            RemoveColors();
             // 선택한 색상이 유효한 프로빈스인지 확인 후 색칠
             if (GlobalVariables.COLORTOPROVINCE.ContainsKey(c))
             {
-                ColorNewProvinces(c, tex_0);
+                ColorNewProvinces(c);
             }
 
             prevColor = c; // 이전 색상 갱신
         }
 
         tex_0.Apply(); // 텍스처 변경 적용
-        isWorking = false;
+    }
+
+    void RemoveColors()
+    {
+        List<Vector2> list;
+        // 이전에 칠했던 색상을 원래대로 되돌림
+        while (paintedColors.Count != 0)
+        {
+            Color32 painted = paintedColors.Pop();
+            if (colorToVec2.TryGetValue(painted, out list))
+            {
+                foreach (Vector2 v in list)
+                {
+                    tex_0.SetPixel((int)v.x, (int)v.y, painted);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -177,7 +185,7 @@ public class SelectProvince : MonoBehaviour
     /// </summary>
     /// <param name="c">선택한 색상</param>
     /// <param name="tex_0">변경할 텍스처</param>
-    void ColorNewProvinces(Color32 c, Texture2D tex_0)
+    void ColorNewProvinces(Color32 c)
     {
         List<Vector2> list;
         paintedColors.Push(c); // 현재 색상을 스택에 저장
