@@ -33,7 +33,6 @@ public class NationUI : MonoBehaviour
         if (_instance == null)
         {
             _instance = this;
-            DontDestroyOnLoad(gameObject);  // 씬 변경 시 유지
         }
         else if (_instance != this)
         {
@@ -67,15 +66,20 @@ public class NationUI : MonoBehaviour
         // Nation에 속한 Province 추가
         if (GlobalVariables.INITIAL_PROVINCES.TryGetValue(nation.name, out List<string> provinces))
         {
-            foreach (string province in provinces)
+            foreach (string provinceName in provinces)
             {
+                Province province = GlobalVariables.PROVINCES[provinceName]; // Assume this method exists
+
                 GameObject newProvince = Instantiate(provinceItemPrefab, provinceListParent);
-                newProvince.GetComponentInChildren<TMP_Text>().text = province;
+                ProvinceUI provinceUI = newProvince.GetComponent<ProvinceUI>();
+                if (provinceUI != null && province != null)
+                {
+                    provinceUI.SetProvinceData(province);
+                }
             }
         }
 
-        // UI 활성화
-        uiPanel.SetActive(true);
+        UIManager.Instance.ReplacePopUp(gameObject);
     }
 
     /// <summary>

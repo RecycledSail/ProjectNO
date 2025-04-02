@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -17,6 +18,9 @@ public class UIManager : MonoBehaviour
             return _instance;
         }
     }
+
+    private Stack<GameObject> popUpVisited;
+    private GameObject currentPopUp;
 
     /// <summary>
     /// 유저가 속한 국가의 재산(화폐)를 표기하는 텍스트 UI
@@ -55,6 +59,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     void Start()
     {
+        popUpVisited = new Stack<GameObject>();
     }
 
     /// <summary>
@@ -74,7 +79,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     /// <param name="val">변환할 숫자</param>
     /// <returns>축약된 문자열 값</returns>
-    string ShortenValue(long val)
+    public static string ShortenValue(long val)
     {
         string returnText;
         if (val >= 1000000)
@@ -121,5 +126,81 @@ public class UIManager : MonoBehaviour
         {
             dateText.text = GameManager.Instance.GetTimeSpeed() + " " + GameManager.Instance.GetCurrentDate();
         }
+    }
+
+    /// <summary>
+    /// 팝업 뒤로가기 버튼을 눌렀을 때 이전 팝업을 불러오는 메서드
+    /// </summary>
+    /// <returns>성공 시 true, 실패 시 false</returns>
+    public void GoBackPopUp()
+    {
+        if (popUpVisited.Count != 0)
+        {
+            currentPopUp.SetActive(false);
+            GameObject prev = popUpVisited.Pop();
+            currentPopUp = prev;
+            currentPopUp.SetActive(true);
+            return;
+        }
+        else return; 
+    }
+
+    /// <summary>
+    /// 현재 팝업을 교체하는 메서드
+    /// </summary>
+    /// <param name="go">교체(활성화할) 메서드</param>
+    /// <returns>성공 시 true, 실패 시 false</returns>
+    public bool ReplacePopUp(GameObject go)
+    {
+        try
+        {
+            if (SavePopUp())
+            {
+                currentPopUp = go;
+                go.SetActive(true);
+                return true;
+            }
+            else
+            {
+                currentPopUp = go;
+                go.SetActive(true);
+                return true;
+            }
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 현재 팝업 UI를 저장하고 비활성화하는 메서드
+    /// </summary>
+    /// <returns>성공 시 true, 실패 시 false</returns>
+    private bool SavePopUp()
+    {
+        if (currentPopUp != null)
+        {
+            popUpVisited.Push(currentPopUp);
+            currentPopUp.SetActive(false);
+            currentPopUp = null;
+            return true;
+        }
+        else return false;
+    }
+
+    /// <summary>
+    /// 현재 팝업 UI를 닫고 방문 목록을 비우는 메서드
+    /// </summary>
+    public void ClosePopUp()
+    {
+        if(currentPopUp != null)
+        {
+            currentPopUp.SetActive(false);
+            currentPopUp = null;
+            popUpVisited.Clear();
+            return;
+        }
+        else return;
     }
 }
