@@ -249,8 +249,17 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void ProcessDailyEvents()
     {
-        // 현재는 예시 로그 출력 (향후 게임 로직 추가 필요)
-        //Debug.Log($"Daily Update: {year}-{month:00}-{day:00}");
+
+        foreach (User user in users)
+    {
+        foreach (Province province in user.nation.provinces)
+        {
+            province.market.ProduceCrops();
+        }
+    }
+
+    
+
     }
 
     /// <summary>

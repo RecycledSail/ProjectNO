@@ -1,5 +1,7 @@
 using TMPro;
 using UnityEngine;
+using System.Linq;
+
 
 public class ProvinceDetailUI : MonoBehaviour
 {
@@ -7,6 +9,8 @@ public class ProvinceDetailUI : MonoBehaviour
     public TMP_Text provinceNameText;
     public TMP_Text provinceDescriptionText;
     public TMP_Text provincePopulationText;
+
+    public TMP_Text provinceCropsText;
     private Province province;
 
 
@@ -44,9 +48,16 @@ public class ProvinceDetailUI : MonoBehaviour
         uiPanel.SetActive(false); // 처음에는 UI를 숨김
     }
 
-    private void Update()
+private void Update()
+{
+    if (province != null)
     {
+        provinceCropsText.text = "Crops: " + string.Join(", ",
+            province.market.crops.Select(crop => $"{crop.name}: {UIManager.ShortenValue(crop.amount)}")
+        );
     }
+}
+
 
     /// <summary>
     /// Province Detail UI를 설정하고 여는 메서드
@@ -73,6 +84,9 @@ public class ProvinceDetailUI : MonoBehaviour
         }
         provinceDescriptionText.text = "Topology: " + topoString;
         provincePopulationText.text = "Pop: " + UIManager.ShortenValue(province.population);
+        provinceCropsText.text = "Crops: " + string.Join(", ",
+        province.market.crops.Select(crop => $"{crop.name}: {UIManager.ShortenValue(crop.amount)}")   );
+
 
         UIManager.Instance.ReplacePopUp(gameObject);
     }
