@@ -7,7 +7,7 @@ using UnityEngine;
 
 /// <summary>
 /// Topography Enum
-/// ÆòÁö, »ê, ¹Ù´Ù Á¤ÀÇ
+/// í‰ì§€, ì‚°, ë°”ë‹¤ ì •ì˜
 /// </summary>
 public enum Topography
 {
@@ -17,8 +17,8 @@ public enum Topography
 }
 
 /// <summary>
-/// ÇÁ·Îºó½º Å¬·¡½º
-/// ID, ÀÌ¸§, ÀÎ±¸, ÅäÆú·ÎÁö, ´ëÀÀ ÄÃ·¯ Á¤ÀÇ
+/// í”„ë¡œë¹ˆìŠ¤ í´ë˜ìŠ¤
+/// ID, ì´ë¦„, ì¸êµ¬, í† í´ë¡œì§€, ëŒ€ì‘ ì»¬ëŸ¬ ì •ì˜
 /// </summary>
 public class Province
 {
@@ -29,22 +29,25 @@ public class Province
     public Color32 color { get; }
     public Nation nation { get; set; } = null;
 
+    public Market market { get; } 
+
     /// <summary>
-    /// Province ÃÊ±âÈ­
+    /// Province ì´ˆê¸°í™”
     /// </summary>
-    /// <param name="id">ÇÁ·Îºó½ºÀÇ ID</param>
-    /// <param name="name">ÇÁ·Îºó½ºÀÇ ÀÌ¸§</param>
-    /// <param name="population">ÇÁ·Îºó½ºÀÇ ÀÎ±¸ ¼ö</param>
-    /// <param name="topo">ÇÁ·Îºó½ºÀÇ ÅäÆú·ÎÁö</param>
-    /// <param name="color">ÇÁ·Îºó½ºÀÇ »ö»ó</param>
+    /// <param name="id">í”„ë¡œë¹ˆìŠ¤ì˜ ID</param>
+    /// <param name="name">í”„ë¡œë¹ˆìŠ¤ì˜ ì´ë¦„</param>
+    /// <param name="population">í”„ë¡œë¹ˆìŠ¤ì˜ ì¸êµ¬ ìˆ˜</param>
+    /// <param name="topo">í”„ë¡œë¹ˆìŠ¤ì˜ í† í´ë¡œì§€</param>
+    /// <param name="color">í”„ë¡œë¹ˆìŠ¤ì˜ ìƒ‰ìƒ</param>
     public Province(int id, string name, long population, Topography topo, Color32 color)
     {
-        // this -> instanceÀÇ id
+        // this -> instanceì˜ id
         this.id = id;
         this.name = name;
         this.population = population;
         this.topo = topo;
         this.color = color;
+        this.market = new Market(this);
     }
 
     public void AddNation(Nation nation)
@@ -64,8 +67,8 @@ public class Province
 }
 
 /// <summary>
-/// ±¹°¡ Å¬·¡½º
-/// ID, ÀÌ¸§, ¼ÒÀ¯ ÇÁ·Îºó½º, Àç»ê Á¤ÀÇ
+/// êµ­ê°€ í´ë˜ìŠ¤
+/// ID, ì´ë¦„, ì†Œìœ  í”„ë¡œë¹ˆìŠ¤, ì¬ì‚° ì •ì˜
 /// </summary>
 public class Nation
 {
@@ -75,10 +78,10 @@ public class Nation
     public long balance { get; set; }
 
     /// <summary>
-    /// ±¹°¡ »ı¼ºÀÚ
+    /// êµ­ê°€ ìƒì„±ì
     /// </summary>
-    /// <param name="id">±¹°¡ÀÇ ID</param>
-    /// <param name="name">±¹°¡ÀÇ ÀÌ¸§(ÄÚµå)</param>
+    /// <param name="id">êµ­ê°€ì˜ ID</param>
+    /// <param name="name">êµ­ê°€ì˜ ì´ë¦„(ì½”ë“œ)</param>
     public Nation(int id, string name)
     {
         this.id = id;
@@ -87,21 +90,21 @@ public class Nation
     }
 
     /// <summary>
-    /// ÇØ´ç ÇÁ·Îºó½º°¡ ÀÖ´ÂÁö °Ë»çÇÏ´Â ¸Ş¼­µå
+    /// í•´ë‹¹ í”„ë¡œë¹ˆìŠ¤ê°€ ìˆëŠ”ì§€ ê²€ì‚¬í•˜ëŠ” ë©”ì„œë“œ
     /// </summary>
-    /// <param name="province">°Ë»çÇÏ°íÀÚ ÇÏ´Â ÇÁ·Îºó½º</param>
-    /// <returns>ÇÁ·Îºó½º º¸À¯ ÁßÀÌ¸é true, ¾Æ´Ï¸é false</returns>
+    /// <param name="province">ê²€ì‚¬í•˜ê³ ì í•˜ëŠ” í”„ë¡œë¹ˆìŠ¤</param>
+    /// <returns>í”„ë¡œë¹ˆìŠ¤ ë³´ìœ  ì¤‘ì´ë©´ true, ì•„ë‹ˆë©´ false</returns>
     public bool HasProvinces(Province province)
     {
         return provinces.Find(x => x.Equals(province)) != null;
     }
 
     /// <summary>
-    /// ÇÁ·Îºó½º¸¦ Ãß°¡ÇÏ´Â ¸Ş¼­µå
-    /// Ãß°¡ ½Ãµµ ÈÄ ¼º°ø ¿©ºÎ¿¡ µû¶ó boolean ¹İÈ¯
+    /// í”„ë¡œë¹ˆìŠ¤ë¥¼ ì¶”ê°€í•˜ëŠ” ë©”ì„œë“œ
+    /// ì¶”ê°€ ì‹œë„ í›„ ì„±ê³µ ì—¬ë¶€ì— ë”°ë¼ boolean ë°˜í™˜
     /// </summary>
-    /// <param name="province">Ãß°¡ÇÏ°íÀÚ ÇÏ´Â ÇÁ·Îºó½º</param>
-    /// <returns>Ãß°¡ °¡´ÉÇÏ¸é true, ¾Æ´Ï¸é false</returns>
+    /// <param name="province">ì¶”ê°€í•˜ê³ ì í•˜ëŠ” í”„ë¡œë¹ˆìŠ¤</param>
+    /// <returns>ì¶”ê°€ ê°€ëŠ¥í•˜ë©´ true, ì•„ë‹ˆë©´ false</returns>
     public bool AddProvinces(Province province)
     {
         if (!HasProvinces(province))
@@ -114,11 +117,11 @@ public class Nation
     }
 
     /// <summary>
-    /// ÇÁ·Îºó½º¸¦ Á¦°ÅÇÏ´Â ¸Ş¼­µå
-    /// Á¦°Å ½Ãµµ ÈÄ ¼º°ø ¿©ºÎ¿¡ µû¶ó boolean ¹İÈ¯
+    /// í”„ë¡œë¹ˆìŠ¤ë¥¼ ì œê±°í•˜ëŠ” ë©”ì„œë“œ
+    /// ì œê±° ì‹œë„ í›„ ì„±ê³µ ì—¬ë¶€ì— ë”°ë¼ boolean ë°˜í™˜
     /// </summary>
-    /// <param name="province">Á¦°ÅÇÏ°íÀÚ ÇÏ´Â ÇÁ·Îºó½º</param>
-    /// <returns>Á¦°Å °¡´ÉÇÏ¸é true, ¾Æ´Ï¸é false</returns>
+    /// <param name="province">ì œê±°í•˜ê³ ì í•˜ëŠ” í”„ë¡œë¹ˆìŠ¤</param>
+    /// <returns>ì œê±° ê°€ëŠ¥í•˜ë©´ true, ì•„ë‹ˆë©´ false</returns>
     public bool RemoveProvinces(Province province)
     {
         bool avail = provinces.Remove(province);
@@ -130,9 +133,9 @@ public class Nation
     }
 
     /// <summary>
-    /// ±¹°¡ÀÇ ¸ğµç ÇÁ·Îºó½ºÀÇ ÀÎ±¸ÀÇ ÇÕÀ» ¹İÈ¯
+    /// êµ­ê°€ì˜ ëª¨ë“  í”„ë¡œë¹ˆìŠ¤ì˜ ì¸êµ¬ì˜ í•©ì„ ë°˜í™˜
     /// </summary>
-    /// <returns>±¹°¡ÀÇ ¸ğµç ÇÁ·Îºó½ºÀÇ ÀÎ±¸ ÇÕ</returns>
+    /// <returns>êµ­ê°€ì˜ ëª¨ë“  í”„ë¡œë¹ˆìŠ¤ì˜ ì¸êµ¬ í•©</returns>
     public long GetPopulation()
     {
         long sum = 0;
@@ -144,8 +147,8 @@ public class Nation
 }
 
 /// <summary>
-/// À¯Àú Å¬·¡½º
-/// À¯Àú ID, ±¹°¡¸¦ Á¤ÀÇ
+/// ìœ ì € í´ë˜ìŠ¤
+/// ìœ ì € ID, êµ­ê°€ë¥¼ ì •ì˜
 /// </summary>
 public class User
 {
@@ -153,10 +156,10 @@ public class User
     public Nation nation { get; set; }
 
     /// <summary>
-    /// À¯Àú »ı¼ºÀÚ
+    /// ìœ ì € ìƒì„±ì
     /// </summary>
-    /// <param name="id">À¯ÀúÀÇ ID</param>
-    /// <param name="nation">À¯Àú°¡ ¼ÓÇÑ ±¹°¡</param>
+    /// <param name="id">ìœ ì €ì˜ ID</param>
+    /// <param name="nation">ìœ ì €ê°€ ì†í•œ êµ­ê°€</param>
     public User(int id, Nation nation)
     {
         this.id = id;
@@ -164,11 +167,64 @@ public class User
     }
 
     /// <summary>
-    /// À¯Àú°¡ ¼ÓÇÑ ±¹°¡ÀÇ Àç»ê ¹İÈ¯
+    /// ìœ ì €ê°€ ì†í•œ êµ­ê°€ì˜ ì¬ì‚° ë°˜í™˜
     /// </summary>
-    /// <returns>À¯Àú°¡ ¼ÓÇÑ ±¹°¡ÀÇ Àç»ê</returns>
+    /// <returns>ìœ ì €ê°€ ì†í•œ êµ­ê°€ì˜ ì¬ì‚°</returns>
     public long GetCurrentBalance()
     {
         return this.nation.balance;
+    }
+}
+
+
+public class Crop
+{
+    public string name { get; }
+    public int amount { get; set; }
+
+    public Crop(string name, int initialAmount)
+    {
+        this.name = name;
+        this.amount = initialAmount;
+    }
+
+    public void Produce(int quantity)
+    {
+        this.amount += quantity;
+    }
+}
+
+
+public class Market
+{
+    public Province province { get; }
+    public List<Crop> crops { get; }
+
+    public Market(Province province)
+    {
+        this.province = province;
+        this.crops = new List<Crop>
+        {
+            new Crop("Wheat", 0),
+            new Crop("Rice", 0),
+            new Crop("Corn", 0)
+        };
+    }
+
+    /// <summary>
+    /// ì¸êµ¬ ìˆ˜ì— ë¹„ë¡€í•˜ì—¬ ì‘ë¬¼ì„ ìƒì‚°í•©ë‹ˆë‹¤.
+    /// </summary>
+    public void ProduceCrops()
+    {
+        int scale = (int)(province.population / 1000); // ì¸êµ¬ 1000ëª…ë‹¹ ìƒì‚°
+        foreach (var crop in crops)
+        {
+            crop.Produce(scale); 
+        }
+    }
+
+    public Crop GetCrop(string cropName)
+    {
+        return crops.Find(c => c.name == cropName);
     }
 }
