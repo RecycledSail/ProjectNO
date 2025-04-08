@@ -2,14 +2,19 @@ using UnityEngine;
 
 public class CameraMove : MonoBehaviour
 {
+    // 드래그 속도, 줌 속도, 최소/최대 줌 FOV
     public float dragSpeed = 500f;
     public float zoomSpeed = 100f;
     public float minZoom = 5f;
     public float maxZoom = 50f;
 
+    // 카메라 이동 한계
     public Vector2 moveThreshold = new Vector2(100, 100); // X, Z axis limit
 
+    // 이전 Update때의 마우스 위치 (현재 Update때의 위치와 비교해서 얼마나 움직이는지 사용)
     private Vector3 dragOrigin;
+
+    // 초기 카메라의 위치 (moveThreshold와 같이 사용)
     private Vector3 origin;
 
     private void Start()
@@ -23,6 +28,9 @@ public class CameraMove : MonoBehaviour
         HandleZoom();
     }
 
+    /// <summary>
+    /// 마우스 드래깅 핸들링 메서드
+    /// </summary>
     void HandleMouseDrag()
     {
         if (Input.GetMouseButtonDown(2)) // Middle Mouse Button Press
@@ -36,6 +44,10 @@ public class CameraMove : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 카메라를 이동시키는 메서드
+    /// moveThreshold까지만 움직일 수 있음 (맵 밖으로 너무 벗어나는 것 방지)
+    /// </summary>
     void MoveAround()
     {
         Vector3 difference = Camera.main.ScreenToViewportPoint(Input.mousePosition - dragOrigin);
@@ -52,6 +64,10 @@ public class CameraMove : MonoBehaviour
         dragOrigin = Input.mousePosition;
     }
 
+    /// <summary>
+    /// FOV를 변경하여 줌인/줌아웃을 하는 메서드
+    /// 최소 minZoom, 최대 maxZoom FOV까지만 줌인/줌아웃 가능
+    /// </summary>
     void HandleZoom()
     {
         float scroll = Input.GetAxis("Mouse ScrollWheel");
