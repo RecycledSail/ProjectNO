@@ -150,7 +150,14 @@ public class GameManager : MonoBehaviour
             {
                 Province province = GlobalVariables.PROVINCES[provinceStr];
                 nation.AddProvinces(province);
+
+                // 🔽 여기서 종족을 할당!
+                province.species = new Human
+                {
+                    population = (int)province.population // 동기화
+                };
             }
+
 
             // 국가마다 User 객체 생성 및 목록에 추가
             User user = new User(id++, nation);
@@ -249,17 +256,13 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void ProcessDailyEvents()
     {
-
         foreach (User user in users)
-    {
-        foreach (Province province in user.nation.provinces)
         {
-            province.market.ProduceCrops();
+            foreach (Province province in user.nation.provinces)
+            {
+                province.SimulateTurn(); // 이것만 호출
+            }
         }
-    }
-
-    
-
     }
 
     /// <summary>

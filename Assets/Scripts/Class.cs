@@ -31,6 +31,8 @@ public class Province
 
     public Market market { get; } 
 
+    public Species species { get; set; } = null;
+
     /// <summary>
     /// Province 초기화
     /// </summary>
@@ -64,6 +66,18 @@ public class Province
         }
         else return false;
     }
+    public void SimulateTurn()
+    {
+        if (species == null) return;
+
+        species.Consume(market);
+        market.ProduceCrops();
+        species.UpdateGrowth();
+
+        population = species.population; // 이 줄로 동기화도 함께
+    }
+
+
 }
 
 /// <summary>
