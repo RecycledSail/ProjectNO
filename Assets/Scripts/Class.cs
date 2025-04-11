@@ -232,7 +232,7 @@ public class Market
     /// </summary>
     public void ProduceCrops()
     {
-        int scale = (int)(province.population / 1000); // 인구 1000명당 생산
+        int scale = (int)(province.population / 1); // 인구 1명당 생산
         foreach (var crop in crops)
         {
             crop.Produce(scale); 
