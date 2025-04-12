@@ -32,5 +32,17 @@ public class ResearchNode
         this.name = name;
         this.requiredPoint = requiredPoint;
         this.buffs = buffs;
+        prev = new List<ResearchNode>();
+        next = new List<ResearchNode>();
+    }
+
+    public void AddPrevResearch(ResearchNode node)
+    {
+        prev.Add(node);
+    }
+
+    public void AddNextResearch(ResearchNode node)
+    {
+        next.Add(node);
     }
 }
