@@ -91,16 +91,30 @@ public class Nation
     public List<Province> provinces { get; set; }
     public long balance { get; set; }
 
+    public List<ResearchNode> doneResearches;
+    public Dictionary<BuffKind, double> buffs;
+
     /// <summary>
     /// 국가 생성자
     /// </summary>
     /// <param name="id">국가의 ID</param>
     /// <param name="name">국가의 이름(코드)</param>
-    public Nation(int id, string name)
+    public Nation(int id, string name, List<ResearchNode> researches)
     {
         this.id = id;
         this.name = name;
         provinces = new List<Province>();
+        doneResearches = researches;
+        buffs = new Dictionary<BuffKind, double>();
+        foreach(ResearchNode research in doneResearches)
+        {
+            foreach(Buff buff in research.buffs)
+            {
+                double prevValue = 0;
+                buffs.TryGetValue(buff.baseBuff, out prevValue);
+                buffs.Add(buff.baseBuff, prevValue + buff.power);
+            } 
+        }
     }
 
     /// <summary>
@@ -232,7 +246,14 @@ public class Market
     /// </summary>
     public void ProduceCrops()
     {
-        int scale = (int)(province.population / 1); // 인구 1명당 생산
+        Nation curNation = this.province.nation;
+        double modifier = 1;
+        if(curNation != null)
+        {
+            double addMod = curNation.buffs.GetValueOrDefault(BuffKind.FOOD_PRODUCE_PER_UP, 0.0);
+            modifier += addMod;
+        }
+        int scale = (int)(modifier * province.population / 1); // 인구 1명당 생산
         foreach (var crop in crops)
         {
             crop.Produce(scale); 
@@ -244,3 +265,4 @@ public class Market
         return crops.Find(c => c.name == cropName);
     }
 }
+

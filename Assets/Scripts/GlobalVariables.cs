@@ -7,14 +7,35 @@ using UnityEngine;
 /// </summary>
 public static class GlobalVariables
 {
+
+    /// <summary>
+    /// 버프를 저장하는 Dictionary
+    /// Key: 버프 이름, Value: Buff 객체
+    /// </summary>
+    public static readonly Dictionary<string, Buff> BUFF = new Dictionary<string, Buff>()
+    {
+        {"FOOD_UP_PER_20",  new Buff(1, "FOOD_UP_PER_20", BuffKind.FOOD_PRODUCE_PER_UP, 0.2)},
+    };
+
+    /// <summary>
+    /// 연구 노드를 저장하는 Dictionary
+    /// Key: 연구 노드 이름, Value: ResearchNode 객체
+    /// </summary>
+    public static readonly Dictionary<string, ResearchNode> RESEARCH_NODE = new Dictionary<string, ResearchNode>()
+    {
+        {"FarmTools", new ResearchNode(1, "FarmTools", 350.0, new List<Buff>(){BUFF["FOOD_UP_PER_20"] }) },
+    };
+
     /// <summary>
     /// 국가 정보를 저장하는 Dictionary
     /// Key: 국가 이름, Value: Nation 객체
     /// </summary>
     public static readonly Dictionary<string, Nation> NATIONS = new Dictionary<string, Nation>()
     {
-        {"First", new Nation(1, "First") },
-        {"Second", new Nation(2, "Second") }
+        {"First", new Nation(1, "First", new List<ResearchNode>(){
+            RESEARCH_NODE["FarmTools"] })
+        },
+        {"Second", new Nation(2, "Second", new List<ResearchNode>())  }
     };
 
     /// <summary>
@@ -68,4 +89,6 @@ public static class GlobalVariables
         {new Color32(184, 61, 186, 255), PROVINCES["Pink"] },
         {new Color32(255, 242, 0, 255), PROVINCES["Yellow"] }
     };
+
+
 }
