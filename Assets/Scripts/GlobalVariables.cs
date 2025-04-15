@@ -32,10 +32,10 @@ public static class GlobalVariables
     /// </summary>
     public static readonly Dictionary<string, Nation> NATIONS = new Dictionary<string, Nation>()
     {
-        {"First", new Nation(1, "First", new List<ResearchNode>(){
+        {"Nation1", new Nation(1, "Nation1", new List<ResearchNode>(){
             RESEARCH_NODE["FarmTools"] })
         },
-        {"Second", new Nation(2, "Second", new List<ResearchNode>())  }
+        {"Nation2", new Nation(2, "Nation2", new List<ResearchNode>())  }
     };
 
     /// <summary>
@@ -44,8 +44,8 @@ public static class GlobalVariables
     /// </summary>
     public static readonly Dictionary<string, List<string>> INITIAL_PROVINCES = new Dictionary<string, List<string>>()
     {
-        {"First", new List<string>{"Red", "Green", "Grey" } },
-        {"Second", new List<string>{"LightPink", "Pink", "Yellow"} }
+        {"Nation1", new List<string>{"Province1", "Province2"} },
+        {"Nation2", new List<string>{"Province3"} }
     };
 
     /// <summary>
@@ -54,12 +54,13 @@ public static class GlobalVariables
     /// </summary>
     public static readonly Dictionary<string, Province> PROVINCES = new Dictionary<string, Province>()
     {
-        {"Red", new Province(1, "Red", 4555, Topography.Plane, new Color32(136, 0, 27, 255))},
-        {"Green", new Province(2, "Green", 1550022, Topography.Plane, new Color32(14, 209, 69, 255)) },
-        {"Grey", new Province(3, "Grey", 3123, Topography.Mountain, new Color32(88, 88, 88, 255)) },
-        {"LightPink", new Province(4, "LightPink", 671243, Topography.Plane, new Color32(255, 174, 200, 255)) },
-        {"Pink", new Province(5, "Pink", 3331, Topography.Plane, new Color32(184, 61, 186, 255)) },
-        {"Yellow", new Province(6, "Yellow", 3331, Topography.Plane, new Color32(255, 242, 0, 255)) }
+        {"Province1", new Province(1, "Province1", 4555, Topography.Plane, new Color32(114, 185, 90, 255))},
+        {"Province2", new Province(2, "Province2", 5000, Topography.Plane, new Color32(66, 76, 163, 255))},
+        {"Province3", new Province(3, "Province3", 6500, Topography.Plane, new Color32(175, 182, 188, 255))},
+        {"Province4", new Province(4, "Province4", 6500, Topography.Plane, new Color32(57, 238, 124, 255))},
+        {"Province5", new Province(5, "Province5", 6500, Topography.Plane, new Color32(85, 183, 83, 255))},
+        {"Province6", new Province(6, "Province6", 6500, Topography.Plane, new Color32(145, 215, 209, 255))},
+        {"Province7", new Province(7, "Province7", 6500, Topography.Plane, new Color32(184, 221, 56, 255))},
     };
 
     /// <summary>
@@ -68,27 +69,18 @@ public static class GlobalVariables
     /// </summary>
     public static readonly Dictionary<string, List<Province>> ADJACENT_PROVINCES = new Dictionary<string, List<Province>>()
     {
-        {"Red", new List<Province>{PROVINCES["Green"], PROVINCES["Yellow"], PROVINCES["Grey"] } },
-        {"Green", new List<Province>{PROVINCES["Red"], PROVINCES["Grey"], PROVINCES["Pink"] } },
-        {"Grey", new List<Province>{PROVINCES["Red"], PROVINCES["Green"], PROVINCES["LightPink"], PROVINCES["Pink"], PROVINCES["Yellow"] } },
-        {"LightPink", new List<Province>{PROVINCES["Grey"], PROVINCES["Pink"], PROVINCES["Yellow"] }},
-        {"Pink", new List<Province>{PROVINCES["Green"], PROVINCES["LightPink"], PROVINCES["Grey"]}},
-        {"Yellow", new List<Province>{PROVINCES["Red"], PROVINCES["LightPink"], PROVINCES["Grey"]}}
+        {"Province1", new List<Province>{PROVINCES["Province2"]} },
+        {"Province2", new List<Province>{PROVINCES["Province1"], PROVINCES["Province3"] } },
+        {"Province3", new List<Province>{PROVINCES["Province2"], PROVINCES["Province4"], PROVINCES["Province5"] } },
+        {"Province4", new List<Province>{PROVINCES["Province3"], PROVINCES["Province5"], PROVINCES["Province6"] } },
+        {"Province5", new List<Province>{PROVINCES["Province2"], PROVINCES["Province3"], PROVINCES["Province4"], PROVINCES["Province6"], PROVINCES["Province7"] } },
+        {"Province6", new List<Province>{PROVINCES["Province4"], PROVINCES["Province5"], PROVINCES["Province7"]} },
+        {"Province7", new List<Province>{PROVINCES["Province5"], PROVINCES["Province6"]} },
     };
 
     /// <summary>
     /// 각 색상에 대응하는 주 정보를 저장하는 Dictionary
     /// Key: Color32 (각 주의 색상), Value: 해당하는 Province 객체
     /// </summary>
-    public static readonly Dictionary<Color32, Province> COLORTOPROVINCE = new Dictionary<Color32, Province>()
-    {
-        {new Color32(136, 0, 27, 255), PROVINCES["Red"]},
-        {new Color32(14, 209, 69, 255), PROVINCES["Green"] },
-        {new Color32(88, 88, 88, 255), PROVINCES["Grey"] },
-        {new Color32(255, 174, 200, 255), PROVINCES["LightPink"] },
-        {new Color32(184, 61, 186, 255), PROVINCES["Pink"] },
-        {new Color32(255, 242, 0, 255), PROVINCES["Yellow"] }
-    };
-
-
+    public static Dictionary<Color32, Province> COLORTOPROVINCE = new Dictionary<Color32, Province>();
 }

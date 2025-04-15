@@ -122,6 +122,8 @@ public class SelectProvince : MonoBehaviour
         {
             if (cur.nation != null)
                 NationUI.Instance.OpenNationUI(cur.nation);
+            else
+                ProvinceDetailUI.Instance.OpenProvinceDetailUI(cur);
         }
     }
     

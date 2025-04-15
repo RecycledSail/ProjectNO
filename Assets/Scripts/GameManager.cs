@@ -62,8 +62,8 @@ public class GameManager : MonoBehaviour
     {
         users = new List<User>();
 
-        // 게임 새로 시작 (기본 국가 코드 "First")
-        GameManager.Instance.StartNewGame("First");
+        // 게임 새로 시작 (기본 국가 코드 "Nation1")
+        GameManager.Instance.StartNewGame("Nation1");
         paused = false;
 
         // 날짜 진행 Coroutine 시작
@@ -139,6 +139,11 @@ public class GameManager : MonoBehaviour
     void StartNewGame(string nationCode)
     {
         int id = 0;
+
+        foreach(Province province in GlobalVariables.PROVINCES.Values)
+        {
+            GlobalVariables.COLORTOPROVINCE.Add(province.color, province);
+        }
 
         // GlobalVariables에서 모든 국가 순회
         foreach (string nationStr in GlobalVariables.NATIONS.Keys)
