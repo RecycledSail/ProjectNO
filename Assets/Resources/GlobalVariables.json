@@ -1,0 +1,34 @@
+{
+  "buffs": [
+    { "id": 1, "name": "FOOD_UP_PER_20", "kind": "FOOD_PRODUCE_PER_UP", "value": 0.2 }
+  ],
+  "researchNodes": [
+    { "id": 1, "name": "FarmTools", "cost": 350.0, "buffNames": ["FOOD_UP_PER_20"] }
+  ],
+  "nations": [
+    { "id": 1, "name": "Nation1", "researchNodeNames": ["FarmTools"] },
+    { "id": 2, "name": "Nation2", "researchNodeNames": [] }
+  ],
+  "initialProvinces": [
+    { "nation": "Nation1", "provinces": ["Province1", "Province2"] },
+    { "nation": "Nation2", "provinces": ["Province3"] }
+  ],
+  "provinces": [
+    { "id": 1, "name": "Province1", "population": 4555, "topography": "Plane", "color": [114, 185, 90, 255] },
+    { "id": 2, "name": "Province2", "population": 5000, "topography": "Plane", "color": [66, 76, 163, 255] },
+    { "id": 3, "name": "Province3", "population": 6500, "topography": "Plane", "color": [175, 182, 188, 255] },
+    { "id": 4, "name": "Province4", "population": 6500, "topography": "Plane", "color": [57, 238, 124, 255] },
+    { "id": 5, "name": "Province5", "population": 6500, "topography": "Plane", "color": [85, 183, 83, 255] },
+    { "id": 6, "name": "Province6", "population": 6500, "topography": "Plane", "color": [145, 215, 209, 255] },
+    { "id": 7, "name": "Province7", "population": 6500, "topography": "Plane", "color": [184, 221, 56, 255] }
+  ],
+  "adjacentProvinces": [
+    { "province": "Province1", "adjacents": ["Province2"] },
+    { "province": "Province2", "adjacents": ["Province1", "Province3"] },
+    { "province": "Province3", "adjacents": ["Province2", "Province4", "Province5"] },
+    { "province": "Province4", "adjacents": ["Province3", "Province5", "Province6"] },
+    { "province": "Province5", "adjacents": ["Province2", "Province3", "Province4", "Province6", "Province7"] },
+    { "province": "Province6", "adjacents": ["Province4", "Province5", "Province7"] },
+    { "province": "Province7", "adjacents": ["Province5", "Province6"] }
+  ]
+}

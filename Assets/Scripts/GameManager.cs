@@ -140,11 +140,6 @@ public class GameManager : MonoBehaviour
     {
         int id = 0;
 
-        foreach(Province province in GlobalVariables.PROVINCES.Values)
-        {
-            GlobalVariables.COLORTOPROVINCE.Add(province.color, province);
-        }
-
         // GlobalVariables에서 모든 국가 순회
         foreach (string nationStr in GlobalVariables.NATIONS.Keys)
         {
