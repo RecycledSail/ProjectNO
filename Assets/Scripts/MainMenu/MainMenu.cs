@@ -8,24 +8,25 @@ public class MainMenu : MonoBehaviour
 {
     public void OnNewGameClicked()
     {
+        GlobalVariables.LoadDefaultData();
         // "PlayScene" 로딩
         SceneManager.LoadScene("PlayScene");
     }
 
     public void OnLoadClicked()
     {
-        string saveFilePath = Path.Combine(Application.persistentDataPath, "savefile.sav");
 
-        if (File.Exists(saveFilePath))
+        if (!File.Exists(GlobalVariables.saveFileName))
         {
-            string saveData = File.ReadAllText(saveFilePath);
-            Debug.Log("Save file loaded:\n" + saveData);
+            SaveManager.OnLoad();
+            //Debug.Log("Save file loaded:\n" + GlobalVariables.saveFileName);
 
             // TODO: 불러온 데이터를 적용하는 로직 추가
+            SceneManager.LoadScene("PlayScene");
         }
         else
         {
-            Debug.LogWarning("Save file not found at: " + saveFilePath);
+            Debug.LogWarning("Save file not found at: " + GlobalVariables.saveFileName);
         }
     }
 

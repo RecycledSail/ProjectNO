@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
@@ -50,8 +51,6 @@ public class UIManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-
-        DontDestroyOnLoad(gameObject);
     }
 
     /// <summary>
@@ -202,5 +201,14 @@ public class UIManager : MonoBehaviour
             return;
         }
         else return;
+    }
+
+    /// <summary>
+    /// 현재 게임을 저장하고 바깥으로 나가는 메서드
+    /// </summary>
+    public void SaveGame()
+    {
+        SaveManager.OnSave();
+        SceneManager.LoadScene("MainMenuScene");
     }
 }

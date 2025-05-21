@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using Unity.VisualScripting;
 
 /// <summary>
 /// GlobalVariables 클래스는 게임 내 전역적으로 사용되는 데이터를 저장하는 정적 클래스입니다.
@@ -52,11 +53,16 @@ public static class GlobalVariables
     public static Dictionary<Color32, Province> COLORTOPROVINCE = new Dictionary<Color32, Province>();
 
     /// <summary>
+    /// 세이브 파일명 
+    /// </summary>
+    public static string saveFileName = "save";
+
+    /// <summary>
     /// Assets/Resources/GlovalVariables.json을 불러와 GlobalVariables의 멤버들을 채우는 함수
     /// JSON 구성은 하단 GameDataFormat 참조
     /// </summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    public static void LoadData()
+    public static void LoadDefaultData()
     {
         TextAsset jsonFile = Resources.Load<TextAsset>("GlobalVariables");
         if (jsonFile == null)
@@ -128,7 +134,6 @@ public static class GlobalVariables
             }
             INITIAL_PROVINCES[data.nation] = rnodes;
         }
-
     }
 
     /// <summary>

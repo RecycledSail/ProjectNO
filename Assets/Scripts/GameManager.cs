@@ -47,7 +47,7 @@ public class GameManager : MonoBehaviour
         if (_instance == null)
         {
             _instance = this;
-            DontDestroyOnLoad(gameObject);  // 씬 변경 시 유지
+            //DontDestroyOnLoad(gameObject);  // 씬 변경 시 유지
         }
         else if (_instance != this)
         {
