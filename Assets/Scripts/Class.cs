@@ -28,9 +28,7 @@ public class Province
     public Topography topo { get; }
     public Color32 color { get; }
     public Nation nation { get; set; } = null;
-
     public Market market { get; } 
-
     public Species species { get; set; } = null;
 
     /// <summary>

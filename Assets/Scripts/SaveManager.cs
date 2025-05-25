@@ -1,13 +1,16 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static GlobalVariables;
 
 public static class SaveManager
 {
     public static void OnLoad()
     {
-        
+        GameManager gameManager = GameManager.Instance;
+        if (gameManager == null) return;
+
         if (saveFileName == null)
         {
             Debug.LogError("saveFileName is null.");
@@ -20,73 +23,60 @@ public static class SaveManager
         }
 
         string json = File.ReadAllText(jsonPath);
-        var gameData = JsonUtility.FromJson<GameDataFormat>(json);
+        var gameData = JsonUtility.FromJson<SaveDataFormat>(json);
 
-        // Load Buffs
-        foreach (var b in gameData.buffs)
-        {
-            var buff = new Buff(b.id, b.name, (BuffKind)System.Enum.Parse(typeof(BuffKind), b.kind), b.value);
-            BUFF[b.name] = buff;
-        }
 
-        // Load Research Nodes
-        foreach (var r in gameData.researchNodes)
-        {
-            var buffs = new List<Buff>();
-            foreach (var bname in r.buffNames)
-            {
-                if (BUFF.TryGetValue(bname, out var buff))
-                    buffs.Add(buff);
-            }
-            var node = new ResearchNode(r.id, r.name, r.cost, buffs);
-            RESEARCH_NODE[r.name] = node;
-        }
-
-        // Load Provinces & Color-to-province
+        // Load Provinces
+        gameManager.provinces = new();
         foreach (var p in gameData.provinces)
         {
-            var color = new Color32(p.color[0], p.color[1], p.color[2], p.color[3]);
-            var province = new Province(p.id, p.name, p.population, (Topography)System.Enum.Parse(typeof(Topography), p.topography), color);
-            PROVINCES[p.name] = province;
-            COLORTOPROVINCE[color] = province;
-        }
-
-        // Load Adjacent Provinces
-        foreach (var pair in gameData.adjacentProvinces)
-        {
-            var list = new List<Province>();
-            foreach (var pname in pair.adjacents)
-                list.Add(PROVINCES[pname]);
-            ADJACENT_PROVINCES[pair.province] = list;
+            var province = PROVINCES[p.name];
+            province.population = p.population;
+            gameManager.provinces[p.name] = province;
         }
 
         // Load Nations
+        gameManager.nations = new();
         foreach (var n in gameData.nations)
         {
+            var nation = NATIONS[n.name];
             var rnodes = new List<ResearchNode>();
             foreach (var rname in n.researchNodeNames)
             {
                 if (RESEARCH_NODE.TryGetValue(rname, out var rnode))
                     rnodes.Add(rnode);
             }
-            var nation = new Nation(n.id, n.name, rnodes);
-            NATIONS[n.name] = nation;
+            nation.doneResearches = rnodes;
+            foreach (var pname in n.provinces)
+            {
+                if (gameManager.provinces.TryGetValue(pname, out var province))
+                    nation.AddProvinces(province);
+            }
+            gameManager.nations[n.name] = nation;
         }
 
-        // Initial Provinces
-        foreach (var data in gameData.initialProvinces)
+        // DateTime
+        gameManager.year = gameData.dateTime.year;
+        gameManager.month = gameData.dateTime.month;
+        gameManager.day = gameData.dateTime.day;
+
+        //Users and user
+        gameManager.users = new();
+        int playerId = gameData.player.id;
+        foreach (var u in gameData.users)
         {
-            var rnodes = new List<string>();
-            foreach (var provinceStr in data.provinces)
-            {
-                rnodes.Add(provinceStr);
-            }
-            INITIAL_PROVINCES[data.nation] = rnodes;
+            User user = new(u.id, gameManager.nations[u.nation]);
+            if (user.id == playerId) gameManager.player = user;
+            gameManager.users.Add(user);
         }
+
+
         Debug.Log("Load Done!");
     }
     public static void OnSave()
     {
+
+        GameManager gameManager = GameManager.Instance;
         if (saveFileName == null)
         {
             Debug.LogError("saveFileName is null.");
@@ -95,46 +85,13 @@ public static class SaveManager
         string jsonPath = Path.Combine(Application.persistentDataPath, GlobalVariables.saveFileName + ".json");
 
 
-        GameDataFormat saveData = new GameDataFormat();
-
-        // Save Buffs
-        saveData.buffs = new List<GameDataFormat.BuffData>();
-        foreach (var b in BUFF.Values)
-        {
-            GameDataFormat.BuffData buff = new GameDataFormat.BuffData();
-            buff.id = b.id;
-            buff.name = b.name;
-            buff.kind = b.baseBuff.ToString();
-            buff.value = b.power;
-            saveData.buffs.Add(buff);
-        }
-
-        // Save Research Nodes
-        saveData.researchNodes = new List<GameDataFormat.ResearchNodeData>();
-        foreach (var r in RESEARCH_NODE.Values)
-        {
-            var node = new GameDataFormat.ResearchNodeData();
-            List<string> buffNames = new List<string>();
-            foreach (Buff b in r.buffs)
-            {
-                buffNames.Add(b.name);
-            }
-            node.id = r.id;
-            node.name = r.name;
-            node.cost = r.requiredPoint;
-            node.buffNames = buffNames;
-            saveData.researchNodes.Add(node);
-        }
+        SaveDataFormat saveData = new SaveDataFormat();
 
         // Save Provinces & Color-to-province
-        saveData.provinces = new List<GameDataFormat.ProvinceData>();
-        foreach (var p in PROVINCES.Values)
+        saveData.provinces = new List<SaveDataFormat.ProvinceData>();
+        foreach (var p in gameManager.provinces.Values)
         {
-            //var color = new Color32(p.color[0], p.color[1], p.color[2], p.color[3]);
-            //var province = new Province(p.id, p.name, p.population, (Topography)System.Enum.Parse(typeof(Topography), p.topography), color);
-            //PROVINCES[p.name] = province;
-            //COLORTOPROVINCE[color] = province;
-            GameDataFormat.ProvinceData provinceData = new GameDataFormat.ProvinceData();
+            SaveDataFormat.ProvinceData provinceData = new SaveDataFormat.ProvinceData();
             provinceData.id = p.id;
             provinceData.name = p.name;
             provinceData.population = (int)p.population;
@@ -150,38 +107,11 @@ public static class SaveManager
             saveData.provinces.Add(provinceData);
         }
 
-        // Save Adjacent Provinces
-        saveData.adjacentProvinces = new();
-        foreach (var (province, adjacents) in ADJACENT_PROVINCES)
-        {
-            //var list = new List<Province>();
-            //foreach (var pname in pair.adjacents)
-            //    list.Add(PROVINCES[pname]);
-            //ADJACENT_PROVINCES[pair.province] = list;
-            GameDataFormat.AdjacentProvinceWrapper adjacentProvinceWrapper = new();
-            adjacentProvinceWrapper.province = province;
-            List<string> adjacentList = new();
-            foreach (var adjacent in adjacents)
-            {
-                adjacentList.Add(adjacent.name);
-            }
-            adjacentProvinceWrapper.adjacents = adjacentList;
-            saveData.adjacentProvinces.Add(adjacentProvinceWrapper);
-        }
-
         // Save Nations
         saveData.nations = new();
-        foreach (var n in NATIONS.Values)
+        foreach (var n in gameManager.nations.Values)
         {
-            //var rnodes = new List<ResearchNode>();
-            //foreach (var rname in n.researchNodeNames)
-            //{
-            //    if (RESEARCH_NODE.TryGetValue(rname, out var rnode))
-            //        rnodes.Add(rnode);
-            //}
-            //var nation = new Nation(n.id, n.name, rnodes);
-            //NATIONS[n.name] = nation;
-            GameDataFormat.NationData nationData = new();
+            SaveDataFormat.NationData nationData = new();
             nationData.id = n.id;
             nationData.name = n.name;
             List<string> researchNodeNames = new();
@@ -190,11 +120,69 @@ public static class SaveManager
                 researchNodeNames.Add(node.name);
             }
             nationData.researchNodeNames = researchNodeNames;
+            List<string> provinces = new();
+            foreach(Province province in n.provinces)
+            {
+                provinces.Add(province.name);
+            }
+            nationData.provinces = provinces;
             saveData.nations.Add(nationData);
         }
+
+
+        // Save datetime
+        saveData.dateTime = new();
+        saveData.dateTime.year = gameManager.year;
+        saveData.dateTime.month = gameManager.month;
+        saveData.dateTime.day = gameManager.day;
+
+        saveData.users = new();
+        foreach(var u in gameManager.users)
+        {
+            SaveDataFormat.UserData user = new();
+            user.id = u.id;
+            user.nation = u.nation.name;
+            saveData.users.Add(user);
+        }
+
+        saveData.player = new();
+        saveData.player.id = gameManager.player.id;
+        saveData.player.nation = gameManager.player.nation.name;
+
+        Debug.Log(saveData);
 
         string json = JsonUtility.ToJson(saveData);
         File.WriteAllText(jsonPath, json);
         Debug.Log("Save complete at " + jsonPath);
+    }
+
+    [System.Serializable]
+    public class SaveDataFormat
+    {
+        public List<UserData> users;
+        public UserData player;
+        public List<BuffData> buffs;
+        public List<ResearchNodeData> researchNodes;
+        public List<NationData> nations;
+        public List<ProvinceData> provinces;
+        public DateTimeWrapper dateTime;
+
+        [System.Serializable]
+        public sealed class UserData { public int id; public string nation; }
+
+        [System.Serializable]
+        public sealed class BuffData { public int id; public string name; public string kind; public double value; }
+
+        [System.Serializable]
+        public sealed class ResearchNodeData { public int id; public string name; public double cost; public List<string> buffNames; }
+
+        [System.Serializable]
+        public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; public List<string> provinces; }
+
+        [System.Serializable]
+        public sealed class ProvinceData { public int id; public string name; public int population; public string topography; public List<byte> color; }
+
+        [System.Serializable]
+        public sealed class DateTimeWrapper { public int year; public int month; public int day; }
     }
 }

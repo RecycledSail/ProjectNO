@@ -168,8 +168,4 @@ public static class GlobalVariables
         [System.Serializable]
         public sealed class AdjacentProvinceWrapper { public string province; public List<string> adjacents; }
     }
-
-    
-
-
 }

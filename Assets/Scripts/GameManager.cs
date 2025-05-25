@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System.IO;
 
 /// <summary>
 /// 게임 전체를 총괄하는 싱글톤 GameManager 클래스입니다.
@@ -23,16 +24,35 @@ public class GameManager : MonoBehaviour
     }
 
     // 모든 유저 목록 및 플레이어 본인 정보
-    public List<User> users { get; private set; }
-    public User player { get; private set; }
+    public List<User> users { get; set; }
+    public User player { get; set; }
 
     // 게임이 일시정지 상태인지 나타내는 플래그
     public bool paused { get; private set; } = true;
 
+    /// <summary>
+    /// 국가 정보를 저장하는 Dictionary
+    /// Key: 국가 이름, Value: Nation 객체
+    /// </summary>
+    public Dictionary<string, Nation> nations = new Dictionary<string, Nation>();
+
+    /// <summary>
+    /// 게임 내 모든 주 정보를 저장하는 Dictionary
+    /// Key: 주 이름, Value: Province 객체
+    /// </summary>
+    public Dictionary<string, Province> provinces = new Dictionary<string, Province>();
+
+    /// <summary>
+    /// 각 색상에 대응하는 주 정보를 저장하는 Dictionary
+    /// Key: Color32 (각 주의 색상), Value: 해당하는 Province 객체
+    /// </summary>
+    public Dictionary<Color32, Province> colorToProvince = new Dictionary<Color32, Province>();
+
+
     // 게임 내 현재 날짜 관리 (초기 날짜: 1836년 1월 1일)
-    public int year { get; private set; } = 1836;
-    public int month { get; private set; } = 1;
-    public int day { get; private set; } = 1;
+    public int year { get; set; } = 1836;
+    public int month { get; set; } = 1;
+    public int day { get; set; } = 1;
 
     // 게임에서 하루가 진행되는 실제 시간 간격(초 단위)
     private int timeSpeed = 1;
@@ -61,9 +81,16 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         users = new List<User>();
-
-        // 게임 새로 시작 (기본 국가 코드 "Nation1")
-        GameManager.Instance.StartNewGame("Nation1");
+        GlobalVariables.LoadDefaultData();
+        if (GlobalVariables.saveFileName != null && File.Exists(Path.Combine(Application.persistentDataPath, GlobalVariables.saveFileName + ".json")))
+        {
+            SaveManager.OnLoad();
+        }
+        else
+        {
+            // 게임 새로 시작 (기본 국가 코드 "Nation1")
+            StartNewGame("Nation1");
+        }
         paused = false;
 
         // 날짜 진행 Coroutine 시작
@@ -158,6 +185,7 @@ public class GameManager : MonoBehaviour
                 };
             }
 
+            nations[nationStr] = nation;
 
             // 국가마다 User 객체 생성 및 목록에 추가
             User user = new User(id++, nation);
@@ -166,6 +194,12 @@ public class GameManager : MonoBehaviour
             // 플레이어가 선택한 국가를 플레이어 유저로 설정
             if (nationStr == nationCode)
                 player = user;
+        }
+
+        foreach(string provinceStr in GlobalVariables.PROVINCES.Keys)
+        {
+            Province province = GlobalVariables.PROVINCES[provinceStr];
+            provinces[provinceStr] = province;
         }
     }
 
