@@ -1,11 +1,46 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static GlobalVariables;
+using static SaveManager.SaveDataFormat;
 
 public static class SaveManager
 {
+    public static SpeciesData ToSpeciesData(Species species)
+    {
+        if (species is Human human)
+        {
+            return new SpeciesData
+            {
+                type = "Human",
+                population = human.population,
+                happiness = human.happiness,
+                literacy = human.literacy,
+                culture = human.culture
+            };
+        }
+
+        Debug.LogError("Unknown species type during save");
+        return null;
+    }
+
+    public static Species FromSpeciesData(SpeciesData data)
+    {
+        if (data.type.CompareTo("Human") >= 0)
+        {
+            return new Human
+            {
+                population = data.population,
+                happiness = data.happiness,
+                literacy = data.literacy,
+                culture = data.culture
+            };
+        }
+
+        return null;
+    }
     public static void OnLoad()
     {
         GameManager gameManager = GameManager.Instance;
@@ -30,10 +65,45 @@ public static class SaveManager
         gameManager.provinces = new();
         foreach (var p in gameData.provinces)
         {
+            //var province = PROVINCES[p.name];
+            //province.population = p.population;
+
+            //// Market + Crop 데이터 복원
+            //if (p.market != null && p.market.crops != null)
+            //{
+            //    foreach (var cropData in p.market.crops)
+            //    {
+            //        var crop = province.market.GetCrop(cropData.name);
+            //        if (crop != null)
+            //        {
+            //            crop.amount = cropData.amount;
+            //        }
+            //    }
+            //}
+
             var province = PROVINCES[p.name];
             province.population = p.population;
+
+            if (p.species.type != "")
+            {
+                Debug.Log(p.species.type);
+                province.species = FromSpeciesData(p.species);
+            }
+            else
+            {
+                province.species = null;
+            }
+
+            foreach (var cropData in p.market.crops)
+            {
+                var crop = province.market.GetCrop(cropData.name);
+                if (crop != null)
+                    crop.amount = cropData.amount;
+            }
+
             gameManager.provinces[p.name] = province;
         }
+
 
         // Load Nations
         gameManager.nations = new();
@@ -87,25 +157,48 @@ public static class SaveManager
 
         SaveDataFormat saveData = new SaveDataFormat();
 
-        // Save Provinces & Color-to-province
+        //// Save Provinces & Color-to-province
         saveData.provinces = new List<SaveDataFormat.ProvinceData>();
         foreach (var p in gameManager.provinces.Values)
         {
-            SaveDataFormat.ProvinceData provinceData = new SaveDataFormat.ProvinceData();
-            provinceData.id = p.id;
-            provinceData.name = p.name;
-            provinceData.population = (int)p.population;
-            provinceData.topography = p.topo.ToString();
-            List<byte> color = new()
+            //var provinceData = new SaveDataFormat.ProvinceData
+            //{
+            //    id = p.id,
+            //    name = p.name,
+            //    population = (int)p.population,
+            //    topography = p.topo.ToString(),
+            //    color = new List<byte> { p.color.r, p.color.g, p.color.b, p.color.a },
+            //    market = new SaveDataFormat.MarketData
+            //    {
+            //        crops = p.market.crops.Select(crop => new SaveDataFormat.CropData
+            //        {
+            //            name = crop.name,
+            //            amount = crop.amount
+            //        }).ToList()
+            //    }
+            //};
+            var provinceData = new SaveDataFormat.ProvinceData
             {
-                p.color.r,
-                p.color.g,
-                p.color.b,
-                p.color.a
+                id = p.id,
+                name = p.name,
+                population = (int)p.population,
+                topography = p.topo.ToString(),
+                color = new List<byte> { p.color.r, p.color.g, p.color.b, p.color.a },
+                market = new SaveDataFormat.MarketData
+                {
+                    crops = p.market.crops.Select(crop => new SaveDataFormat.CropData
+                    {
+                        name = crop.name,
+                        amount = crop.amount
+                    }).ToList()
+                },
+                species = p.species != null ? ToSpeciesData(p.species) : null
             };
-            provinceData.color = color;
             saveData.provinces.Add(provinceData);
         }
+
+        
+
 
         // Save Nations
         saveData.nations = new();
@@ -180,9 +273,35 @@ public static class SaveManager
         public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; public List<string> provinces; }
 
         [System.Serializable]
-        public sealed class ProvinceData { public int id; public string name; public int population; public string topography; public List<byte> color; }
+        public sealed class ProvinceData { public int id; public string name; public int population; public string topography; public List<byte> color; public MarketData market; public SpeciesData species; }
 
         [System.Serializable]
         public sealed class DateTimeWrapper { public int year; public int month; public int day; }
+
+        [System.Serializable]
+        public sealed class MarketData
+        {
+            public List<CropData> crops;
+        }
+
+        [System.Serializable]
+        public sealed class CropData
+        {
+            public string name;
+            public int amount;
+        }
+
+        [System.Serializable]
+        public sealed class SpeciesData
+        {
+            public string type; // 예: "Human"
+            public int population;
+
+            // Human 전용 데이터
+            public int happiness;
+            public int literacy;
+            public int culture;
+
+        }
     }
 }

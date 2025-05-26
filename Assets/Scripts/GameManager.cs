@@ -167,22 +167,28 @@ public class GameManager : MonoBehaviour
     {
         int id = 0;
 
+        // 초기 Province들 init
+        foreach (string provinceStr in GlobalVariables.PROVINCES.Keys)
+        {
+            Province province = GlobalVariables.PROVINCES[provinceStr];
+            provinces[provinceStr] = province;
+
+            // 🔽 여기서 종족을 할당!
+            province.species = new Human
+            {
+                population = (int)province.population // 동기화
+            };
+        }
+
         // GlobalVariables에서 모든 국가 순회
         foreach (string nationStr in GlobalVariables.NATIONS.Keys)
         {
             Nation nation = GlobalVariables.NATIONS[nationStr];
-
             // 해당 국가의 초기 Province들 추가
             foreach (string provinceStr in GlobalVariables.INITIAL_PROVINCES[nationStr])
             {
                 Province province = GlobalVariables.PROVINCES[provinceStr];
                 nation.AddProvinces(province);
-
-                // 🔽 여기서 종족을 할당!
-                province.species = new Human
-                {
-                    population = (int)province.population // 동기화
-                };
             }
 
             nations[nationStr] = nation;
@@ -194,12 +200,6 @@ public class GameManager : MonoBehaviour
             // 플레이어가 선택한 국가를 플레이어 유저로 설정
             if (nationStr == nationCode)
                 player = user;
-        }
-
-        foreach(string provinceStr in GlobalVariables.PROVINCES.Keys)
-        {
-            Province province = GlobalVariables.PROVINCES[provinceStr];
-            provinces[provinceStr] = province;
         }
     }
 
