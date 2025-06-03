@@ -137,6 +137,34 @@ public static class GlobalVariables
     }
 
     /// <summary>
+    /// 모든 세이브 파일명을 가져오는 메서드
+    /// </summary>
+    /// <returns></returns>
+    public static List<string> GetAllJsonFileNames()
+    {
+        List<string> jsonFileNames = new List<string>();
+        string path = Application.persistentDataPath;
+
+        if (Directory.Exists(path))
+        {
+            string[] fileList = Directory.GetFiles(path, "*.json");
+            foreach (string filePath in fileList)
+            {
+                string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);
+                jsonFileNames.Add(fileNameWithoutExtension);
+                Debug.Log(fileNameWithoutExtension);
+            }
+
+        }
+        else
+        {
+            Debug.LogWarning("Persistent data path does not exist: " + path);
+        }
+
+        return jsonFileNames;
+    }
+
+    /// <summary>
     /// JSON에서 불러 올 포맷을 저장하는 클래스
     /// List -> 개별 클래스로 정의, System.Serializable로 직렬화해야 저장/불러오기 가능
     /// </summary>

@@ -204,7 +204,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 게임을 저장하고 바깥으로 나가는 메서드
+    /// DEPRECATED: 현재 게임을 저장하고 바깥으로 나가는 메서드
     /// </summary>
     public void SaveGame()
     {

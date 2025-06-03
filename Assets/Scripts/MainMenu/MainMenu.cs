@@ -6,8 +6,10 @@ using System.IO;
 
 public class MainMenu : MonoBehaviour
 {
+    public GameObject loadPanel;
     public void OnNewGameClicked()
     {
+        GlobalVariables.saveFileName = null;
         GlobalVariables.LoadDefaultData();
         // "PlayScene" 로딩
         SceneManager.LoadScene("PlayScene");
@@ -18,11 +20,7 @@ public class MainMenu : MonoBehaviour
 
         if (!File.Exists(GlobalVariables.saveFileName))
         {
-            SaveManager.OnLoad();
-            //Debug.Log("Save file loaded:\n" + GlobalVariables.saveFileName);
-
-            // TODO: 불러온 데이터를 적용하는 로직 추가
-            SceneManager.LoadScene("PlayScene");
+            loadPanel.SetActive(true);
         }
         else
         {

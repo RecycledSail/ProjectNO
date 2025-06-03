@@ -1,7 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.Rendering.UI;
-using UnityEngine.UI;
 
 public class ProvinceUI : MonoBehaviour
 {
