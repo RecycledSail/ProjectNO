@@ -101,11 +101,16 @@ public class SelectProvince3D : MonoBehaviour
         for(int i=outlined.Count-1; i>=0; i--)
         {
             GameObject province = outlined[i];
+            var outline = province.GetComponent<Outline>();
+            outline.enabled = false;
+            outlined.RemoveAt(i);
         }
     }
 
     void AddOutline(GameObject province)
     {
+        var outline = province.GetComponent<Outline>();
+        outline.enabled = true;
         outlined.Add(province);
     }
     //void RemoveColors()
