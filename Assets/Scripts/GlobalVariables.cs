@@ -55,7 +55,7 @@ public static class GlobalVariables
     /// <summary>
     /// 세이브 파일명 
     /// </summary>
-    public static string saveFileName = "save";
+    public static string saveFileName = null;
 
     /// <summary>
     /// Assets/Resources/GlovalVariables.json을 불러와 GlobalVariables의 멤버들을 채우는 함수
