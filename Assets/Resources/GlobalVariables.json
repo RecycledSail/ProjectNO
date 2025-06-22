@@ -10,25 +10,19 @@
     { "id": 2, "name": "Nation2", "researchNodeNames": [] }
   ],
   "initialProvinces": [
-    { "nation": "Nation1", "provinces": ["Province1", "Province2"] },
-    { "nation": "Nation2", "provinces": ["Province3"] }
+    { "nation": "Nation1", "provinces": ["Bebino", "Eiglepsk", "Sando"] },
+    { "nation": "Nation2", "provinces": ["Stein"] }
   ],
   "provinces": [
-    { "id": 1, "name": "Province1", "population": 4555, "topography": "Plane", "color": [114, 185, 90, 255] },
-    { "id": 2, "name": "Province2", "population": 5000, "topography": "Plane", "color": [66, 76, 163, 255] },
-    { "id": 3, "name": "Province3", "population": 6500, "topography": "Plane", "color": [175, 182, 188, 255] },
-    { "id": 4, "name": "Province4", "population": 6500, "topography": "Plane", "color": [57, 238, 124, 255] },
-    { "id": 5, "name": "Province5", "population": 6500, "topography": "Plane", "color": [85, 183, 83, 255] },
-    { "id": 6, "name": "Province6", "population": 6500, "topography": "Plane", "color": [145, 215, 209, 255] },
-    { "id": 7, "name": "Province7", "population": 6500, "topography": "Plane", "color": [184, 221, 56, 255] }
+    { "id": 1, "name": "Bebino", "population": 4555, "topography": "Plane"},
+    { "id": 2, "name": "Stein", "population": 5000, "topography": "Plane"},
+    { "id": 3, "name": "Eiglepsk", "population": 6500, "topography": "Plane"},
+    { "id": 4, "name": "Sando", "population": 7500, "topography": "Plane"}
   ],
   "adjacentProvinces": [
-    { "province": "Province1", "adjacents": ["Province2"] },
-    { "province": "Province2", "adjacents": ["Province1", "Province3"] },
-    { "province": "Province3", "adjacents": ["Province2", "Province4", "Province5"] },
-    { "province": "Province4", "adjacents": ["Province3", "Province5", "Province6"] },
-    { "province": "Province5", "adjacents": ["Province2", "Province3", "Province4", "Province6", "Province7"] },
-    { "province": "Province6", "adjacents": ["Province4", "Province5", "Province7"] },
-    { "province": "Province7", "adjacents": ["Province5", "Province6"] }
+    { "province": "Stein", "adjacents": ["Sando"] },
+    { "province": "Sando", "adjacents": ["Stein", "Eiglepsk"] },
+    { "province": "Bebino", "adjacents": ["Eiglepsk"] },
+    { "province": "Eiglepsk", "adjacents": ["Bebino", "Sando"] }
   ]
 }

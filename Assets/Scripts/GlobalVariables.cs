@@ -96,10 +96,8 @@ public static class GlobalVariables
         // Load Provinces & Color-to-province
         foreach (var p in gameData.provinces)
         {
-            var color = new Color32(p.color[0], p.color[1], p.color[2], p.color[3]);
-            var province = new Province(p.id, p.name, p.population, (Topography)System.Enum.Parse(typeof(Topography), p.topography), color);
+            var province = new Province(p.id, p.name, p.population, (Topography)System.Enum.Parse(typeof(Topography), p.topography));
             PROVINCES[p.name] = province;
-            COLORTOPROVINCE[color] = province;
         }
 
         // Load Adjacent Provinces
@@ -152,7 +150,7 @@ public static class GlobalVariables
             {
                 string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);
                 jsonFileNames.Add(fileNameWithoutExtension);
-                Debug.Log(fileNameWithoutExtension);
+                //Debug.Log(fileNameWithoutExtension);
             }
 
         }
@@ -188,7 +186,7 @@ public static class GlobalVariables
         public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; }
 
         [System.Serializable]
-        public sealed class ProvinceData { public int id; public string name; public int population; public string topography; public List<byte> color; }
+        public sealed class ProvinceData { public int id; public string name; public int population; public string topography;}
 
         [System.Serializable]
         public sealed class InitialProvinceWrapper { public string nation; public List<string> provinces; }

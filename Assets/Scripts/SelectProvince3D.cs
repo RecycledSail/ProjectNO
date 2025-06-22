@@ -70,18 +70,17 @@ public class SelectProvince3D : MonoBehaviour
 
     void OpenNationUI(GameObject child)
     {
-        
-
         //Province cur;
         string name = child.name;
         Debug.Log(name);
-        //if (GlobalVariables.COLORTOPROVINCE.TryGetValue(c, out cur))
-        //{
-        //    if (cur.nation != null)
-        //        NationUI.Instance.OpenNationUI(cur.nation);
-        //    else
-        //        ProvinceDetailUI.Instance.OpenProvinceDetailUI(cur);
-        //}
+        Province cur;
+        if (GlobalVariables.PROVINCES.TryGetValue(name, out cur))
+        {
+            if (cur.nation != null)
+                NationUI.Instance.OpenNationUI(cur.nation);
+            else
+                ProvinceDetailUI.Instance.OpenProvinceDetailUI(cur);
+        }
     }
 
     /// <summary>

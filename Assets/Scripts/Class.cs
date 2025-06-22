@@ -26,7 +26,6 @@ public class Province
     public string name { get;}
     public long population { get; set; }
     public Topography topo { get; }
-    public Color32 color { get; }
     public Nation nation { get; set; } = null;
     public Market market { get; } 
     public Species species { get; set; } = null;
@@ -39,14 +38,13 @@ public class Province
     /// <param name="population">프로빈스의 인구 수</param>
     /// <param name="topo">프로빈스의 토폴로지</param>
     /// <param name="color">프로빈스의 색상</param>
-    public Province(int id, string name, long population, Topography topo, Color32 color)
+    public Province(int id, string name, long population, Topography topo)
     {
         // this -> instance의 id
         this.id = id;
         this.name = name;
         this.population = population;
         this.topo = topo;
-        this.color = color;
         this.market = new Market(this);
     }
 

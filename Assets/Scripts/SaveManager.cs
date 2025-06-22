@@ -183,7 +183,6 @@ public static class SaveManager
                 name = p.name,
                 population = (int)p.population,
                 topography = p.topo.ToString(),
-                color = new List<byte> { p.color.r, p.color.g, p.color.b, p.color.a },
                 market = new SaveDataFormat.MarketData
                 {
                     crops = p.market.crops.Select(crop => new SaveDataFormat.CropData
@@ -273,7 +272,7 @@ public static class SaveManager
         public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; public List<string> provinces; }
 
         [System.Serializable]
-        public sealed class ProvinceData { public int id; public string name; public int population; public string topography; public List<byte> color; public MarketData market; public SpeciesData species; }
+        public sealed class ProvinceData { public int id; public string name; public int population; public string topography; public MarketData market; public SpeciesData species; }
 
         [System.Serializable]
         public sealed class DateTimeWrapper { public int year; public int month; public int day; }
