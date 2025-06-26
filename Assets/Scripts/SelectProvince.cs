@@ -5,6 +5,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+/*
 /// <summary>
 /// SelectProvince 클래스는 마우스 클릭을 통해 특정 지역(Province)을 선택하고, 
 /// 해당 지역과 인접한 지역을 색상 변경하는 기능을 수행합니다.
@@ -187,44 +188,45 @@ public class SelectProvince : MonoBehaviour
     /// </summary>
     /// <param name="c">선택한 색상</param>
     /// <param name="tex_0">변경할 텍스처</param>
-    //void ColorNewProvinces(Color32 c)
-    //{
-    //    List<Vector2> list;
-    //    paintedColors.Push(c); // 현재 색상을 스택에 저장
+    void ColorNewProvinces(Color32 c)
+    {
+        List<Vector2> list;
+        paintedColors.Push(c); // 현재 색상을 스택에 저장
 
-    //    // 현재 색상에 해당하는 모든 픽셀을 파란색으로 변경
-    //    if (colorToVec2.TryGetValue(c, out list))
-    //    {
-    //        foreach (Vector2 v in list)
-    //        {
-    //            tex_0.SetPixel((int)v.x, (int)v.y, Color.blue);
-    //        }
-    //    }
+        // 현재 색상에 해당하는 모든 픽셀을 파란색으로 변경
+        if (colorToVec2.TryGetValue(c, out list))
+        {
+            foreach (Vector2 v in list)
+            {
+                tex_0.SetPixel((int)v.x, (int)v.y, Color.blue);
+            }
+        }
 
-    //    // 현재 프로빈스를 가져옴
-    //    Province cur;
-    //    if (GlobalVariables.COLORTOPROVINCE.TryGetValue(c, out cur))
-    //    {
-    //        List<Province> provinces;
-    //        // 현재 프로빈스와 인접한 프로빈스 목록을 가져옴
-    //        if (GlobalVariables.ADJACENT_PROVINCES.TryGetValue(cur.name, out provinces))
-    //        {
-    //            foreach (Province province in provinces)
-    //            {
-    //                Color32 provColor = province.color;
-    //                List<Vector2> provPixelVec;
+        // 현재 프로빈스를 가져옴
+        Province cur;
+        if (GlobalVariables.COLORTOPROVINCE.TryGetValue(c, out cur))
+        {
+            List<Province> provinces;
+            // 현재 프로빈스와 인접한 프로빈스 목록을 가져옴
+            if (GlobalVariables.ADJACENT_PROVINCES.TryGetValue(cur.name, out provinces))
+            {
+                foreach (Province province in provinces)
+                {
+                    Color32 provColor = province.color;
+                    List<Vector2> provPixelVec;
 
-    //                // 인접한 프로빈스의 픽셀을 하늘색으로 변경
-    //                if (colorToVec2.TryGetValue(provColor, out provPixelVec))
-    //                {
-    //                    foreach (Vector2 v in provPixelVec)
-    //                    {
-    //                        tex_0.SetPixel((int)v.x, (int)v.y, Color.cyan);
-    //                    }
-    //                    paintedColors.Push(provColor); // 변경한 색상을 스택에 저장
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
+                    // 인접한 프로빈스의 픽셀을 하늘색으로 변경
+                    if (colorToVec2.TryGetValue(provColor, out provPixelVec))
+                    {
+                        foreach (Vector2 v in provPixelVec)
+                        {
+                            tex_0.SetPixel((int)v.x, (int)v.y, Color.cyan);
+                        }
+                        paintedColors.Push(provColor); // 변경한 색상을 스택에 저장
+                    }
+                }
+            }
+        }
+    }
 }
+*/

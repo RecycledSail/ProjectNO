@@ -14,48 +14,54 @@ public static class GlobalVariables
     /// 버프를 저장하는 Dictionary
     /// Key: 버프 이름, Value: Buff 객체
     /// </summary>
-    public static Dictionary<string, Buff> BUFF = new Dictionary<string, Buff>();
+    public static Dictionary<string, Buff> BUFF = new();
 
     /// <summary>
     /// 연구 노드를 저장하는 Dictionary
     /// Key: 연구 노드 이름, Value: ResearchNode 객체
     /// </summary>
-    public static Dictionary<string, ResearchNode> RESEARCH_NODE = new Dictionary<string, ResearchNode>();
+    public static Dictionary<string, ResearchNode> RESEARCH_NODE = new();
 
     /// <summary>
     /// 국가 정보를 저장하는 Dictionary
     /// Key: 국가 이름, Value: Nation 객체
     /// </summary>
-    public static Dictionary<string, Nation> NATIONS = new Dictionary<string, Nation>();
+    public static Dictionary<string, Nation> NATIONS = new();
 
     /// <summary>
     /// 각 국가가 시작 시 소유하는 주 목록
     /// Key: 국가 이름, Value: 주 이름 리스트
     /// </summary>
-    public static Dictionary<string, List<string>> INITIAL_PROVINCES = new Dictionary<string, List<string>>();
+    public static Dictionary<string, List<string>> INITIAL_PROVINCES = new();
 
     /// <summary>
     /// 게임 내 모든 주 정보를 저장하는 Dictionary
     /// Key: 주 이름, Value: Province 객체
     /// </summary>
-    public static Dictionary<string, Province> PROVINCES = new Dictionary<string, Province>();
+    public static Dictionary<string, Province> PROVINCES = new();
 
     /// <summary>
     /// 각 주와 인접한 주들의 정보를 저장하는 Dictionary
     /// Key: 주 이름, Value: 인접한 주의 리스트
     /// </summary>
-    public static Dictionary<string, List<Province>> ADJACENT_PROVINCES = new Dictionary<string, List<Province>>();
+    public static Dictionary<string, List<Province>> ADJACENT_PROVINCES = new();
 
     /// <summary>
     /// 각 색상에 대응하는 주 정보를 저장하는 Dictionary
     /// Key: Color32 (각 주의 색상), Value: 해당하는 Province 객체
     /// </summary>
-    public static Dictionary<Color32, Province> COLORTOPROVINCE = new Dictionary<Color32, Province>();
+    //public static Dictionary<Color32, Province> COLORTOPROVINCE = new Dictionary<Color32, Province>();
 
     /// <summary>
     /// 세이브 파일명 
     /// </summary>
     public static string saveFileName = null;
+
+    /// <summary>
+    /// 유닛 타입을 저장하는 Dictionary
+    /// Key: string (유닛 타입의 name), Value: 유닛 타입의 값
+    /// </summary>
+    public static Dictionary<string, UnitType> UNIT_TYPES = new();
 
     /// <summary>
     /// Assets/Resources/GlovalVariables.json을 불러와 GlobalVariables의 멤버들을 채우는 함수

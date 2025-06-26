@@ -2,6 +2,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 
@@ -200,7 +201,10 @@ public class User
     }
 }
 
-
+/// <summary>
+/// 프로빈스 내 작물의 갯수 클래스
+/// 작물 ID, 작물 이름을 정의
+/// </summary>
 public class Crop
 {
     public string name { get; }
@@ -212,6 +216,10 @@ public class Crop
         this.amount = initialAmount;
     }
 
+    /// <summary>
+    /// 작물 생산 메서드
+    /// </summary>
+    /// <param name="quantity"></param>
     public void Produce(int quantity)
     {
         this.amount += quantity;
@@ -220,7 +228,10 @@ public class Crop
 
 }
 
-
+/// <summary>
+/// 프로빈스 내 시장 클래스
+/// 프로빈스와 프로빈스가 보유한 작물들을 정의
+/// </summary>
 public class Market
 {
     public Province province { get; }
@@ -262,3 +273,220 @@ public class Market
     }
 }
 
+/// <summary>
+/// 유닛 타입 클래스
+/// </summary>
+public class UnitType
+{
+    public int id { get; }
+    public string name { get;}
+    public int attackPerUnit { get; }
+    public int defensePerUnit { get; }
+    public int moveSpeedPerUnit { get; }
+
+    public UnitType(int id, string name, int attackPerUnit, int defensePerUnit, int moveSpeedPerUnit)
+    {
+        this.id = id;
+        this.name = name;
+        this.attackPerUnit = attackPerUnit;
+        this.defensePerUnit = defensePerUnit;
+        this.moveSpeedPerUnit = moveSpeedPerUnit;
+    }
+}
+
+public enum RegimentState
+{
+    IDLE,
+    MOVE,
+    BATTLE
+}
+public class Regiment
+{
+    public Nation nation { get; }
+    public int id { get; }
+    public string name { get; set; }
+    public Dictionary<UnitType, int> units { get; set; }
+    public Province location;
+    public RegimentState state;
+
+    public Regiment(Nation nation, int id, string name, Province location)
+    {
+        this.nation = nation;
+        this.id = id;
+        this.name = name;
+        this.location = location;
+        this.units = new();
+        this.state = RegimentState.IDLE;
+    }
+
+    public int GetUnitCount()
+    {
+        int unitCount = 0;
+        foreach (UnitType type in units.Keys)
+        {
+            int curCount = units[type];
+            unitCount += curCount;
+        }
+        return unitCount;
+    }
+    public double GetAttackPower()
+    {
+        double totalAttack = 0, unitCount = 0;
+        foreach(UnitType type in units.Keys)
+        {
+            double curCount = units[type];
+            totalAttack += curCount * type.attackPerUnit;
+            unitCount += curCount;
+        }
+        double result = totalAttack / unitCount;
+        return result < 0.1 ? 0.1 : result;
+    }
+
+    public double GetDefensePower()
+    {
+        double totalDefense = 0, unitCount = 0;
+        foreach (UnitType type in units.Keys)
+        {
+            double curCount = units[type];
+            totalDefense += curCount * type.defensePerUnit;
+            unitCount += curCount;
+        }
+        double result = totalDefense / unitCount;
+        return result < 0.1 ? 0.1 : result;
+    }
+
+    public double GetMoveSpeed()
+    {
+        if(units.Count == 0)
+        {
+            return 0;
+        }
+        else
+        {
+            double minMoveSpeed = -1;
+            foreach (UnitType type in units.Keys)
+            {
+                if (minMoveSpeed == -1)
+                    minMoveSpeed = type.moveSpeedPerUnit;
+                else
+                    minMoveSpeed = Math.Min(minMoveSpeed, type.moveSpeedPerUnit);
+            }
+            return minMoveSpeed < 0.1 ? 0.1 : minMoveSpeed;
+        }
+    }
+}
+
+public class Trait
+{
+    public int id { get; }
+    public string name { get; }
+    public Buff buff { get; }
+
+    public Trait(int id, string name, Buff buff)
+    {
+        this.id = id;
+        this.name = name;
+        this.buff = buff;
+    }
+}
+
+public class NamedPerson
+{
+    public int id { get; }
+    public string firstName { get; }
+    public string lastName { get; }
+
+    public Species species { get; }
+    public List<Trait> traits { get; set; }
+
+    public NamedPerson(int id, string firstName, string lastName, Species species)
+    {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.species = species;
+        this.traits = new();
+    }
+
+    public bool AddTrait(Trait trait)
+    {
+        if (traits.Contains(trait))
+        {
+            return false;
+        }
+        else
+        {
+            traits.Add(trait);
+            return true;
+        }
+    }
+
+    public bool RemoveTrait(Trait trait)
+    {
+        return traits.Remove(trait);
+    }
+
+    public string FullName()
+    {
+        return firstName + " " + lastName;
+    }
+}
+
+public class Battle
+{
+    public List<Regiment> attackRegiments { get; set; }
+    public List<Regiment> defenseRegiments { get; set; }
+    public Province battleArea { get; }
+
+
+    public double winProbability { get; set; }
+
+    public Battle(List<Regiment> attackRegiments, List<Regiment> defenseRegiments, Province battleArea)
+    {
+        this.attackRegiments = attackRegiments;
+        this.defenseRegiments = defenseRegiments;
+        this.battleArea = battleArea;
+        this.winProbability = 50.0;
+    }
+
+    public bool AddAttackRegiment(Regiment regiment)
+    {
+        if(attackRegiments.Contains(regiment) || defenseRegiments.Contains(regiment))
+        {
+            return false;
+        }
+        else
+        {
+            attackRegiments.Add(regiment);
+            return true;
+        }
+    }
+
+    public bool AddDefenseRegiment(Regiment regiment)
+    {
+        if (attackRegiments.Contains(regiment) || defenseRegiments.Contains(regiment))
+        {
+            return false;
+        }
+        else
+        {
+            defenseRegiments.Add(regiment);
+            return true;
+        }
+    }
+
+    public bool RemoveAttackRegiment(Regiment regiment)
+    {
+        return attackRegiments.Remove(regiment);
+    }
+
+    public bool RemoveDefenseRegiment(Regiment regiment)
+    {
+        return defenseRegiments.Remove(regiment);
+    }
+
+    public void Attack()
+    {
+
+    }
+}
