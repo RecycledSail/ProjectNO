@@ -44,6 +44,15 @@ public class SelectProvince3D : MonoBehaviour
         OutlineProvince(child); // 프로빈스 색칠 함수 호출
     }
 
+    private bool IsPointerOverUIObject()
+    {
+        PointerEventData eventDataCurrentPosition = new PointerEventData(EventSystem.current);
+        eventDataCurrentPosition.position = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventDataCurrentPosition, results);
+        return results.Count > 0;
+    }
+
     GameObject HitChild()
     {
         RaycastHit hit;
@@ -58,6 +67,11 @@ public class SelectProvince3D : MonoBehaviour
 
         // 충돌한 오브젝트에 유효한 텍스처가 있는지 확인
         if (!children.Contains(obj))
+        {
+            return null;
+        }
+
+        if (IsPointerOverUIObject())
         {
             return null;
         }
