@@ -77,7 +77,6 @@ public class NationUI : MonoBehaviour
         delayedUpdate = (delayedUpdate + 1) % 5;
         if(delayedUpdate == 0 && currentNation != null)
         {
-            InitProvinceList();
             InitNationStats();
         }
     }
@@ -89,6 +88,23 @@ public class NationUI : MonoBehaviour
     /// <param name="nation">선택한 국가</param>
     public void OpenNationUI(Nation nation)
     {
+
+        // Nation 이름 표시
+        nationNameText.text = nation.name;
+        currentNation = nation;
+
+        InitProvinceList();
+        InitNationStats();
+
+        UIManager.Instance.ReplacePopUp(gameObject);
+    }
+
+    /// <summary>
+    /// 플레이어의 Nation의 UI를 열고 그에 속한 Province 목록을 표시합니다.
+    /// </summary>
+    public void OpenNationUI()
+    {
+        Nation nation = GameManager.Instance.player.nation;
 
         // Nation 이름 표시
         nationNameText.text = nation.name;
