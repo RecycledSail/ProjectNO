@@ -224,8 +224,6 @@ public class Crop
     {
         this.amount += quantity;
     }
-
-
 }
 
 /// <summary>

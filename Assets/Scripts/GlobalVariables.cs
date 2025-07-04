@@ -64,6 +64,12 @@ public static class GlobalVariables
     public static Dictionary<string, UnitType> UNIT_TYPES = new();
 
     /// <summary>
+    /// 종족값을 저장하는 Dictionary
+    /// Key: string (종족명), Value: 종족값
+    /// </summary>
+    public static Dictionary<string, SpeciesSpec> SPECIES_SPEC = new();
+
+    /// <summary>
     /// Assets/Resources/GlovalVariables.json을 불러와 GlobalVariables의 멤버들을 채우는 함수
     /// JSON 구성은 하단 GameDataFormat 참조
     /// </summary>
@@ -138,6 +144,17 @@ public static class GlobalVariables
             }
             INITIAL_PROVINCES[data.nation] = rnodes;
         }
+
+        // Load Species Spec
+        foreach(var data in gameData.speciesSpecs)
+        {
+            SpeciesSpec speciesSpec = new SpeciesSpec
+            {
+                name = data.name,
+                foodNeeded = data.foodNeeded
+            };
+            SPECIES_SPEC[data.name] = speciesSpec;
+        }
     }
 
     /// <summary>
@@ -181,6 +198,7 @@ public static class GlobalVariables
         public List<ProvinceData> provinces;
         public List<InitialProvinceWrapper> initialProvinces;
         public List<AdjacentProvinceWrapper> adjacentProvinces;
+        public List<SpeciesSpecData> speciesSpecs;
 
         [System.Serializable]
         public sealed class BuffData { public int id; public string name; public string kind; public double value; }
@@ -199,5 +217,8 @@ public static class GlobalVariables
 
         [System.Serializable]
         public sealed class AdjacentProvinceWrapper { public string province; public List<string> adjacents; }
-    }
+
+        [System.Serializable]
+        public sealed class SpeciesSpecData { public string name; public int foodNeeded; }
+        }
 }

@@ -174,7 +174,7 @@ public class GameManager : MonoBehaviour
             provinces[provinceStr] = province;
 
             // 🔽 여기서 종족을 할당!
-            province.species = new Human
+            province.species = new Species("Elf")
             {
                 population = (int)province.population // 동기화
             };

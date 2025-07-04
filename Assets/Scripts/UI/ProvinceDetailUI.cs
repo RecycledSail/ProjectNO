@@ -11,6 +11,7 @@ public class ProvinceDetailUI : MonoBehaviour
     public TMP_Text provincePopulationText;
 
     public TMP_Text provinceCropsText;
+    public PieChart racesPieChart;
     private Province province;
 
 

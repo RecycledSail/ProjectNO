@@ -10,36 +10,25 @@ public static class SaveManager
 {
     public static SpeciesData ToSpeciesData(Species species)
     {
-        if (species is Human human)
+        return new SpeciesData
         {
-            return new SpeciesData
-            {
-                type = "Human",
-                population = human.population,
-                happiness = human.happiness,
-                literacy = human.literacy,
-                culture = human.culture
-            };
-        }
-
-        Debug.LogError("Unknown species type during save");
-        return null;
+            type = species.name,
+            population = species.population,
+            happiness = species.happiness,
+            literacy = species.literacy,
+            culture = species.culture
+        };
     }
 
     public static Species FromSpeciesData(SpeciesData data)
     {
-        if (data.type.CompareTo("Human") >= 0)
+        return new Species(data.type)
         {
-            return new Human
-            {
-                population = data.population,
-                happiness = data.happiness,
-                literacy = data.literacy,
-                culture = data.culture
-            };
-        }
-
-        return null;
+            population = data.population,
+            happiness = data.happiness,
+            literacy = data.literacy,
+            culture = data.culture
+        };
     }
     public static void OnLoad()
     {
@@ -296,7 +285,6 @@ public static class SaveManager
             public string type; // 예: "Human"
             public int population;
 
-            // Human 전용 데이터
             public int happiness;
             public int literacy;
             public int culture;

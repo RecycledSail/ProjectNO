@@ -24,5 +24,9 @@
     { "province": "Sando", "adjacents": ["Stein", "Eiglepsk"] },
     { "province": "Bebino", "adjacents": ["Eiglepsk"] },
     { "province": "Eiglepsk", "adjacents": ["Bebino", "Sando"] }
+  ],
+  "speciesSpecs": [
+	{ "name": "Human", "foodNeeded": 2 },
+	{ "name": "Elf", "foodNeeded": 1.5 }
   ]
 }
