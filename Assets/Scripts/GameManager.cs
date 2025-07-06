@@ -172,12 +172,6 @@ public class GameManager : MonoBehaviour
         {
             Province province = GlobalVariables.PROVINCES[provinceStr];
             provinces[provinceStr] = province;
-
-            // 🔽 여기서 종족을 할당!
-            province.species = new Species("Elf")
-            {
-                population = (int)province.population // 동기화
-            };
         }
 
         // GlobalVariables에서 모든 국가 순회

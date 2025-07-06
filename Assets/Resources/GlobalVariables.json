@@ -14,10 +14,10 @@
     { "nation": "Nation2", "provinces": ["Stein"] }
   ],
   "provinces": [
-    { "id": 1, "name": "Bebino", "population": 4555, "topography": "Plane"},
-    { "id": 2, "name": "Stein", "population": 5000, "topography": "Plane"},
-    { "id": 3, "name": "Eiglepsk", "population": 6500, "topography": "Plane"},
-    { "id": 4, "name": "Sando", "population": 7500, "topography": "Plane"}
+    { "id": 1, "name": "Bebino", "pops": [{"name": "Human", "population": 3500, "happiness": 70, "literacy": 25, "culture": 0}], "topography": "Plane"},
+    { "id": 2, "name": "Stein", "pops": [{"name": "Human", "population": 8200, "happiness": 45, "literacy": 25, "culture": 0}], "topography": "Plane"},
+    { "id": 3, "name": "Eiglepsk", "pops": [{"name": "Human", "population": 1244, "happiness": 70, "literacy": 25, "culture": 0}], "topography": "Plane"},
+    { "id": 4, "name": "Sando", "pops": [{"name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0}, {"name": "Elf", "population": 5333, "happiness": 70, "literacy": 70, "culture": 1}], "topography": "Plane"}
   ],
   "adjacentProvinces": [
     { "province": "Stein", "adjacents": ["Sando"] },

@@ -29,7 +29,7 @@ public class Province
     public Topography topo { get; }
     public Nation nation { get; set; } = null;
     public Market market { get; } 
-    public Species species { get; set; } = null;
+    public List<Species> pops { get; set; } = null;
 
     /// <summary>
     /// Province 초기화
@@ -47,6 +47,7 @@ public class Province
         this.population = population;
         this.topo = topo;
         this.market = new Market(this);
+        pops = new();
     }
 
     public void AddNation(Nation nation)
@@ -65,13 +66,16 @@ public class Province
     }
     public void SimulateTurn()
     {
-        if (species == null) return;
+        if (pops.Count == 0) return;
 
-        species.Consume(market);
-        market.ProduceCrops();
-        species.UpdateGrowth();
+        population = 0;
+        foreach(Species species in pops) {
+            species.Consume(market);
+            market.ProduceCrops();
+            species.UpdateGrowth();
 
-        population = species.population; // 이 줄로 동기화도 함께
+            population += species.population; // 이 줄로 동기화도 함께
+        }
     }
 
 

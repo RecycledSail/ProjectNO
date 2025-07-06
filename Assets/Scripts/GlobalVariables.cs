@@ -105,10 +105,36 @@ public static class GlobalVariables
             RESEARCH_NODE[r.name] = node;
         }
 
+        // Load Species Spec
+        foreach (var data in gameData.speciesSpecs)
+        {
+            SpeciesSpec speciesSpec = new SpeciesSpec
+            {
+                name = data.name,
+                foodNeeded = data.foodNeeded
+            };
+            SPECIES_SPEC[data.name] = speciesSpec;
+        }
+
         // Load Provinces & Color-to-province
         foreach (var p in gameData.provinces)
         {
-            var province = new Province(p.id, p.name, p.population, (Topography)System.Enum.Parse(typeof(Topography), p.topography));
+            List<Species> loadPops = new();
+            int population = 0;
+            foreach(var speciesData in p.pops)
+            {
+                Species species = new(speciesData.name)
+                {
+                    population = speciesData.population,
+                    happiness = speciesData.happiness,
+                    literacy = speciesData.literacy,
+                    culture = speciesData.culture
+                };
+                loadPops.Add(species);
+                population += species.population;
+            }
+            var province = new Province(p.id, p.name, population, (Topography)System.Enum.Parse(typeof(Topography), p.topography));
+            province.pops = loadPops;
             PROVINCES[p.name] = province;
         }
 
@@ -145,16 +171,7 @@ public static class GlobalVariables
             INITIAL_PROVINCES[data.nation] = rnodes;
         }
 
-        // Load Species Spec
-        foreach(var data in gameData.speciesSpecs)
-        {
-            SpeciesSpec speciesSpec = new SpeciesSpec
-            {
-                name = data.name,
-                foodNeeded = data.foodNeeded
-            };
-            SPECIES_SPEC[data.name] = speciesSpec;
-        }
+        
     }
 
     /// <summary>
@@ -210,7 +227,7 @@ public static class GlobalVariables
         public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; }
 
         [System.Serializable]
-        public sealed class ProvinceData { public int id; public string name; public int population; public string topography;}
+        public sealed class ProvinceData { public int id; public string name; public List<SpeciesPopData> pops; public string topography;}
 
         [System.Serializable]
         public sealed class InitialProvinceWrapper { public string nation; public List<string> provinces; }
@@ -219,6 +236,9 @@ public static class GlobalVariables
         public sealed class AdjacentProvinceWrapper { public string province; public List<string> adjacents; }
 
         [System.Serializable]
-        public sealed class SpeciesSpecData { public string name; public int foodNeeded; }
+        public sealed class SpeciesSpecData { public string name; public int foodNeeded;}
+
+        [System.Serializable]
+        public sealed class SpeciesPopData { public string name; public int population; public int happiness; public int literacy; public int culture; }
         }
 }

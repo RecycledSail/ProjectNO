@@ -8,16 +8,23 @@ using static SaveManager.SaveDataFormat;
 
 public static class SaveManager
 {
-    public static SpeciesData ToSpeciesData(Species species)
+    public static List<SpeciesData> ToSpeciesData(List<Species> pops)
     {
-        return new SpeciesData
+        List<SpeciesData> savePops = new();
+        foreach(Species species in pops)
         {
-            type = species.name,
-            population = species.population,
-            happiness = species.happiness,
-            literacy = species.literacy,
-            culture = species.culture
-        };
+            savePops.Add(
+                new SpeciesData
+                {
+                    type = species.name,
+                    population = species.population,
+                    happiness = species.happiness,
+                    literacy = species.literacy,
+                    culture = species.culture
+                }
+            );
+        }
+        return savePops;
     }
 
     public static Species FromSpeciesData(SpeciesData data)
@@ -73,15 +80,15 @@ public static class SaveManager
             var province = PROVINCES[p.name];
             province.population = p.population;
 
-            if (p.species.type != "")
-            {
-                Debug.Log(p.species.type);
-                province.species = FromSpeciesData(p.species);
+            List<Species> loadPops = new();
+            foreach(var species in p.pops) {
+                if (species.type != "")
+                {
+                    Debug.Log(species.type);
+                    loadPops.Add(FromSpeciesData(species));
+                }
             }
-            else
-            {
-                province.species = null;
-            }
+            province.pops = loadPops;
 
             foreach (var cropData in p.market.crops)
             {
@@ -150,22 +157,6 @@ public static class SaveManager
         saveData.provinces = new List<SaveDataFormat.ProvinceData>();
         foreach (var p in gameManager.provinces.Values)
         {
-            //var provinceData = new SaveDataFormat.ProvinceData
-            //{
-            //    id = p.id,
-            //    name = p.name,
-            //    population = (int)p.population,
-            //    topography = p.topo.ToString(),
-            //    color = new List<byte> { p.color.r, p.color.g, p.color.b, p.color.a },
-            //    market = new SaveDataFormat.MarketData
-            //    {
-            //        crops = p.market.crops.Select(crop => new SaveDataFormat.CropData
-            //        {
-            //            name = crop.name,
-            //            amount = crop.amount
-            //        }).ToList()
-            //    }
-            //};
             var provinceData = new SaveDataFormat.ProvinceData
             {
                 id = p.id,
@@ -180,7 +171,7 @@ public static class SaveManager
                         amount = crop.amount
                     }).ToList()
                 },
-                species = p.species != null ? ToSpeciesData(p.species) : null
+                pops = ToSpeciesData(p.pops)
             };
             saveData.provinces.Add(provinceData);
         }
@@ -261,7 +252,7 @@ public static class SaveManager
         public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; public List<string> provinces; }
 
         [System.Serializable]
-        public sealed class ProvinceData { public int id; public string name; public int population; public string topography; public MarketData market; public SpeciesData species; }
+        public sealed class ProvinceData { public int id; public string name; public int population; public string topography; public MarketData market; public List<SpeciesData> pops; }
 
         [System.Serializable]
         public sealed class DateTimeWrapper { public int year; public int month; public int day; }
