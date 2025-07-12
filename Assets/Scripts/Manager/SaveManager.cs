@@ -97,6 +97,10 @@ public static class SaveManager
                     crop.amount = cropData.amount;
             }
 
+            foreach(var buildingData in p.buildings)
+            {
+            }
+
             gameManager.provinces[p.name] = province;
         }
 
@@ -252,7 +256,7 @@ public static class SaveManager
         public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; public List<string> provinces; }
 
         [System.Serializable]
-        public sealed class ProvinceData { public int id; public string name; public int population; public string topography; public MarketData market; public List<SpeciesData> pops; }
+        public sealed class ProvinceData { public int id; public string name; public int population; public string topography; public MarketData market; public List<SpeciesData> pops; public List<BuildingData> buildings; }
 
         [System.Serializable]
         public sealed class DateTimeWrapper { public int year; public int month; public int day; }
@@ -280,6 +284,13 @@ public static class SaveManager
             public int literacy;
             public int culture;
 
+        }
+
+        [System.Serializable]
+        public sealed class BuildingData
+        {
+            public string BuildingType;
+            public int workers;
         }
     }
 }

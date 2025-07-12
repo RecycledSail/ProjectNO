@@ -10,6 +10,7 @@ public class BuildingType
     public string name;
     public Dictionary<string, int> requireItems;
     public Dictionary<string, int> produceItems;
+    public Dictionary<string, int> workerNeeded;
 
     public BuildingType(string name)
     {

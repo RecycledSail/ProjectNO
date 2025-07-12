@@ -70,6 +70,19 @@ public static class GlobalVariables
     public static Dictionary<string, SpeciesSpec> SPECIES_SPEC = new();
 
     /// <summary>
+    /// 빌딩 타입을 저장하는 Dictionary
+    /// Key: string (빌딩 종류), Value: 빌딩타입 클래스
+    /// </summary>
+    public static Dictionary<string, BuildingType> BUILDING_TYPE = new();
+
+
+    /// <summary>
+    /// 직업분류를 저장하는 Dictionary
+    /// Key: string (직업명), Value: 직업타입 클래스
+    /// </summary>
+    public static Dictionary<string, JobType> JOB_TYPE = new();
+
+    /// <summary>
     /// Assets/Resources/GlovalVariables.json을 불러와 GlobalVariables의 멤버들을 채우는 함수
     /// JSON 구성은 하단 GameDataFormat 참조
     /// </summary>
@@ -216,6 +229,10 @@ public static class GlobalVariables
         public List<InitialProvinceWrapper> initialProvinces;
         public List<AdjacentProvinceWrapper> adjacentProvinces;
         public List<SpeciesSpecData> speciesSpecs;
+        public List<BuildingTypeData> buildingTypes;
+
+        [System.Serializable]
+        public sealed class ItemData { public string name; public int amount; }
 
         [System.Serializable]
         public sealed class BuffData { public int id; public string name; public string kind; public double value; }
@@ -240,5 +257,8 @@ public static class GlobalVariables
 
         [System.Serializable]
         public sealed class SpeciesPopData { public string name; public int population; public int happiness; public int literacy; public int culture; }
-        }
+
+        [System.Serializable]
+        public sealed class BuildingTypeData { public string name; public List<ItemData> requireItems; public List<ItemData> produceItems; public List<ItemData> workerNeeded; }
+    }
 }

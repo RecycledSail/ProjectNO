@@ -8,7 +8,7 @@ public class Species
     public string name { get; set; }
     public int population { get; set; } = 0;
     public int happiness { get; set; } = 100;　// 행복도
-    public int literacy { get; set; } = 0; // 문해율
+    public int literacy { get; set; } = 50; // 문해율
     public int culture { get; set; } = 0; // 문화(앞으로 여러 문화를 추가할것 )
     private int foodConsumed = 0;
     private int foodNeeded = 2; // 예: 1명당 2 유닛 필요
@@ -78,32 +78,13 @@ public class SpeciesSpec
 }
 
 
-// public class Elf
-// {
-//     public string name { get; set; } = "Elf";
-//     public int population { get; set; } = 0;
-//     public int maxPopulation { get; set; } = 1000000;
-//     public int growthRate { get; set; } = 1;
-//     public int happiness { get; set; } = 100;
-//     public int literacy { get; set; } = 0;
-//     public int culture { get; set; } = 0;
-//     public int religion { get; set; } = 0;
-//     public int technology { get; set; } = 0;
-// }
-
-
-// public class Dwarf
-// {
-//     public string name { get; set; } = "Dwarf";
-//     public int population { get; set; } = 0;
-//     public int maxPopulation { get; set; } = 1000000;
-//     public int growthRate { get; set; } = 1;
-//     public int happiness { get; set; } = 100;
-//     public int literacy { get; set; } = 0;
-//     public int culture { get; set; } = 0;
-//     public int religion { get; set; } = 0;
-//     public int technology { get; set; } = 0;
-// }
+//직업 타입을 정의하는 클래스
+public class JobType
+{
+    public string name; // 직업 이름 정의
+    public bool literacyNeeded; // 문해능력 필요 여부
+    public int salary; // 월급
+}
 
 
 
