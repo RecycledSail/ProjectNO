@@ -25,7 +25,7 @@ public class Building
 {
     private BuildingType buildingType;
     private Province province;
-    private int workers;
+    private double workers; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
 
     public Building(BuildingType buildingType, Province province)
     {
@@ -33,7 +33,7 @@ public class Building
         this.province = province;
     }
 
-    public int GetWorkers()
+    public double GetWorkers()
     {
         return workers;
     }
