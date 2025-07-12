@@ -78,8 +78,6 @@ public class Province
             population += species.population; // 이 줄로 동기화도 함께
         }
     }
-
-
 }
 
 /// <summary>
