@@ -29,8 +29,11 @@
 	{ "name": "Human", "foodNeeded": 2 },
 	{ "name": "Elf", "foodNeeded": 1.5 }
   ],
+  "jobTypes": [
+	{ "name": "peasant", "literacyNeeded": true, "salary": 0}
+  ],
   "buildingTypes": [
-	{ "name": "WheatField", "requireItems": [], "produceItems": [{"name": "Wheat", "amount": 100}], "workerNeeded": [{"peasant": 100}]},
-	{ "name": "LogField", "requireItems": [], "produceItems": [{"name": "Log", "amount": 100}], "workerNeeded": [{"peasant": 100}]}
+	{ "name": "WheatField", "requireItems": [], "produceItems": [{"name": "Wheat", "amount": 100}], "workerNeeded": [{"name": "peasant", "amount": 100}]},
+	{ "name": "LogField", "requireItems": [], "produceItems": [{"name": "Log", "amount": 100}], "workerNeeded": [{"name": "peasant", "amount": 100}]}
   ]
 }
