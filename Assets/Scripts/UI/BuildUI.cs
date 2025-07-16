@@ -20,6 +20,8 @@ public class BuildUI : MonoBehaviour
 
     private int delayedUpdate;
 
+    private List<BuildingType> buildings;
+
     // 싱글톤 인스턴스 (다른 스크립트에서 쉽게 접근 가능)
     private static BuildUI _instance;
     public static BuildUI Instance
@@ -63,6 +65,11 @@ public class BuildUI : MonoBehaviour
                 currentOpenSubUI = subUIs[i];
             }
         }
+        buildings = new();
+        foreach(BuildingType buildingType in GlobalVariables.BUILDING_TYPE.Values)
+        {
+            buildings.Add(buildingType);
+        }
         uiPanel.SetActive(false); // 처음에는 UI를 숨김
         currentNation = null;
         delayedUpdate = 0;
@@ -73,7 +80,7 @@ public class BuildUI : MonoBehaviour
         delayedUpdate = (delayedUpdate + 1) % 5;
         if (delayedUpdate == 0 && currentNation != null)
         {
-            InitBuildList();
+            //InitBuildList();
         }
     }
 
@@ -103,7 +110,13 @@ public class BuildUI : MonoBehaviour
         }
 
         // TODO: Nation에 속한 Build 추가
-
+        foreach(BuildingType buildingType in buildings)
+        {
+            GameObject child = Instantiate(BuildItemPrefab, BuildListParent);
+            BuildingUI buildingUI = child.GetComponent<BuildingUI>();
+            buildingUI.SetBuildingData(currentNation, buildingType);
+        }
+        
     }
 
     /// <summary>

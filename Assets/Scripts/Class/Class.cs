@@ -30,7 +30,7 @@ public class Province
     public Nation nation { get; set; } = null;
     public Market market { get; } 
     public List<Species> pops { get; set; } = null;
-    public List<Building> buildings { get; set; } = null;
+    public Dictionary<BuildingType, Building> buildings { get; set; } = null;
 
     /// <summary>
     /// Province 초기화
@@ -48,6 +48,7 @@ public class Province
         this.population = population;
         this.topo = topo;
         this.market = new Market(this);
+        buildings = new();
         pops = new();
     }
 

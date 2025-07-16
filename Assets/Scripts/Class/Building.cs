@@ -23,9 +23,10 @@ public class BuildingType
 /// </summary>
 public class Building
 {
-    private BuildingType buildingType;
-    private Province province;
-    private double workers; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
+    public BuildingType buildingType;
+    public Province province;
+    public double workers; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
+    public int level = 0;
 
     public Building(BuildingType buildingType, Province province)
     {

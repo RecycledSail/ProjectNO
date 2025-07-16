@@ -138,6 +138,7 @@ public static class GlobalVariables
                 literacyNeeded = data.literacyNeeded,
                 salary = data.salary
             };
+            JOB_TYPE[data.name] = jobType;
         }
 
         // Load Building Types
@@ -167,6 +168,7 @@ public static class GlobalVariables
                 requireItems = requiredItems,
                 workerNeeded = workerNeeded
             };
+            BUILDING_TYPE[data.name] = buildingType;
         } 
 
         // Load Provinces & Color-to-province
