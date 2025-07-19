@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 
 
@@ -25,7 +26,7 @@ public class Building
 {
     public BuildingType buildingType;
     public Province province;
-    public double workers; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
+    public double workerScale; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
     public int level = 0;
 
     public Building(BuildingType buildingType, Province province)
@@ -34,9 +35,19 @@ public class Building
         this.province = province;
     }
 
-    public double GetWorkers()
+    /// <summary>
+    /// jobType에 해당하는 직업을 가진 근무자가 몇명 있는지 반환
+    /// </summary>
+    /// <param name="jobType">직업명 (JobTypes)</param>
+    /// <returns>근무자 수</returns>
+    public double GetWorkers(string jobType)
     {
-        return workers;
+        int workerNeededForType;
+        if (buildingType.workerNeeded.TryGetValue(jobType, out workerNeededForType))
+        {
+            return workerScale * workerNeededForType;
+        }
+        else return -1;
     }
 
     /// <summary>
@@ -80,11 +91,37 @@ public class Building
     /// <returns>생산한 배율</returns>
     public double ProduceItem()
     {
+        //하루에 얼만큼 수확할건지?
+        double produceScale = 0.01;
         //TODO: Province의 Market의 Crops를 Items로 정형화시킨다
         //TODO: BuildingType의 requiredItems를 순회하면서 Market이 가지고 있는 최솟값을 찾고, 그 값을 Market에서 뺀 다음 produceItem들을 나눈 값으로 더해서 Market에 저장한다
         //얼만큼 Produce했는지 배율을 return한다.
-        
-        return 0.0;
+        if (workerScale <= 0.0) return 0.0;
+        else
+        {
+            double minCropsScale = workerScale;
+            // 1차: minCropsScale을 찾는다
+            foreach(string cropName in buildingType.requireItems.Keys)
+            {
+                int cropNeed = buildingType.requireItems[cropName];
+                Crop crop = province.market.GetCrop(cropName);
+                if(crop.amount <= cropNeed * minCropsScale * produceScale)
+                {
+                    minCropsScale = crop.amount / cropNeed;
+                }
+            }
+
+            // 2차: 찾은 minCropsScale만큼, 그리고 produceScale만큼 하루마다 market.crops에서 제외한다
+            foreach (string cropName in buildingType.requireItems.Keys)
+            {
+                int cropNeed = buildingType.requireItems[cropName];
+                Crop crop = province.market.GetCrop(cropName);
+                crop.amount -= (int)(cropNeed * minCropsScale * produceScale);
+            }
+
+            // 반환
+            return minCropsScale * produceScale;
+        }
     }
 }
 
