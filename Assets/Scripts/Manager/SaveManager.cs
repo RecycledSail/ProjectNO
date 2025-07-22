@@ -61,21 +61,6 @@ public static class SaveManager
         gameManager.provinces = new();
         foreach (var p in gameData.provinces)
         {
-            //var province = PROVINCES[p.name];
-            //province.population = p.population;
-
-            //// Market + Crop 데이터 복원
-            //if (p.market != null && p.market.crops != null)
-            //{
-            //    foreach (var cropData in p.market.crops)
-            //    {
-            //        var crop = province.market.GetCrop(cropData.name);
-            //        if (crop != null)
-            //        {
-            //            crop.amount = cropData.amount;
-            //        }
-            //    }
-            //}
 
             var province = PROVINCES[p.name];
             province.population = p.population;
@@ -90,11 +75,11 @@ public static class SaveManager
             }
             province.pops = loadPops;
 
-            foreach (var cropData in p.market.crops)
+            foreach (var productData in p.market.products)
             {
-                var crop = province.market.GetCrop(cropData.name);
-                if (crop != null)
-                    crop.amount = cropData.amount;
+                var product = province.market.GetProduct(productData.name);
+                if (product != null)
+                    product.amount = productData.amount;
             }
 
             foreach(var buildingData in p.buildings)
@@ -169,10 +154,10 @@ public static class SaveManager
                 topography = p.topo.ToString(),
                 market = new SaveDataFormat.MarketData
                 {
-                    crops = p.market.crops.Select(crop => new SaveDataFormat.CropData
+                    products = p.market.products.Select(product => new SaveDataFormat.ProductData
                     {
-                        name = crop.name,
-                        amount = crop.amount
+                        name = product.name,
+                        amount = product.amount
                     }).ToList()
                 },
                 pops = ToSpeciesData(p.pops)
@@ -264,11 +249,11 @@ public static class SaveManager
         [System.Serializable]
         public sealed class MarketData
         {
-            public List<CropData> crops;
+            public List<ProductData> products;
         }
 
         [System.Serializable]
-        public sealed class CropData
+        public sealed class ProductData
         {
             public string name;
             public int amount;

@@ -73,7 +73,11 @@ public class Province
         population = 0;
         foreach(Species species in pops) {
             species.Consume(market);
-            market.ProduceCrops();
+            //market.ProduceCrops();
+            foreach(Building building in buildings.Values)
+            {
+                building.ProduceItem();
+            }
             species.UpdateGrowth();
 
             population += species.population; // 이 줄로 동기화도 함께
@@ -209,12 +213,12 @@ public class User
 /// 프로빈스 내 작물의 갯수 클래스
 /// 작물 ID, 작물 이름을 정의
 /// </summary>
-public class Crop
+public class Product
 {
     public string name { get; }
     public int amount { get; set; }
 
-    public Crop(string name, int initialAmount)
+    public Product(string name, int initialAmount)
     {
         this.name = name;
         this.amount = initialAmount;
@@ -237,16 +241,15 @@ public class Crop
 public class Market
 {
     public Province province { get; }
-    public List<Crop> crops { get; }
+    public List<Product> products { get; }
 
     public Market(Province province)
     {
         this.province = province;
-        this.crops = new List<Crop>
+        this.products = new List<Product>
         {
-            new Crop("Wheat", 0),
-            new Crop("Rice", 0),
-            new Crop("Corn", 0)
+            new Product("Wheat", 0),
+            new Product("Log", 0)
         };
     }
 
@@ -263,15 +266,15 @@ public class Market
             modifier += addMod;
         }
         int scale = (int)(modifier * province.population / 1); // 인구 1명당 생산
-        foreach (var crop in crops)
+        foreach (var crop in products)
         {
             crop.Produce(scale); 
         }
     }
 
-    public Crop GetCrop(string cropName)
+    public Product GetProduct(string cropName)
     {
-        return crops.Find(c => c.name == cropName);
+        return products.Find(c => c.name == cropName);
     }
 }
 

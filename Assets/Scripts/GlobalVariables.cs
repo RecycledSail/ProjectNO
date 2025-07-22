@@ -188,7 +188,22 @@ public static class GlobalVariables
                 loadPops.Add(species);
                 population += species.population;
             }
+
             var province = new Province(p.id, p.name, population, (Topography)System.Enum.Parse(typeof(Topography), p.topography));
+
+            Dictionary<BuildingType, Building> buildings = new();
+            foreach (var building in p.buildings)
+            {
+                BuildingType buildingType = BUILDING_TYPE[building.buildingTypeName];
+                buildings.Add(buildingType, new(buildingType, province)
+                {
+                    workerScale = building.workerScale,
+                    level = building.level
+                });
+            }
+
+            province.buildings = buildings;
+
             province.pops = loadPops;
             PROVINCES[p.name] = province;
         }
@@ -287,7 +302,7 @@ public static class GlobalVariables
         public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; }
 
         [System.Serializable]
-        public sealed class ProvinceData { public int id; public string name; public List<SpeciesPopData> pops; public string topography; }
+        public sealed class ProvinceData { public int id; public string name; public List<SpeciesPopData> pops; public string topography; public List<BuildingData> buildings; }
 
         [System.Serializable]
         public sealed class InitialProvinceWrapper { public string nation; public List<string> provinces; }
@@ -306,5 +321,8 @@ public static class GlobalVariables
 
         [System.Serializable]
         public sealed class JobTypeData { public string name; public bool literacyNeeded; public int salary; }
+
+        [System.Serializable]
+        public sealed class BuildingData { public string buildingTypeName; public double workerScale; public int level; }
     }
 }

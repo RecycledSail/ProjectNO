@@ -92,35 +92,44 @@ public class Building
     public double ProduceItem()
     {
         //하루에 얼만큼 수확할건지?
-        double produceScale = 0.01;
-        //TODO: Province의 Market의 Crops를 Items로 정형화시킨다
+        double produceScale = 1;
+        //TODO: Province의 Market의 products를 Items로 정형화시킨다
         //TODO: BuildingType의 requiredItems를 순회하면서 Market이 가지고 있는 최솟값을 찾고, 그 값을 Market에서 뺀 다음 produceItem들을 나눈 값으로 더해서 Market에 저장한다
         //얼만큼 Produce했는지 배율을 return한다.
         if (workerScale <= 0.0) return 0.0;
         else
         {
-            double minCropsScale = workerScale;
-            // 1차: minCropsScale을 찾는다
-            foreach(string cropName in buildingType.requireItems.Keys)
+            double minproductsScale = workerScale;
+            // 1차: minproductsScale을 찾는다
+            foreach(string productName in buildingType.requireItems.Keys)
             {
-                int cropNeed = buildingType.requireItems[cropName];
-                Crop crop = province.market.GetCrop(cropName);
-                if(crop.amount <= cropNeed * minCropsScale * produceScale)
+                int productNeed = buildingType.requireItems[productName];
+                Product product = province.market.GetProduct(productName);
+                if(product.amount <= productNeed * minproductsScale * produceScale)
                 {
-                    minCropsScale = crop.amount / cropNeed;
+                    minproductsScale = product.amount / productNeed;
                 }
             }
 
-            // 2차: 찾은 minCropsScale만큼, 그리고 produceScale만큼 하루마다 market.crops에서 제외한다
-            foreach (string cropName in buildingType.requireItems.Keys)
+            // 2차: 찾은 minproductsScale만큼, 그리고 produceScale만큼 하루마다 market.products에서 제외한다
+            foreach (string productName in buildingType.requireItems.Keys)
             {
-                int cropNeed = buildingType.requireItems[cropName];
-                Crop crop = province.market.GetCrop(cropName);
-                crop.amount -= (int)(cropNeed * minCropsScale * produceScale);
+                int productNeed = buildingType.requireItems[productName];
+                Product product = province.market.GetProduct(productName);
+                product.amount -= (int)(productNeed * minproductsScale * produceScale);
             }
 
+            // 3차: produceScale만큼 하루마다 market.products에 추가한다
+            foreach(string productName in buildingType.produceItems.Keys)
+            {
+                int productProduce = buildingType.produceItems[productName];
+                Product product = province.market.GetProduct(productName);
+                product.amount += (int)(productProduce * minproductsScale * produceScale);
+            }
+
+            
             // 반환
-            return minCropsScale * produceScale;
+            return minproductsScale * produceScale;
         }
     }
 }
