@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-public class BuildUI : MonoBehaviour
+public class BuildProvinceUI : MonoBehaviour
 {
     public GameObject uiPanel;  // Nation UI 패널
 
@@ -23,13 +23,13 @@ public class BuildUI : MonoBehaviour
     private List<BuildingType> buildings;
 
     // 싱글톤 인스턴스 (다른 스크립트에서 쉽게 접근 가능)
-    private static BuildUI _instance;
-    public static BuildUI Instance
+    private static BuildProvinceUI _instance;
+    public static BuildProvinceUI Instance
     {
         get
         {
             if (!_instance)
-                _instance = FindFirstObjectByType(typeof(BuildUI)) as BuildUI;
+                _instance = FindFirstObjectByType(typeof(BuildProvinceUI)) as BuildProvinceUI;
 
             return _instance;
         }
@@ -104,21 +104,8 @@ public class BuildUI : MonoBehaviour
     /// <summary>
     /// Province의 목록을 해당 nation의 province들로 초기화한다.
     /// </summary>
-    public void InitBuildList()
+    public void InitProvinceList()
     {
-        // 기존 리스트 정리
-        foreach (Transform child in BuildListParent)
-        {
-            Destroy(child.gameObject);
-        }
-
-        // TODO: Nation에 속한 Build 추가
-        foreach(BuildingType buildingType in buildings)
-        {
-            GameObject child = Instantiate(BuildItemPrefab, BuildListParent);
-            BuildingUI buildingUI = child.GetComponent<BuildingUI>();
-            buildingUI.SetBuildingData(currentNation, buildingType);
-        }
         
     }
 
