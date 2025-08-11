@@ -35,5 +35,9 @@
   "buildingTypes": [
 	{ "name": "WheatField", "requireItems": [], "produceItems": [{"name": "Wheat", "amount": 100}], "workerNeeded": [{"name": "peasant", "amount": 100}]},
 	{ "name": "LogField", "requireItems": [], "produceItems": [{"name": "Log", "amount": 100}], "workerNeeded": [{"name": "peasant", "amount": 100}]}
-  ]
+  ],
+  "buildingmaterials": [
+    "name"
+  ],
+  "mateirals"
 }
