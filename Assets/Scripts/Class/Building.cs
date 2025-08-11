@@ -101,23 +101,23 @@ public class Building
         {
             double minCropsScale = workerScale;
             // 1차: minCropsScale을 찾는다
-            foreach(string cropName in buildingType.requireItems.Keys)
-            {
-                int cropNeed = buildingType.requireItems[cropName];
-                Crop crop = province.market.GetCrop(cropName);
-                if(crop.amount <= cropNeed * minCropsScale * produceScale)
-                {
-                    minCropsScale = crop.amount / cropNeed;
-                }
-            }
+            // foreach(string cropName in buildingType.requireItems.Keys)
+            // {
+            //     int cropNeed = buildingType.requireItems[cropName];
+            //     Crop crop = province.market.GetCrop(cropName);
+            //     if(crop.amount <= cropNeed * minCropsScale * produceScale)
+            //     {
+            //         minCropsScale = crop.amount / cropNeed;
+            //     }
+            // }
 
-            // 2차: 찾은 minCropsScale만큼, 그리고 produceScale만큼 하루마다 market.crops에서 제외한다
-            foreach (string cropName in buildingType.requireItems.Keys)
-            {
-                int cropNeed = buildingType.requireItems[cropName];
-                Crop crop = province.market.GetCrop(cropName);
-                crop.amount -= (int)(cropNeed * minCropsScale * produceScale);
-            }
+            // // 2차: 찾은 minCropsScale만큼, 그리고 produceScale만큼 하루마다 market.crops에서 제외한다
+            // foreach (string cropName in buildingType.requireItems.Keys)
+            // {
+            //     int cropNeed = buildingType.requireItems[cropName];
+            //     Crop crop = province.market.GetCrop(cropName);
+            //     crop.amount -= (int)(cropNeed * minCropsScale * produceScale);
+            // }
 
             // 반환
             return minCropsScale * produceScale;

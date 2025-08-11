@@ -82,11 +82,22 @@ public static class GlobalVariables
     /// </summary>
     public static Dictionary<string, JobType> JOB_TYPE = new();
 
+
+    /// <summary>
+    /// 상품 이름과 초기 가격설정 Dictionary
+    /// Key: string (상품이름), Value: 초기상품가격
+    /// </summary>
+    public static Dictionary<string, Products> Products = new();
+
+
+
     /// <summary>
     /// Assets/Resources/GlovalVariables.json을 불러와 GlobalVariables의 멤버들을 채우는 함수
     /// JSON 구성은 하단 GameDataFormat 참조
     /// </summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+
+
     public static void LoadDefaultData()
     {
         TextAsset jsonFile = Resources.Load<TextAsset>("GlobalVariables");
@@ -169,14 +180,14 @@ public static class GlobalVariables
                 workerNeeded = workerNeeded
             };
             BUILDING_TYPE[data.name] = buildingType;
-        } 
+        }
 
         // Load Provinces & Color-to-province
         foreach (var p in gameData.provinces)
         {
             List<Species> loadPops = new();
             int population = 0;
-            foreach(var speciesData in p.pops)
+            foreach (var speciesData in p.pops)
             {
                 Species species = new(speciesData.name)
                 {
@@ -226,7 +237,14 @@ public static class GlobalVariables
             INITIAL_PROVINCES[data.nation] = rnodes;
         }
 
-        
+        foreach (var item in gameData.products)
+        {
+            Products[item.name] = new Products(item.InitialPrice);
+
+
+        }
+
+
     }
 
     /// <summary>
@@ -274,6 +292,10 @@ public static class GlobalVariables
         public List<JobTypeData> jobTypes;
         public List<BuildingTypeData> buildingTypes;
 
+        public List<ProductsData> products;
+
+
+
         [System.Serializable]
         public sealed class ItemData { public string name; public int amount; }
 
@@ -306,5 +328,8 @@ public static class GlobalVariables
 
         [System.Serializable]
         public sealed class JobTypeData { public string name; public bool literacyNeeded; public int salary; }
+
+        [System.Serializable]
+        public sealed class ProductsData{ public string name; public int InitialPrice;}
     }
 }
