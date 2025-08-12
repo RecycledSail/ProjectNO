@@ -4,96 +4,96 @@ using System.IO;
 using Unity.VisualScripting;
 
 /// <summary>
-/// GlobalVariables 클래스는 게임 내 전역적으로 사용되는 데이터를 저장하는 정적 클래스입니다.
-/// 국가, 주(Province), 그리고 인접한 주 정보를 포함하고 있습니다.
+/// GlobalVariables ??????? ???? ?? ?????????? ????? ??????? ??????? ???? ?????????.
+/// ????, ??(Province), ????? ?????? ?? ?????? ??????? ??????.
 /// </summary>
 public static class GlobalVariables
 {
 
     /// <summary>
-    /// 버프를 저장하는 Dictionary
-    /// Key: 버프 이름, Value: Buff 객체
+    /// ?????? ??????? Dictionary
+    /// Key: ???? ???, Value: Buff ???
     /// </summary>
     public static Dictionary<string, Buff> BUFF = new();
 
     /// <summary>
-    /// 연구 노드를 저장하는 Dictionary
-    /// Key: 연구 노드 이름, Value: ResearchNode 객체
+    /// ???? ??? ??????? Dictionary
+    /// Key: ???? ??? ???, Value: ResearchNode ???
     /// </summary>
     public static Dictionary<string, ResearchNode> RESEARCH_NODE = new();
 
     /// <summary>
-    /// 국가 정보를 저장하는 Dictionary
-    /// Key: 국가 이름, Value: Nation 객체
+    /// ???? ?????? ??????? Dictionary
+    /// Key: ???? ???, Value: Nation ???
     /// </summary>
     public static Dictionary<string, Nation> NATIONS = new();
 
     /// <summary>
-    /// 각 국가가 시작 시 소유하는 주 목록
-    /// Key: 국가 이름, Value: 주 이름 리스트
+    /// ?? ?????? ???? ?? ??????? ?? ???
+    /// Key: ???? ???, Value: ?? ??? ?????
     /// </summary>
     public static Dictionary<string, List<string>> INITIAL_PROVINCES = new();
 
     /// <summary>
-    /// 게임 내 모든 주 정보를 저장하는 Dictionary
-    /// Key: 주 이름, Value: Province 객체
+    /// ???? ?? ??? ?? ?????? ??????? Dictionary
+    /// Key: ?? ???, Value: Province ???
     /// </summary>
     public static Dictionary<string, Province> PROVINCES = new();
 
     /// <summary>
-    /// 각 주와 인접한 주들의 정보를 저장하는 Dictionary
-    /// Key: 주 이름, Value: 인접한 주의 리스트
+    /// ?? ??? ?????? ????? ?????? ??????? Dictionary
+    /// Key: ?? ???, Value: ?????? ???? ?????
     /// </summary>
     public static Dictionary<string, List<Province>> ADJACENT_PROVINCES = new();
 
     /// <summary>
-    /// 각 색상에 대응하는 주 정보를 저장하는 Dictionary
-    /// Key: Color32 (각 주의 색상), Value: 해당하는 Province 객체
+    /// ?? ???? ??????? ?? ?????? ??????? Dictionary
+    /// Key: Color32 (?? ???? ????), Value: ?????? Province ???
     /// </summary>
     //public static Dictionary<Color32, Province> COLORTOPROVINCE = new Dictionary<Color32, Province>();
 
     /// <summary>
-    /// 세이브 파일명 
+    /// ????? ????? 
     /// </summary>
     public static string saveFileName = null;
 
     /// <summary>
-    /// 유닛 타입을 저장하는 Dictionary
-    /// Key: string (유닛 타입의 name), Value: 유닛 타입의 값
+    /// ???? ????? ??????? Dictionary
+    /// Key: string (???? ????? name), Value: ???? ????? ??
     /// </summary>
     public static Dictionary<string, UnitType> UNIT_TYPES = new();
 
     /// <summary>
-    /// 종족값을 저장하는 Dictionary
-    /// Key: string (종족명), Value: 종족값
+    /// ???????? ??????? Dictionary
+    /// Key: string (??????), Value: ??????
     /// </summary>
     public static Dictionary<string, SpeciesSpec> SPECIES_SPEC = new();
 
     /// <summary>
-    /// 빌딩 타입을 저장하는 Dictionary
-    /// Key: string (빌딩 종류), Value: 빌딩타입 클래스
+    /// ???? ????? ??????? Dictionary
+    /// Key: string (???? ????), Value: ??????? ?????
     /// </summary>
     public static Dictionary<string, BuildingType> BUILDING_TYPE = new();
 
 
     /// <summary>
-    /// 직업분류를 저장하는 Dictionary
-    /// Key: string (직업명), Value: 직업타입 클래스
+    /// ?????з??? ??????? Dictionary
+    /// Key: string (??????), Value: ??????? ?????
     /// </summary>
     public static Dictionary<string, JobType> JOB_TYPE = new();
 
 
     /// <summary>
-    /// 상품 이름과 초기 가격설정 Dictionary
-    /// Key: string (상품이름), Value: 초기상품가격
+    /// ??? ????? ??? ??????? Dictionary
+    /// Key: string (??????), Value: ?????????
     /// </summary>
     public static Dictionary<string, Products> Products = new();
 
 
 
     /// <summary>
-    /// Assets/Resources/GlovalVariables.json을 불러와 GlobalVariables의 멤버들을 채우는 함수
-    /// JSON 구성은 하단 GameDataFormat 참조
+    /// Assets/Resources/GlovalVariables.json?? ????? GlobalVariables?? ??????? ???? ???
+    /// JSON ?????? ??? GameDataFormat ????
     /// </summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
 
@@ -199,7 +199,22 @@ public static class GlobalVariables
                 loadPops.Add(species);
                 population += species.population;
             }
+
             var province = new Province(p.id, p.name, population, (Topography)System.Enum.Parse(typeof(Topography), p.topography));
+
+            Dictionary<BuildingType, Building> buildings = new();
+            foreach (var building in p.buildings)
+            {
+                BuildingType buildingType = BUILDING_TYPE[building.buildingTypeName];
+                buildings.Add(buildingType, new(buildingType, province)
+                {
+                    workerScale = building.workerScale,
+                    level = building.level
+                });
+            }
+
+            province.buildings = buildings;
+
             province.pops = loadPops;
             PROVINCES[p.name] = province;
         }
@@ -248,7 +263,7 @@ public static class GlobalVariables
     }
 
     /// <summary>
-    /// 모든 세이브 파일명을 가져오는 메서드
+    /// ??? ????? ??????? ???????? ?????
     /// </summary>
     /// <returns></returns>
     public static List<string> GetAllJsonFileNames()
@@ -276,8 +291,8 @@ public static class GlobalVariables
     }
 
     /// <summary>
-    /// JSON에서 불러 올 포맷을 저장하는 클래스
-    /// List -> 개별 클래스로 정의, System.Serializable로 직렬화해야 저장/불러오기 가능
+    /// JSON???? ??? ?? ?????? ??????? ?????
+    /// List -> ???? ??????? ????, System.Serializable?? ???????? ????/??????? ????
     /// </summary>
     [System.Serializable]
     public class GameDataFormat
@@ -309,7 +324,7 @@ public static class GlobalVariables
         public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; }
 
         [System.Serializable]
-        public sealed class ProvinceData { public int id; public string name; public List<SpeciesPopData> pops; public string topography; }
+        public sealed class ProvinceData { public int id; public string name; public List<SpeciesPopData> pops; public string topography; public List<BuildingData> buildings; }
 
         [System.Serializable]
         public sealed class InitialProvinceWrapper { public string nation; public List<string> provinces; }
@@ -328,6 +343,9 @@ public static class GlobalVariables
 
         [System.Serializable]
         public sealed class JobTypeData { public string name; public bool literacyNeeded; public int salary; }
+
+        [System.Serializable]
+        public sealed class BuildingData { public string buildingTypeName; public double workerScale; public int level; }
 
         [System.Serializable]
         public sealed class ProductsData{ public string name; public int InitialPrice;}
