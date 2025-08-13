@@ -169,7 +169,7 @@ public static class GlobalVariables
                 workerNeeded = workerNeeded
             };
             BUILDING_TYPE[data.name] = buildingType;
-        } 
+        }
 
         // Load Provinces & Color-to-province
         foreach (var p in gameData.provinces)
@@ -240,8 +240,6 @@ public static class GlobalVariables
             }
             INITIAL_PROVINCES[data.nation] = rnodes;
         }
-
-        
     }
 
     /// <summary>

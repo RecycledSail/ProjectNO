@@ -75,12 +75,13 @@ public static class SaveManager
             }
             province.pops = loadPops;
 
-            foreach (var productData in p.market.products)
-            {
-                var product = province.market.GetProduct(productData.name);
-                if (product != null)
-                    product.amount = productData.amount;
-            }
+            //TODO: Crops 고치면 그때 하기
+            //foreach (var productData in p.market.products)
+            //{
+            //    var product = province.market.GetProduct(productData.name);
+            //    if (product != null)
+            //        product.amount = productData.amount;
+            //}
 
             foreach(var buildingData in p.buildings)
             {
@@ -154,11 +155,12 @@ public static class SaveManager
                 topography = p.topo.ToString(),
                 market = new SaveDataFormat.MarketData
                 {
-                    products = p.market.products.Select(product => new SaveDataFormat.ProductData
-                    {
-                        name = product.name,
-                        amount = product.amount
-                    }).ToList()
+                    //TODO: CROPS 고치면 그때 하기
+                    //products = p.market.products.Select(product => new SaveDataFormat.ProductData
+                    //{
+                    //    name = product.name,
+                    //    amount = product.amount
+                    //}).ToList()
                 },
                 pops = ToSpeciesData(p.pops)
             };

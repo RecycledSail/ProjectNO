@@ -91,46 +91,7 @@ public class Building
     /// <returns>생산한 배율</returns>
     public double ProduceItem()
     {
-        //하루에 얼만큼 수확할건지?
-        double produceScale = 1;
-        //TODO: Province의 Market의 products를 Items로 정형화시킨다
-        //TODO: BuildingType의 requiredItems를 순회하면서 Market이 가지고 있는 최솟값을 찾고, 그 값을 Market에서 뺀 다음 produceItem들을 나눈 값으로 더해서 Market에 저장한다
-        //얼만큼 Produce했는지 배율을 return한다.
-        if (workerScale <= 0.0) return 0.0;
-        else
-        {
-            double minproductsScale = workerScale;
-            // 1차: minproductsScale을 찾는다
-            foreach(string productName in buildingType.requireItems.Keys)
-            {
-                int productNeed = buildingType.requireItems[productName];
-                Product product = province.market.GetProduct(productName);
-                if(product.amount <= productNeed * minproductsScale * produceScale)
-                {
-                    minproductsScale = product.amount / productNeed;
-                }
-            }
-
-            // 2차: 찾은 minproductsScale만큼, 그리고 produceScale만큼 하루마다 market.products에서 제외한다
-            foreach (string productName in buildingType.requireItems.Keys)
-            {
-                int productNeed = buildingType.requireItems[productName];
-                Product product = province.market.GetProduct(productName);
-                product.amount -= (int)(productNeed * minproductsScale * produceScale);
-            }
-
-            // 3차: produceScale만큼 하루마다 market.products에 추가한다
-            foreach(string productName in buildingType.produceItems.Keys)
-            {
-                int productProduce = buildingType.produceItems[productName];
-                Product product = province.market.GetProduct(productName);
-                product.amount += (int)(productProduce * minproductsScale * produceScale);
-            }
-
-            
-            // 반환
-            return minproductsScale * produceScale;
-        }
+        return 0.0;
     }
 }
 
