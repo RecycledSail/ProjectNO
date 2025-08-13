@@ -73,17 +73,11 @@
     { "name": "peasant", "literacyNeeded": true, "salary": 0 }
   ],
   "buildingTypes": [
-    {
-      "name": "WheatField",
-      "requireItems": [],
-      "produceItems": [{ "name": "Wheat", "amount": 10000 }],
-      "workerNeeded": [{ "name": "peasant", "amount": 10000 }]
-    },
-    {
-      "name": "LogField",
-      "requireItems": [],
-      "produceItems": [{ "name": "Log", "amount": 10000 }],
-      "workerNeeded": [{ "name": "peasant", "amount": 10000 }]
-    }
-  ]
+	{ "name": "WheatField", "requireItems": [], "produceItems": [{"name": "Wheat", "amount": 100}], "workerNeeded": [{"name": "peasant", "amount": 100}]},
+	{ "name": "LogField", "requireItems": [], "produceItems": [{"name": "Log", "amount": 100}], "workerNeeded": [{"name": "peasant", "amount": 100}]}
+  ],
+  "buildingmaterials": [
+    "name"
+  ],
+  "mateirals"
 }
