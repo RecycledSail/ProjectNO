@@ -63,6 +63,7 @@ public class RegimentUI : MonoBehaviour
         regiment = new(nation, -1, testName, province);
         testUnitType = new UnitType(-1, "TestUnit-" + testName, testAttackPerUnit, testDefensePerUnit, 1);
         regiment.units.Add(testUnitType, testPop);
+        Debug.Log(BattleManager.Instance);
         BattleManager.Instance.AddRegiment(regiment);
     }
 

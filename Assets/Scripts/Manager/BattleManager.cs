@@ -29,12 +29,13 @@ public class BattleManager : MonoBehaviour
         {
             Destroy(gameObject);  // 중복 시 제거
         }
+        regiments = new();
+        battleInProvinces = new();
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        regiments = new();
-        battleInProvinces = new();
+        
     }
 
     // Update is called once per frame
