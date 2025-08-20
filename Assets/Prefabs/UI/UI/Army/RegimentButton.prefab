@@ -513,7 +513,7 @@ GameObject:
   - component: {fileID: 8452155323609328463}
   - component: {fileID: 3506779548689912533}
   - component: {fileID: 7984400338704053571}
-  - component: {fileID: 5360346559576616857}
+  - component: {fileID: 5105620104514843950}
   m_Layer: 5
   m_Name: RegimentButton
   m_TagString: Untagged
@@ -626,7 +626,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &5360346559576616857
+--- !u!114 &5105620104514843950
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -635,11 +635,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 3558047263359609195}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b15c3de4d760eef4c8783d89188d1dbe, type: 3}
+  m_Script: {fileID: 11500000, guid: 1fe0252d414fd49419ffd69551bbe722, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   nameText: {fileID: 865999624614038432}
-  countText: {fileID: 0}
+  popText: {fileID: 7213413484926104723}
+  hometownText: {fileID: 4573151243846886876}
 --- !u!1 &3977556616522376506
 GameObject:
   m_ObjectHideFlags: 0
