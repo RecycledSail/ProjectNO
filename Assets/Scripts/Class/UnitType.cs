@@ -5,11 +5,11 @@ public class UnitType
 {
     public int id { get; }
     public string name { get; }
-    public int attackPerUnit { get; }
-    public int defensePerUnit { get; }
-    public int moveSpeedPerUnit { get; }
+    public double attackPerUnit { get; }
+    public double defensePerUnit { get; }
+    public double moveSpeedPerUnit { get; }
 
-    public UnitType(int id, string name, int attackPerUnit, int defensePerUnit, int moveSpeedPerUnit)
+    public UnitType(int id, string name, double attackPerUnit, double defensePerUnit, double moveSpeedPerUnit)
     {
         this.id = id;
         this.name = name;

@@ -10,7 +10,7 @@ public class Nation
     public string name { get; }
     public List<Province> provinces { get; set; }
     public long balance { get; set; }
-
+    public List<Regiment> regiments { get; set; }
     public List<ResearchNode> doneResearches;
     public Dictionary<BuffKind, double> buffs;
 
@@ -24,6 +24,7 @@ public class Nation
         this.id = id;
         this.name = name;
         provinces = new List<Province>();
+        regiments = new List<Regiment>();
         doneResearches = researches;
         buffs = new Dictionary<BuffKind, double>();
         foreach (ResearchNode research in doneResearches)
@@ -92,5 +93,21 @@ public class Nation
             sum += province.population;
         }
         return sum;
+    }
+
+    /// <summary>
+    /// 연대를 추가하는 메서드
+    /// 추가 시도 후 성공 여부에 따라 boolean 반환
+    /// </summary>
+    /// <param name="regiment">추가하고자 하는 연대</param>
+    /// <returns>성공 시 true, 실패 시 false</returns>
+    public bool AddRegiment(Regiment regiment)
+    {
+        if (regiment == null) return false;
+        else
+        {
+            this.regiments.Add(regiment);
+            return true;
+        }
     }
 }

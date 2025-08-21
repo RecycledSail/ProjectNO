@@ -60,9 +60,10 @@ public class RegimentUI : MonoBehaviour
             GlobalVariables.PROVINCES["testProvince"] = province;
         }
 
-        regiment = new(nation, -1, testName, province);
+        regiment = new(nation, testName, province);
         testUnitType = new UnitType(-1, "TestUnit-" + testName, testAttackPerUnit, testDefensePerUnit, 1);
-        regiment.units.Add(testUnitType, testPop);
+        regiment.units.Add(testUnitType, new Squad(testUnitType));
+        Debug.Log(BattleManager.Instance);
         BattleManager.Instance.AddRegiment(regiment);
     }
 
@@ -71,7 +72,7 @@ public class RegimentUI : MonoBehaviour
         int pop = 0;
         foreach(var unitType in regiment.units.Keys)
         {
-            pop += regiment.units[unitType];
+            pop += regiment.units[unitType].population;
         }
         unitPop.text = pop.ToString();
     }
