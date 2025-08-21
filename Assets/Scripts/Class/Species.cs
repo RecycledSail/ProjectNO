@@ -32,7 +32,7 @@ public class Species
         int requiredFood = population * foodNeeded; // 전체 인구가 필요한 음식의 양 계산
 
         int totalAvailable = 0; // 실제로 소비한 음식량
-        foreach (var product in market.products) // market.crops에 있는 각 crop(작물)에 대해 반복
+        foreach (var product in market.crops) // market.crops에 있는 각 crop(작물)에 대해 반복
         {
             // eatAmount는 "요구하는 음식량(requiredFood)"과 "작물에서 얻을 수 있는 양(crop.amount)" 중 더 작은 값
             int eatAmount = Math.Min(requiredFood, product.amount);

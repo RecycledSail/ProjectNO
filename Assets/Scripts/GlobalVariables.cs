@@ -77,7 +77,7 @@ public static class GlobalVariables
 
 
     /// <summary>
-    /// ?????¬Ù??? ??????? Dictionary
+    /// ?????ï¿½ï¿½??? ??????? Dictionary
     /// Key: string (??????), Value: ??????? ?????
     /// </summary>
     public static Dictionary<string, JobType> JOB_TYPE = new();
@@ -252,14 +252,7 @@ public static class GlobalVariables
             INITIAL_PROVINCES[data.nation] = rnodes;
         }
 
-        foreach (var item in gameData.products)
-        {
-            Products[item.name] = new Products(item.InitialPrice);
-
-
-        }
-
-
+        
     }
 
     /// <summary>

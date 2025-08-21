@@ -126,7 +126,7 @@ public class ProvinceDetailUI : MonoBehaviour
     private void UpdateCropsText()
     {
         provinceCropsText.text = "Crops: " + string.Join(", ",
-            province.market.products.Select(crop => $"{crop.name}: {UIManager.ShortenValue(crop.amount)}")
+            province.market.crops.Select(crop => $"{crop.name}: {UIManager.ShortenValue(crop.amount)}")
         );
     }
 
