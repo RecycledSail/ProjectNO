@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-public class ArmyRegimentUI : MonoBehaviour
+public class RegimentButtonUI : MonoBehaviour
 {
     public TMP_Text nameText; // 연대 이름 텍스트
     public TMP_Text popText; // 연대 수 텍스트
@@ -12,13 +12,13 @@ public class ArmyRegimentUI : MonoBehaviour
     /// <summary>
     /// Regiment 데이터를 설정하고 UI를 업데이트합니다.
     /// </summary>
-    public void SetBuildingData(Nation nation, Regiment regiment)
+    public void SetRegimentData(Nation nation, Regiment regiment)
     {
         nationData = nation;
         this.regiment = regiment;
+        nameText.text = this.regiment.name;
         popText.text = this.regiment.GetUnitCount().ToString();
-        this.hometownText.text = regiment.location.name;
-        //populationText.text = $"Pop: {UIManager.ShortenValue(province.population)}"; // Format population
+        hometownText.text = this.regiment.location.name;
     }
 
     private void Update()
@@ -37,6 +37,6 @@ public class ArmyRegimentUI : MonoBehaviour
     public void OnClick()
     {
         //TODO: Building build UI
-
+        RegimentDetailUI.Instance.OpenRegimentDetail(regiment);
     }
 }

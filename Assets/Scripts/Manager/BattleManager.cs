@@ -114,7 +114,7 @@ public class BattleManager : MonoBehaviour
             List<UnitType> unitTypes = new List<UnitType>(regiment.units.Keys);
             foreach (UnitType unitType in unitTypes)
             {
-                double curCount = regiment.units[unitType];
+                double curCount = regiment.units[unitType].population;
                 int remainingUnits = (int)curCount - (int)((curCount / attackUnitCount) * defenseCapability);
                 if (remainingUnits <= 0)
                 {
@@ -124,7 +124,7 @@ public class BattleManager : MonoBehaviour
                 else
                 {
                     attackCasulties += (int)curCount - remainingUnits;
-                    regiment.units[unitType] = remainingUnits;
+                    regiment.units[unitType].SetPopulation(remainingUnits);
                 }
             }
         }
@@ -134,7 +134,7 @@ public class BattleManager : MonoBehaviour
             List<UnitType> unitTypes = new List<UnitType>(regiment.units.Keys);
             foreach (UnitType unitType in unitTypes)
             {
-                double curCount = regiment.units[unitType];
+                double curCount = regiment.units[unitType].population;
                 int remainingUnits = (int)curCount - (int)((curCount / defenseUnitCount) * attackCapability);
                 if (remainingUnits <= 0)
                 {
@@ -144,7 +144,7 @@ public class BattleManager : MonoBehaviour
                 else
                 {
                     defenseCasulties += (int)curCount - remainingUnits;
-                    regiment.units[unitType] = remainingUnits;
+                    regiment.units[unitType].SetPopulation(remainingUnits);
                 }
             }
         }

@@ -73,7 +73,7 @@ public class ArmyUI : MonoBehaviour
         delayedUpdate = (delayedUpdate + 1) % 5;
         if(delayedUpdate == 0 && currentNation != null)
         {
-            InitRegimentList();
+            //InitRegimentList();
         }
     }
 
@@ -103,7 +103,11 @@ public class ArmyUI : MonoBehaviour
         }
 
         // TODO: Nation에 속한 Regiment 추가
-        
+        foreach(var regiment in currentNation.regiments)
+        {
+            GameObject newObject = Instantiate(regimentItemPrefab, regimentListParent);
+            newObject.GetComponent<RegimentButtonUI>().SetRegimentData(currentNation, regiment);
+        }
     }
 
     /// <summary>

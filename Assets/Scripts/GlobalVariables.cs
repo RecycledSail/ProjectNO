@@ -23,6 +23,12 @@ public static class GlobalVariables
     public static Dictionary<string, ResearchNode> RESEARCH_NODE = new();
 
     /// <summary>
+    /// 군사 유닛 Type을 저장하는 Dictionary
+    /// Key: 군사 유닛 이름, Value: UnitType 객체
+    /// </summary>
+    public static Dictionary<string, UnitType> UNIT_TYPE = new();
+
+    /// <summary>
     /// 국가 정보를 저장하는 Dictionary
     /// Key: 국가 이름, Value: Nation 객체
     /// </summary>
@@ -116,6 +122,13 @@ public static class GlobalVariables
             }
             var node = new ResearchNode(r.id, r.name, r.cost, buffs);
             RESEARCH_NODE[r.name] = node;
+        }
+
+        // Load Unit Types
+        foreach (var data in gameData.unitTypes)
+        {
+            var unitType = new UnitType(data.id, data.name, data.attackPerUnit, data.defensePerUnit, data.moveSpeedPerUnit);
+            UNIT_TYPE[data.name] = unitType;
         }
 
         // Load Species Spec
@@ -226,7 +239,18 @@ public static class GlobalVariables
                 if (RESEARCH_NODE.TryGetValue(rname, out var rnode))
                     rnodes.Add(rnode);
             }
-            var nation = new Nation(n.id, n.name, rnodes);
+            Nation nation = new(n.id, n.name, rnodes);
+            foreach(var regimentData in n.regiments)
+            {
+                
+                Regiment newRegiment = new(nation, regimentData.name, PROVINCES[regimentData.location]);
+                foreach (var squad in regimentData.squads)
+                {
+                    Squad newSquad = new(UNIT_TYPE[squad.unitType], squad.capacity, squad.population);
+                    newRegiment.units[UNIT_TYPE[squad.unitType]] = newSquad;
+                }
+                nation.AddRegiment(newRegiment);
+            }
             NATIONS[n.name] = nation;
         }
 
@@ -279,6 +303,7 @@ public static class GlobalVariables
     {
         public List<BuffData> buffs;
         public List<ResearchNodeData> researchNodes;
+        public List<UnitTypeData> unitTypes;
         public List<NationData> nations;
         public List<ProvinceData> provinces;
         public List<InitialProvinceWrapper> initialProvinces;
@@ -297,7 +322,16 @@ public static class GlobalVariables
         public sealed class ResearchNodeData { public int id; public string name; public double cost; public List<string> buffNames; }
 
         [System.Serializable]
-        public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; }
+        public sealed class UnitTypeData { public int id; public string name; public double attackPerUnit; public double defensePerUnit; public double moveSpeedPerUnit; }
+
+        [System.Serializable]
+        public sealed class RegimentData { public string name; public string location; public List<SquadData> squads; }
+
+        [System.Serializable]
+        public sealed class SquadData { public string unitType; public int capacity; public int population; }
+
+        [System.Serializable]
+        public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; public List<RegimentData> regiments; }
 
         [System.Serializable]
         public sealed class ProvinceData { public int id; public string name; public List<SpeciesPopData> pops; public string topography; public List<BuildingData> buildings; }

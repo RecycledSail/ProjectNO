@@ -7,19 +7,21 @@ public enum RegimentState
     MOVE,
     BATTLE
 }
+
 public class Regiment
 {
+    public static int global_id = 0;
     public Nation nation { get; }
     public int id { get; }
     public string name { get; set; }
-    public Dictionary<UnitType, int> units { get; set; }
+    public Dictionary<UnitType, Squad> units { get; set; }
     public Province location;
     public RegimentState state;
 
-    public Regiment(Nation nation, int id, string name, Province location)
+    public Regiment(Nation nation, string name, Province location)
     {
         this.nation = nation;
-        this.id = id;
+        this.id = global_id++;
         this.name = name;
         this.location = location;
         this.units = new();
@@ -31,7 +33,7 @@ public class Regiment
         int unitCount = 0;
         foreach (UnitType type in units.Keys)
         {
-            int curCount = units[type];
+            int curCount = units[type].population;
             unitCount += curCount;
         }
         return unitCount;
@@ -41,7 +43,7 @@ public class Regiment
         double totalAttack = 0, unitCount = 0;
         foreach (UnitType type in units.Keys)
         {
-            double curCount = units[type];
+            double curCount = units[type].population;
             totalAttack += curCount * type.attackPerUnit;
             unitCount += curCount;
         }
@@ -54,7 +56,7 @@ public class Regiment
         double totalDefense = 0, unitCount = 0;
         foreach (UnitType type in units.Keys)
         {
-            double curCount = units[type];
+            double curCount = units[type].population;
             totalDefense += curCount * type.defensePerUnit;
             unitCount += curCount;
         }

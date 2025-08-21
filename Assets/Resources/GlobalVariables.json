@@ -1,32 +1,82 @@
 {
   "buffs": [
-    { "id": 1, "name": "FOOD_UP_PER_20", "kind": "FOOD_PRODUCE_PER_UP", "value": 0.2 }
+    {
+      "id": 1,
+      "name": "FOOD_UP_PER_20",
+      "kind": "FOOD_PRODUCE_PER_UP",
+      "value": 0.2
+    }
   ],
   "researchNodes": [
-    { "id": 1, "name": "FarmTools", "cost": 350.0, "buffNames": ["FOOD_UP_PER_20"] }
+    {
+      "id": 1,
+      "name": "FarmTools",
+      "cost": 350.0,
+      "buffNames": [ "FOOD_UP_PER_20" ]
+    }
   ],
-  "nations": [
-    { "id": 1, "name": "Nation1", "researchNodeNames": ["FarmTools"] },
-    { "id": 2, "name": "Nation2", "researchNodeNames": [] }
+  "unitTypes": [
+    {
+      "id": 1,
+      "name": "Warrior",
+      "attackPerUnit": 5,
+      "defensePerUnit": 4,
+      "moveSpeedPerUnit": 3
+    },
+    {
+      "id": 2,
+      "name": "Archer",
+      "attackPerUnit": 10,
+      "defensePerUnit": 2,
+      "moveSpeedPerUnit": 2.5
+    },
+    {
+      "id": 3,
+      "name": "Cavaly",
+      "attackPerUnit": 15,
+      "defensePerUnit": 0.5,
+      "moveSpeedPerUnit": 7
+    }
   ],
+
   "provinces": [
     {
       "id": 1,
       "name": "Bebino",
       "pops": [
-        { "name": "Human", "population": 3500, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 3500,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 1.0, "level": 1 },
-        { "buildingTypeName": "LogField", "workerScale": 0.5, "level": 1 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 1.0,
+          "level": 1
+        },
+        {
+          "buildingTypeName": "LogField",
+          "workerScale": 0.5,
+          "level": 1
+        }
       ]
     },
     {
       "id": 2,
       "name": "Stein",
       "pops": [
-        { "name": "Human", "population": 8200, "happiness": 45, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 8200,
+          "happiness": 45,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": []
@@ -35,177 +85,447 @@
       "id": 3,
       "name": "Eiglepsk",
       "pops": [
-        { "name": "Human", "population": 1244, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 1244,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "LogField", "workerScale": 1.0, "level": 2 }
+        {
+          "buildingTypeName": "LogField",
+          "workerScale": 1.0,
+          "level": 2
+        }
       ]
     },
     {
       "id": 4,
       "name": "Sando",
       "pops": [
-        { "name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0 },
-        { "name": "Elf", "population": 5333, "happiness": 70, "literacy": 70, "culture": 1 }
+        {
+          "name": "Human",
+          "population": 12550,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        },
+        {
+          "name": "Elf",
+          "population": 5333,
+          "happiness": 70,
+          "literacy": 70,
+          "culture": 1
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 2.0, "level": 3 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 2.0,
+          "level": 3
+        }
       ]
     },
-	{
+    {
       "id": 5,
       "name": "Talem",
       "pops": [
-        { "name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 12550,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 2.0, "level": 3 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 2.0,
+          "level": 3
+        }
       ]
     },
-	{
+    {
       "id": 6,
       "name": "Uzyda",
       "pops": [
-        { "name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 12550,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 2.0, "level": 3 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 2.0,
+          "level": 3
+        }
       ]
     },
-	{
+    {
       "id": 7,
       "name": "Buske",
       "pops": [
-        { "name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 12550,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 2.0, "level": 3 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 2.0,
+          "level": 3
+        }
       ]
     },
-	{
+    {
       "id": 8,
       "name": "Svovoda",
       "pops": [
-        { "name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 12550,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 2.0, "level": 3 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 2.0,
+          "level": 3
+        }
       ]
     },
-	{
+    {
       "id": 9,
       "name": "Tarantsusi",
       "pops": [
-        { "name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 12550,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 2.0, "level": 3 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 2.0,
+          "level": 3
+        }
       ]
     },
-	{
+    {
       "id": 10,
       "name": "Jojisha",
       "pops": [
-        { "name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 12550,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 2.0, "level": 3 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 2.0,
+          "level": 3
+        }
       ]
     },
-	{
+    {
       "id": 11,
       "name": "Matz",
       "pops": [
-        { "name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 12550,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 2.0, "level": 3 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 2.0,
+          "level": 3
+        }
       ]
     },
-	{
+    {
       "id": 12,
       "name": "Zilia",
       "pops": [
-        { "name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 12550,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 2.0, "level": 3 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 2.0,
+          "level": 3
+        }
       ]
     },
-	{
+    {
       "id": 13,
       "name": "Prano",
       "pops": [
-        { "name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 12550,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 2.0, "level": 3 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 2.0,
+          "level": 3
+        }
       ]
     },
-	{
+    {
       "id": 14,
       "name": "Meril",
       "pops": [
-        { "name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 12550,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 2.0, "level": 3 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 2.0,
+          "level": 3
+        }
       ]
     },
-	{
+    {
       "id": 15,
       "name": "Ozisk",
       "pops": [
-        { "name": "Human", "population": 12550, "happiness": 70, "literacy": 25, "culture": 0 }
+        {
+          "name": "Human",
+          "population": 12550,
+          "happiness": 70,
+          "literacy": 25,
+          "culture": 0
+        }
       ],
       "topography": "Plane",
       "buildings": [
-        { "buildingTypeName": "WheatField", "workerScale": 2.0, "level": 3 }
+        {
+          "buildingTypeName": "WheatField",
+          "workerScale": 2.0,
+          "level": 3
+        }
+      ]
+    }
+  ],
+  "adjacentProvinces": [
+    {
+      "province": "Stein",
+      "adjacents": [ "Sando", "Svovoda" ]
+    },
+    {
+      "province": "Sando",
+      "adjacents": [ "Stein", "Eiglepsk", "Zilia", "Ozisk" ]
+    },
+    {
+      "province": "Bebino",
+      "adjacents": [ "Eiglepsk", "Talem" ]
+    },
+    {
+      "province": "Eiglepsk",
+      "adjacents": [ "Bebino", "Sando", "Ozisk" ]
+    },
+    {
+      "province": "Talem",
+      "adjacents": [ "Bebino", "Uzyda", "Svovoda" ]
+    },
+    {
+      "province": "Uzyda",
+      "adjacents": [ "Talem", "Buske" ]
+    },
+    {
+      "province": "Buske",
+      "adjacents": [ "Uzyda", "Svovoda" ]
+    },
+    {
+      "province": "Svovoda",
+      "adjacents": [ "Buske", "Talem", "Stein", "Tarantsusi", "Jojisha" ]
+    },
+    {
+      "province": "Tarantsusi",
+      "adjacents": [ "Svovoda" ]
+    },
+    {
+      "province": "Jojisha",
+      "adjacents": [ "Stein", "Svovoda", "Matz" ]
+    },
+    {
+      "province": "Matz",
+      "adjacents": [ "Jojisha", "Stein", "Zilia" ]
+    },
+    {
+      "province": "Zilia",
+      "adjacents": [ "Matz", "Stein", "Sando", "Prano", "Meril" ]
+    },
+    {
+      "province": "Prano",
+      "adjacents": [ "Zilia", "Meril", "Ozisk" ]
+    },
+    {
+      "province": "Meril",
+      "adjacents": [ "Zilia", "Prano", "Ozisk" ]
+    },
+    {
+      "province": "Ozisk",
+      "adjacents": [ "Meril", "Prano", "Sando", "Eiglepsk", "Bebino" ]
+    }
+  ],
+  "speciesSpecs": [
+    {
+      "name": "Human",
+      "foodNeeded": 2
+    },
+    {
+      "name": "Elf",
+      "foodNeeded": 1.5
+    }
+  ],
+  "jobTypes": [
+    {
+      "name": "peasant",
+      "literacyNeeded": true,
+      "salary": 0
+    }
+  ],
+  "buildingTypes": [
+    {
+      "name": "WheatField",
+      "requireItems": [],
+      "produceItems": [
+        {
+          "name": "Wheat",
+          "amount": 100
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 100
+        }
+      ]
+    },
+    {
+      "name": "LogField",
+      "requireItems": [],
+      "produceItems": [
+        {
+          "name": "Log",
+          "amount": 100
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 100
+        }
+      ]
+    }
+  ],
+  "nations": [
+    {
+      "id": 1,
+      "name": "Nation1",
+      "researchNodeNames": [ "FarmTools" ],
+      "regiments": [
+        {
+          "name": "The First Regiment",
+          "location": "Bebino",
+          "squads": [
+            {
+              "unitType": "Warrior",
+              "capacity": 500,
+              "population": 350
+            },
+            {
+              "unitType": "Archer",
+              "capacity": 100,
+              "population": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Nation2",
+      "researchNodeNames": [],
+      "regiments": [
+        {
+          "name": "Power of the Might",
+          "location": "Stein",
+          "squads": [
+            {
+              "unitType": "Cavaly",
+              "capacity": 700,
+              "population": 230
+            }
+          ]
+        }
       ]
     }
   ],
   "initialProvinces": [
-    { "nation": "Nation1", "provinces": ["Bebino", "Eiglepsk", "Sando"] },
-    { "nation": "Nation2", "provinces": ["Stein"] }
-  ],
-  "adjacentProvinces": [
-    { "province": "Stein", "adjacents": ["Sando", "Svovoda"] },
-    { "province": "Sando", "adjacents": ["Stein", "Eiglepsk", "Zilia", "Ozisk"] },
-    { "province": "Bebino", "adjacents": ["Eiglepsk", "Talem"] },
-    { "province": "Eiglepsk", "adjacents": ["Bebino", "Sando", "Ozisk"] },
-	{ "province": "Talem", "adjacents": ["Bebino", "Uzyda", "Svovoda"] },
-	{ "province": "Uzyda", "adjacents": ["Talem", "Buske"] },
-	{ "province": "Buske", "adjacents": ["Uzyda", "Svovoda"] },
-	{ "province": "Svovoda", "adjacents": ["Buske", "Talem", "Stein", "Tarantsusi", "Jojisha"] },
-	{ "province": "Tarantsusi", "adjacents": ["Svovoda"] },
-	{ "province": "Jojisha", "adjacents": ["Stein", "Svovoda", "Matz"] },
-	{ "province": "Matz", "adjacents": ["Jojisha", "Stein", "Zilia"] },
-	{ "province": "Zilia", "adjacents": ["Matz", "Stein", "Sando", "Prano", "Meril"] },
-	{ "province": "Prano", "adjacents": ["Zilia", "Meril", "Ozisk"] },
-	{ "province": "Meril", "adjacents": ["Zilia", "Prano", "Ozisk"] },
-	{ "province": "Ozisk", "adjacents": ["Meril", "Prano", "Sando", "Eiglepsk", "Bebino"] }
-  ],
-  "speciesSpecs": [
-    { "name": "Human", "foodNeeded": 2 },
-    { "name": "Elf", "foodNeeded": 1.5 }
-  ],
-  "jobTypes": [
-    { "name": "peasant", "literacyNeeded": true, "salary": 0 }
-  ],
-  "buildingTypes": [
-	{ "name": "WheatField", "requireItems": [], "produceItems": [{"name": "Wheat", "amount": 100}], "workerNeeded": [{"name": "peasant", "amount": 100}]},
-	{ "name": "LogField", "requireItems": [], "produceItems": [{"name": "Log", "amount": 100}], "workerNeeded": [{"name": "peasant", "amount": 100}]}
+    {
+      "nation": "Nation1",
+      "provinces": [ "Bebino", "Eiglepsk", "Sando" ]
+    },
+    {
+      "nation": "Nation2",
+      "provinces": [ "Stein" ]
+    }
   ]
 }
