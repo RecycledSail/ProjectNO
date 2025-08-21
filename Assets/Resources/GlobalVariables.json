@@ -9,6 +9,10 @@
     { "id": 1, "name": "Nation1", "researchNodeNames": ["FarmTools"] },
     { "id": 2, "name": "Nation2", "researchNodeNames": [] }
   ],
+  "initialProvinces": [
+    { "nation": "Nation1", "provinces": ["Bebino", "Eiglepsk", "Sando"] },
+    { "nation": "Nation2", "provinces": ["Stein"] }
+  ],
   "provinces": [
     {
       "id": 1,
@@ -55,10 +59,6 @@
       ]
     }
   ],
-  "initialProvinces": [
-    { "nation": "Nation1", "provinces": ["Bebino", "Eiglepsk", "Sando"] },
-    { "nation": "Nation2", "provinces": ["Stein"] }
-  ],
   "adjacentProvinces": [
     { "province": "Stein", "adjacents": ["Sando"] },
     { "province": "Sando", "adjacents": ["Stein", "Eiglepsk"] },
@@ -75,7 +75,6 @@
   "buildingTypes": [
 	{ "name": "WheatField", "requireItems": [], "produceItems": [{"name": "Wheat", "amount": 100}], "workerNeeded": [{"name": "peasant", "amount": 100}]},
 	{ "name": "LogField", "requireItems": [], "produceItems": [{"name": "Log", "amount": 100}], "workerNeeded": [{"name": "peasant", "amount": 100}]}
-<<<<<<< HEAD
   ],
   "buildingmaterials": [
    { "name": ""}
@@ -101,7 +100,5 @@
     { "name": "catalyst", "InitialPrice": 150 }
 
 
-=======
->>>>>>> 2d58eaf68e774b36f4f7e3bfe8648a22c90352df
   ]
 }
