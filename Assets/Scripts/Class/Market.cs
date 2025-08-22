@@ -193,12 +193,14 @@ public class ProvinceMarket
         // 대략적인 목표 재고: 인구/20 (원하는 방식으로 바꾸세요)
         if (GlobalVariables.PROVINCES.TryGetValue(provinceName, out var province))
         {
-            _defaultTargetStock = Math.Max(50, province.population / 20);
+            int pop = (int)Math.Min((long)province.population, int.MaxValue); // 방어적 캐스팅
+            _defaultTargetStock = Mathf.Max(50, pop / 20); // Mathf.Max(int,int)
         }
         else
         {
             _defaultTargetStock = 100;
         }
+
     }
 
     public ProductState CreateIfMissing(string product, int basePrice)

@@ -3,9 +3,9 @@ using System;
 
 public class Products
 {
-    public int price;
+    public int InitialPrice;
     public Products(int initialPrice)
     {
-        price = initialPrice;
+        InitialPrice = initialPrice;
     }
 }

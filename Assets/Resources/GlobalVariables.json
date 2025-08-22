@@ -447,5 +447,26 @@
   "buildingTypes": [
 	{ "name": "WheatField", "requireItems": [], "produceItems": [{"name": "Wheat", "amount": 100}], "workerNeeded": [{"name": "peasant", "amount": 100}]},
 	{ "name": "LogField", "requireItems": [], "produceItems": [{"name": "Log", "amount": 100}], "workerNeeded": [{"name": "peasant", "amount": 100}]}
+  ],
+  "products" : [ 
+    { "name": "Wheat" , "InitialPrice":15 },
+    { "name": "Slime" , "InitialPrice": 50 },
+    { "name": "Iron"  , "InitialPrice":35 },
+    { "name": "Sworrd", "InitialPrice":70 },
+    { "name": "Furniture", "InitialPrice":50},
+    { "name": "Log", "InitialPrice":60},
+    { "name": "Horse", "InitialPrice":300 },
+    { "name": "Gold", "InitialPrice": 1000 },
+    { "name": "Coal", "InitialPrice": 20 },
+    { "name": "Glass", "InitialPrice": 40 },
+    { "name": "Paper", "InitialPrice": 30 },
+    { "name": "Book", "InitialPrice": 60 },
+    { "name": "Potion", "InitialPrice": 100 },
+    { "name": "Wool", "InitialPrice": 40 },
+    { "name": "Cloth", "InitialPrice": 30 },
+    { "name": "Leather", "InitialPrice": 45 },
+    { "name": "Silk", "InitialPrice": 80 },
+    { "name": "catalyst", "InitialPrice": 150 }
+
   ]
 }

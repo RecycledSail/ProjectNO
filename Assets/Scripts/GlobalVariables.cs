@@ -28,11 +28,6 @@ public static class GlobalVariables
     /// </summary>
     public static Dictionary<string, UnitType> UNIT_TYPE = new();
 
-    /// <summary>
-    /// ???? ???? Type?? ??????? Dictionary
-    /// Key: ???? ???? ???, Value: UnitType ???
-    /// </summary>
-    public static Dictionary<string, UnitType> UNIT_TYPE = new();
 
     /// <summary>
     /// ???? ?????? ??????? Dictionary
@@ -257,9 +252,9 @@ public static class GlobalVariables
                     rnodes.Add(rnode);
             }
             Nation nation = new(n.id, n.name, rnodes);
-            foreach(var regimentData in n.regiments)
+            foreach (var regimentData in n.regiments)
             {
-                
+
                 Regiment newRegiment = new(nation, regimentData.name, PROVINCES[regimentData.location]);
                 foreach (var squad in regimentData.squads)
                 {
@@ -281,6 +276,13 @@ public static class GlobalVariables
             }
             INITIAL_PROVINCES[data.nation] = rnodes;
         }
+        // Products 로딩 (카탈로그/기준가)
+        foreach (var prod in gameData.products)
+        {
+            GlobalVariables.Products[prod.name] = new Products(prod.InitialPrice);
+            // or: GlobalVariables.Products[prod.name] = new ProductSpec(prod.name, prod.InitialPrice);
+        }
+
 
         
     }
