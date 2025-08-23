@@ -4,7 +4,7 @@ using Unity.VisualScripting;
 
 
 /// <summary>
-/// °Ç¹°ÀÇ Á¾·ù Å¬·¡½º
+/// ï¿½Ç¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½
 /// </summary>
 public class BuildingType
 {
@@ -20,13 +20,13 @@ public class BuildingType
 }
 
 /// <summary>
-/// ½ÇÁ¦ ÇÁ·Îºó½º À§¿¡ ¾ñÇôÁö´Â ºôµù Å¬·¡½º
+/// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Îºï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½
 /// </summary>
 public class Building
 {
     public BuildingType buildingType;
     public Province province;
-    public double workerScale; // ÀÏ²ÛÀÇ ºñÀ² (1.0 -> BuildingTypeÀÇ workerNeededÀÇ 1¹èÀ²)
+    public double workerScale; // ï¿½Ï²ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (1.0 -> BuildingTypeï¿½ï¿½ workerNeededï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½)
     public int level = 0;
 
     public Building(BuildingType buildingType, Province province)
@@ -36,10 +36,10 @@ public class Building
     }
 
     /// <summary>
-    /// jobType¿¡ ÇØ´çÇÏ´Â Á÷¾÷À» °¡Áø ±Ù¹«ÀÚ°¡ ¸î¸í ÀÖ´ÂÁö ¹ÝÈ¯
+    /// jobTypeï¿½ï¿½ ï¿½Ø´ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ù¹ï¿½ï¿½Ú°ï¿½ ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
     /// </summary>
-    /// <param name="jobType">Á÷¾÷¸í (JobTypes)</param>
-    /// <returns>±Ù¹«ÀÚ ¼ö</returns>
+    /// <param name="jobType">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (JobTypes)</param>
+    /// <returns>ï¿½Ù¹ï¿½ï¿½ï¿½ ï¿½ï¿½</returns>
     public double GetWorkers(string jobType)
     {
         int workerNeededForType;
@@ -51,47 +51,77 @@ public class Building
     }
 
     /// <summary>
-    /// Á÷¿øÀ» °í¿ëÇÏ·Á°í ½ÃµµÇÑ´Ù.
-    /// °í¿ëÀÌ °¡´ÉÇÒ °æ¿ì °í¿ëÇÏ°í workers¸¦ ´Ã¸°´Ù.
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½ï¿½ï¿½ ï¿½Ãµï¿½ï¿½Ñ´ï¿½.
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ workersï¿½ï¿½ ï¿½Ã¸ï¿½ï¿½ï¿½.
     /// </summary>
-    /// <returns>°¡´ÉÇÏ¸é true, ºÒ°¡´ÉÇÏ¸é false</returns>
+    /// <returns>ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ true, ï¿½Ò°ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ false</returns>
     public bool HireWorkers()
     {
         if (IsNewWorkerAvailable())
         {
-            //TODO: ·ÎÁ÷ Ãß°¡
+            //TODO: ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
             return true;
         }
         else return false;
     }
 
     /// <summary>
-    /// ÇöÀç »õ ±Ù·ÎÀÚ¸¦ °í¿ë °¡´ÉÇÑÁö È®ÀÎÇÑ´Ù.
+    /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ù·ï¿½ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½Ñ´ï¿½.
     /// </summary>
-    /// <returns>°í¿ë °¡´ÉÇÏ¸é O, ºÒ°¡´ÉÇÏ¸é X</returns>
+    /// <returns>ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ O, ï¿½Ò°ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ X</returns>
     public bool IsNewWorkerAvailable()
     {
-        //TODO: ÇÁ·Îºó½º¿¡ °í¿ë/½Ç¾÷ ³ª´« µÚ ´Ù½Ã °áÁ¤
-        //TODO: BuildingType¿¡ °í¿ë ÀÎ¿ø, °í¿ë Á¾Á· µî ³ª´«µÚ ´Ù½Ã °áÁ¤
+        //TODO: ï¿½ï¿½ï¿½Îºó½º¿ï¿½ ï¿½ï¿½ï¿½ï¿½/ï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        //TODO: BuildingTypeï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Î¿ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½ï¿½
         return false;
     }
 
     /// <summary>
-    /// ItemÀ» »ý»êÇÒ ¼ö ÀÖ´Â ÃÖ¼Ò ¹èÀ²¸¸Å­ »ý»êÇÏ°í ±× ¹èÀ²À» ¹ÝÈ¯ÇÑ´Ù.
+    /// Itemï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½Ö¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å­ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½.
     /// 
-    ///  * (¿¹½Ã)
+    ///  * (ï¿½ï¿½ï¿½ï¿½)
     /// Require => Rice: 100, Tomato: 200, Onion: 50
     /// Produce => ProducedFood: 10
     /// Have => Rice: 200, Tomato: 600, Onion: 25
     ///
-    /// ÃÑ »ý»ê: 0.5¹èÀ²(OnionÀÇ Have: 25 / Require: 50)
+    /// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: 0.5ï¿½ï¿½ï¿½ï¿½(Onionï¿½ï¿½ Have: 25 / Require: 50)
     /// Market => Rice: 150, Tomato: 500, Onion: 0, ProducedFood: 5
     /// 
     /// </summary>
-    /// <returns>»ý»êÇÑ ¹èÀ²</returns>
+    /// <returns>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½</returns>
     public double ProduceItem()
     {
-        return 0.0;
+        //ï¿½Ï·ç¿¡ ï¿½ï¿½Å­ ï¿½ï¿½È®ï¿½Ò°ï¿½ï¿½ï¿½?
+        double produceScale = 1;
+        //TODO: Provinceï¿½ï¿½ Marketï¿½ï¿½ productsï¿½ï¿½ Itemsï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½Å²ï¿½ï¿½
+        //TODO: BuildingTypeï¿½ï¿½ requiredItemsï¿½ï¿½ ï¿½ï¿½È¸ï¿½Ï¸é¼­ Marketï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½Ö¼Ú°ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½, ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Marketï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ produceItemï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø¼ï¿½ Marketï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½
+        //ï¿½ï¿½Å­ Produceï¿½ß´ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ returnï¿½Ñ´ï¿½.
+        if (workerScale <= 0.0) return 0.0;
+        else
+        {
+            double minCropsScale = workerScale;
+            // 1ï¿½ï¿½: minCropsScaleï¿½ï¿½ Ã£ï¿½Â´ï¿½
+            // foreach(string cropName in buildingType.requireItems.Keys)
+            // {
+            //     int cropNeed = buildingType.requireItems[cropName];
+            //     Crop crop = province.market.GetCrop(cropName);
+            //     if(crop.amount <= cropNeed * minCropsScale * produceScale)
+            //     {
+            //         minCropsScale = crop.amount / cropNeed;
+            //     }
+            // }
+
+            // // 2ï¿½ï¿½: Ã£ï¿½ï¿½ minCropsScaleï¿½ï¿½Å­, ï¿½×¸ï¿½ï¿½ï¿½ produceScaleï¿½ï¿½Å­ ï¿½Ï·ç¸¶ï¿½ï¿½ market.cropsï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½
+            // foreach (string cropName in buildingType.requireItems.Keys)
+            // {
+            //     int cropNeed = buildingType.requireItems[cropName];
+            //     Crop crop = province.market.GetCrop(cropName);
+            //     crop.amount -= (int)(cropNeed * minCropsScale * produceScale);
+            // }
+
+            // ï¿½ï¿½È¯
+            return minproductsScale * produceScale;
+        }
     }
 }
 
