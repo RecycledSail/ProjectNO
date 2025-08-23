@@ -29,23 +29,23 @@ public class Species
     }
     public void Consume(Market market)
     {
-        int requiredFood = population * foodNeeded; // 전체 인구가 필요한 음식의 양 계산
+        //int requiredFood = population * foodNeeded; // 전체 인구가 필요한 음식의 양 계산
 
-        int totalAvailable = 0; // 실제로 소비한 음식량
-        foreach (var product in market.crops) // market.crops에 있는 각 crop(작물)에 대해 반복
-        {
-            // eatAmount는 "요구하는 음식량(requiredFood)"과 "작물에서 얻을 수 있는 양(crop.amount)" 중 더 작은 값
-            int eatAmount = Math.Min(requiredFood, product.amount);
+        //int totalAvailable = 0; // 실제로 소비한 음식량
+        //foreach (var product in market.crops) // market.crops에 있는 각 crop(작물)에 대해 반복
+        //{
+        //    // eatAmount는 "요구하는 음식량(requiredFood)"과 "작물에서 얻을 수 있는 양(crop.amount)" 중 더 작은 값
+        //    int eatAmount = Math.Min(requiredFood, product.amount);
 
-            product.amount -= eatAmount;    // 실제 작물에서 소비한 음식만큼 제거
-            requiredFood -= eatAmount;   // 필요했던 음식량에서 먹은 양만큼 차감
-            totalAvailable += eatAmount; // 총 소비량에 더함
+        //    product.amount -= eatAmount;    // 실제 작물에서 소비한 음식만큼 제거
+        //    requiredFood -= eatAmount;   // 필요했던 음식량에서 먹은 양만큼 차감
+        //    totalAvailable += eatAmount; // 총 소비량에 더함
 
-            if (requiredFood <= 0)       // 요구량을 모두 충족했으면 종료
-                break;
-        }
+        //    if (requiredFood <= 0)       // 요구량을 모두 충족했으면 종료
+        //        break;
+        //}
 
-        foodConsumed = totalAvailable; // 실제로 소비한 총 음식량 저장
+        //foodConsumed = totalAvailable; // 실제로 소비한 총 음식량 저장
     }
 
 

@@ -42,7 +42,7 @@ public class Province
         this.name = name;
         this.population = population;
         this.topo = topo;
-        this.market = new Market(this);
+        this.market = new Market();
         buildings = new();
         pops = new();
     }

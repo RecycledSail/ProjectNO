@@ -120,7 +120,7 @@ public class Building
             // }
 
             // ��ȯ
-            return minproductsScale * produceScale;
+            return minCropsScale * produceScale;
         }
     }
 }
