@@ -11,6 +11,8 @@ public class Nation
     public List<Province> provinces { get; set; }
     public long balance { get; set; }
     public List<Regiment> regiments { get; set; }
+    public Dictionary<Nation, Diplomacy> allies;
+    public Dictionary<Nation, Diplomacy> enemies;
     public List<ResearchNode> doneResearches;
     public Dictionary<BuffKind, double> buffs;
 
@@ -36,6 +38,8 @@ public class Nation
                 buffs.Add(buff.baseBuff, prevValue + buff.power);
             }
         }
+        allies = new();
+        enemies = new();
     }
 
     /// <summary>

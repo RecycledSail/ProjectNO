@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class NationUI : MonoBehaviour
 {
@@ -10,6 +11,11 @@ public class NationUI : MonoBehaviour
     //Province List 관련
     public Transform provinceListParent; // Province 목록이 들어갈 부모 객체
     public GameObject provinceItemPrefab; // Province 버튼 프리팹
+
+    //Diplomacy List 관련
+    public Transform allyListParent; // 동맹국이 들어갈 부모 객체
+    public Transform enemyListParent; // 적국이 들어갈 부모 객체
+    public GameObject nationItemPrefab; // Nation 버튼 프리팹
 
     //Nation stats 관련
     public Transform nationStatsParent;
@@ -94,6 +100,7 @@ public class NationUI : MonoBehaviour
         currentNation = nation;
 
         InitProvinceList();
+        InitDiplomacyStats();
         InitNationStats();
 
         UIManager.Instance.ReplacePopUp(gameObject);
@@ -105,15 +112,7 @@ public class NationUI : MonoBehaviour
     public void OpenNationUI()
     {
         Nation nation = GameManager.Instance.player.nation;
-
-        // Nation 이름 표시
-        nationNameText.text = nation.name;
-        currentNation = nation;
-
-        InitProvinceList();
-        InitNationStats();
-
-        UIManager.Instance.ReplacePopUp(gameObject);
+        OpenNationUI(nation);
     }
 
     /// <summary>
@@ -141,6 +140,37 @@ public class NationUI : MonoBehaviour
                     provinceUI.SetProvinceData(province);
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// 각 Ally 칸과 Enemy 칸에 동맹국/적국으로 초기화한다.
+    /// </summary>
+    public void InitDiplomacyStats()
+    {
+
+        // 기존 리스트 정리
+        for (int i = 1; i < allyListParent.childCount; i++)
+        {
+            Transform child = allyListParent.GetChild(1);
+            Destroy(child.gameObject);
+        }
+        foreach (var allyNation in currentNation.allies)
+        {
+            GameObject newButton = Instantiate(nationItemPrefab, allyListParent);
+            newButton.GetComponent<NationButtonUI>().SetProvinceData(allyNation.Key);
+        }
+
+        // 기존 리스트 정리
+        for (int i = 1; i < enemyListParent.childCount; i++)
+        {
+            Transform child = enemyListParent.GetChild(1);
+            Destroy(child.gameObject);
+        }
+        foreach (var enemyNation in currentNation.enemies)
+        {
+            GameObject newButton = Instantiate(nationItemPrefab, enemyListParent);
+            newButton.GetComponent<NationButtonUI>().SetProvinceData(enemyNation.Key);
         }
     }
 
