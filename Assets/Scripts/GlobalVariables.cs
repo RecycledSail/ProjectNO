@@ -100,14 +100,24 @@ public static class GlobalVariables
     /// </summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
 
-
+    public static void LoadData()
+    {
+        try
+        {
+            LoadDefaultData();
+        }
+        catch(Exception e)
+        {
+            Debug.LogError(e);
+        }
+    }
     public static void LoadDefaultData()
     {
         TextAsset jsonFile = Resources.Load<TextAsset>("GlobalVariables");
         if (jsonFile == null)
         {
             Debug.LogError("GlobalVariables.json not found in Resources.");
-            return;
+            throw new Exception("GlobalVariables.json not found in Resources.");
         }
 
         var gameData = JsonUtility.FromJson<GameDataFormat>(jsonFile.text);
@@ -192,7 +202,7 @@ public static class GlobalVariables
             BUILDING_TYPE[data.name] = buildingType;
         }
 
-        // Load Provinces & Color-to-province
+        // Load Provinces
         foreach (var p in gameData.provinces)
         {
             List<Species> loadPops = new();
@@ -279,6 +289,7 @@ public static class GlobalVariables
             // or: GlobalVariables.Products[prod.name] = new ProductSpec(prod.name, prod.InitialPrice);
         }
 
+        // Diplomacy ·Îµù
         foreach (var diplomacyData in gameData.initialDiplomacies)
         {
             try

@@ -71,7 +71,7 @@ public class Diplomacy
         }
 
         isActive = true;
-        Debug.Log($"외교 관계 설정 완료: {type}");
+        //Debug.Log($"외교 관계 설정 완료: {type}");
     }
 
     /// <summary>
