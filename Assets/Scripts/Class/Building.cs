@@ -4,7 +4,7 @@ using Unity.VisualScripting;
 
 
 /// <summary>
-/// �ǹ��� ���� Ŭ����
+/// 건물의 종류 클래스
 /// </summary>
 public class BuildingType
 {
@@ -20,13 +20,13 @@ public class BuildingType
 }
 
 /// <summary>
-/// ���� ���κ� ���� �������� ���� Ŭ����
+/// 실제 프로빈스 위에 얹혀지는 빌딩 클래스
 /// </summary>
 public class Building
 {
     public BuildingType buildingType;
     public Province province;
-    public double workerScale; // �ϲ��� ���� (1.0 -> BuildingType�� workerNeeded�� 1����)
+    public double workerScale; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
     public int level = 0;
 
     public Building(BuildingType buildingType, Province province)
@@ -36,10 +36,10 @@ public class Building
     }
 
     /// <summary>
-    /// jobType�� �ش��ϴ� ������ ���� �ٹ��ڰ� ��� �ִ��� ��ȯ
+    /// jobType에 해당하는 직업을 가진 근무자가 몇명 있는지 반환
     /// </summary>
-    /// <param name="jobType">������ (JobTypes)</param>
-    /// <returns>�ٹ��� ��</returns>
+    /// <param name="jobType">직업명 (JobTypes)</param>
+    /// <returns>근무자 수</returns>
     public double GetWorkers(string jobType)
     {
         int workerNeededForType;
@@ -51,75 +51,52 @@ public class Building
     }
 
     /// <summary>
-    /// ������ �����Ϸ��� �õ��Ѵ�.
-    /// ������ ������ ��� �����ϰ� workers�� �ø���.
+    /// 직원을 고용하려고 시도한다.
+    /// 고용이 가능할 경우 고용하고 workers를 늘린다.
     /// </summary>
-    /// <returns>�����ϸ� true, �Ұ����ϸ� false</returns>
+    /// <returns>가능하면 true, 불가능하면 false</returns>
     public bool HireWorkers()
     {
         if (IsNewWorkerAvailable())
         {
-            //TODO: ���� �߰�
+            //TODO: 로직 추가
             return true;
         }
         else return false;
     }
 
     /// <summary>
-    /// ���� �� �ٷ��ڸ� ���� �������� Ȯ���Ѵ�.
+    /// 현재 새 근로자를 고용 가능한지 확인한다.
     /// </summary>
-    /// <returns>���� �����ϸ� O, �Ұ����ϸ� X</returns>
+    /// <returns>고용 가능하면 O, 불가능하면 X</returns>
     public bool IsNewWorkerAvailable()
     {
-        //TODO: ���κ󽺿� ����/�Ǿ� ���� �� �ٽ� ����
-        //TODO: BuildingType�� ���� �ο�, ���� ���� �� ������ �ٽ� ����
+        //TODO: 프로빈스에 고용/실업 나눈 뒤 다시 결정
+        //TODO: BuildingType에 고용 인원, 고용 종족 등 나눈뒤 다시 결정
         return false;
     }
 
     /// <summary>
-    /// Item�� ������ �� �ִ� �ּ� ������ŭ �����ϰ� �� ������ ��ȯ�Ѵ�.
+    /// Item을 생산할 수 있는 최소 배율만큼 생산하고 그 배율을 반환한다.
     /// 
-    ///  * (����)
+    ///  * (예시)
     /// Require => Rice: 100, Tomato: 200, Onion: 50
     /// Produce => ProducedFood: 10
     /// Have => Rice: 200, Tomato: 600, Onion: 25
     ///
-    /// �� ����: 0.5����(Onion�� Have: 25 / Require: 50)
+    /// 총 생산: 0.5배율(Onion의 Have: 25 / Require: 50)
     /// Market => Rice: 150, Tomato: 500, Onion: 0, ProducedFood: 5
     /// 
     /// </summary>
-    /// <returns>������ ����</returns>
+    /// <returns>생산한 배율</returns>
     public double ProduceItem()
     {
-        //�Ϸ翡 ��ŭ ��Ȯ�Ұ���?
+        //하루에 얼만큼 수확할건지?
         double produceScale = 1;
-        //TODO: Province�� Market�� products�� Items�� ����ȭ��Ų��
-        //TODO: BuildingType�� requiredItems�� ��ȸ�ϸ鼭 Market�� ������ �ִ� �ּڰ��� ã��, �� ���� Market���� �� ���� produceItem���� ���� ������ ���ؼ� Market�� �����Ѵ�
-        //��ŭ Produce�ߴ��� ������ return�Ѵ�.
         if (workerScale <= 0.0) return 0.0;
         else
         {
             double minCropsScale = workerScale;
-            // 1��: minCropsScale�� ã�´�
-            // foreach(string cropName in buildingType.requireItems.Keys)
-            // {
-            //     int cropNeed = buildingType.requireItems[cropName];
-            //     Crop crop = province.market.GetCrop(cropName);
-            //     if(crop.amount <= cropNeed * minCropsScale * produceScale)
-            //     {
-            //         minCropsScale = crop.amount / cropNeed;
-            //     }
-            // }
-
-            // // 2��: ã�� minCropsScale��ŭ, �׸��� produceScale��ŭ �Ϸ縶�� market.crops���� �����Ѵ�
-            // foreach (string cropName in buildingType.requireItems.Keys)
-            // {
-            //     int cropNeed = buildingType.requireItems[cropName];
-            //     Crop crop = province.market.GetCrop(cropName);
-            //     crop.amount -= (int)(cropNeed * minCropsScale * produceScale);
-            // }
-
-            // ��ȯ
             return minCropsScale * produceScale;
         }
     }
