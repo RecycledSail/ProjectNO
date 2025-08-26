@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using Unity.VisualScripting;
+using System;
+using Unity.Collections;
 
 /// <summary>
 /// GlobalVariables ??????? ???? ?? ?????????? ????? ??????? ??????? ???? ?????????.
@@ -283,12 +285,48 @@ public static class GlobalVariables
             // or: GlobalVariables.Products[prod.name] = new ProductSpec(prod.name, prod.InitialPrice);
         }
 
+        foreach (var diplomacyData in gameData.initialDiplomacies)
+        {
+            try
+            {
+                HashSet<Nation> lnations = new();
+                foreach (var nationData in diplomacyData.lnations)
+                {
+                    Nation nation = NATIONS[nationData];
+                    lnations.Add(nation);
 
-        
+                }
+                HashSet<Nation> rnations = new();
+                foreach (var nationData in diplomacyData.rnations)
+                {
+                    Nation nation = NATIONS[nationData];
+                    rnations.Add(nation);
+                }
+                DiplomacyType type;
+                if (diplomacyData.type == "ALLY")
+                {
+                    type = DiplomacyType.ALLY;
+                }
+                else if (diplomacyData.type == "ENEMY")
+                {
+                    type = DiplomacyType.ENEMY;
+                }
+                else
+                {
+                    throw new Exception("Parse Error while parsing diplomacyData");
+                }
+                Diplomacy diplomacy = new(lnations, rnations, type);
+
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
     }
 
     /// <summary>
-    /// ??? ????? ??????? ???????? ?????
+    /// 모든 JSON 파일 이름을 가져옴
     /// </summary>
     /// <returns></returns>
     public static List<string> GetAllJsonFileNames()
@@ -332,8 +370,8 @@ public static class GlobalVariables
         public List<SpeciesSpecData> speciesSpecs;
         public List<JobTypeData> jobTypes;
         public List<BuildingTypeData> buildingTypes;
-
         public List<ProductsData> products;
+        public List<InitialDiplomaciesWrapper> initialDiplomacies;
 
 
 
@@ -384,5 +422,7 @@ public static class GlobalVariables
 
         [System.Serializable]
         public sealed class ProductsData{ public string name; public int InitialPrice;}
+        [System.Serializable]
+        public sealed class InitialDiplomaciesWrapper { public List<string> lnations; public List<string> rnations; public string type; }
     }
 }
