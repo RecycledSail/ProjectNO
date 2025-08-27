@@ -49,7 +49,7 @@ public class Market
             var pm = new ProvinceMarket(provinceName);
 
             // 모든 제품에 대해 초기 상태 생성
-            foreach (var p in GlobalVariables.Products)
+            foreach (var p in GlobalVariables.PRODUCTS)
             {
                 string product = p.Key;
                 int basePrice = Mathf.Max(1, p.Value.InitialPrice); // 안전장치
@@ -59,7 +59,7 @@ public class Market
             _marketsByProvince[provinceName] = pm;
         }
 
-        Debug.Log($"Market initialized for {_marketsByProvince.Count} provinces and {GlobalVariables.Products.Count} products.");
+        Debug.Log($"Market initialized for {_marketsByProvince.Count} provinces and {GlobalVariables.PRODUCTS.Count} products.");
     }
 
     // --------- 생산/소비 ----------
@@ -153,7 +153,7 @@ public class Market
 
     private static int GetBasePrice(string product)
     {
-        if (GlobalVariables.Products.TryGetValue(product, out var prod))
+        if (GlobalVariables.PRODUCTS.TryGetValue(product, out var prod))
             return Mathf.Max(1, prod.InitialPrice);
         return 1;
     }

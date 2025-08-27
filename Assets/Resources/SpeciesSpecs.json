@@ -1,0 +1,12 @@
+{
+  "speciesSpecs": [
+    {
+      "name": "Human",
+      "foodNeeded": 2
+    },
+    {
+      "name": "Elf",
+      "foodNeeded": 1.5
+    }
+  ]
+}

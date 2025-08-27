@@ -1,0 +1,9 @@
+{
+  "initialDiplomacies": [
+    {
+      "lnations": [ "Nation1" ],
+      "rnations": [ "Nation2" ],
+      "type": "ENEMY"
+    }
+  ]
+}

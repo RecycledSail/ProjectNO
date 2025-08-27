@@ -1,0 +1,9 @@
+{
+  "jobTypes": [
+    {
+      "name": "peasant",
+      "literacyNeeded": true,
+      "salary": 0
+    }
+  ]
+}

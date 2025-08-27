@@ -1,0 +1,25 @@
+{
+  "unitTypes": [
+    {
+      "id": 1,
+      "name": "Warrior",
+      "attackPerUnit": 5,
+      "defensePerUnit": 4,
+      "moveSpeedPerUnit": 3
+    },
+    {
+      "id": 2,
+      "name": "Archer",
+      "attackPerUnit": 10,
+      "defensePerUnit": 2,
+      "moveSpeedPerUnit": 2.5
+    },
+    {
+      "id": 3,
+      "name": "Cavaly",
+      "attackPerUnit": 15,
+      "defensePerUnit": 0.5,
+      "moveSpeedPerUnit": 7
+    }
+  ]
+}

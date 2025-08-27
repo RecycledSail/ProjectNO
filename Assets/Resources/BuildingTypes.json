@@ -1,0 +1,374 @@
+{
+  "buildingTypes": [
+    {
+      "name": "WheatField",
+      "requireItems": [],
+      "produceItems": [
+        {
+          "name": "Wheat",
+          "amount": 100
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 100
+        }
+      ]
+    },
+    {
+      "name": "LogField",
+      "requireItems": [],
+      "produceItems": [
+        {
+          "name": "Log",
+          "amount": 100
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 100
+        }
+      ]
+    },
+    {
+      "name": "SlimeFarm",
+      "requireItems": [],
+      "produceItems": [
+        {
+          "name": "Catalyst",
+          "amount": 50
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 50
+        }
+      ]
+    },
+    {
+      "name": "IronMine",
+      "requireItems": [],
+      "produceItems": [
+        {
+          "name": "Iron",
+          "amount": 70
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 70
+        }
+      ]
+    },
+    {
+      "name": "SwordSmith",
+      "requireItems": [
+        {
+          "name": "Iron",
+          "amount": 20
+        },
+        {
+          "name": "Wood",
+          "amount": 5
+        }
+      ],
+      "produceItems": [
+        {
+          "name": "Sworrd",
+          "amount": 10
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 30
+        }
+      ]
+    },
+    {
+      "name": "FurnitureShop",
+      "requireItems": [
+        {
+          "name": "Log",
+          "amount": 15
+        }
+      ],
+      "produceItems": [
+        {
+          "name": "Furniture",
+          "amount": 10
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 20
+        }
+      ]
+    },
+    {
+      "name": "Stable",
+      "requireItems": [
+        {
+          "name": "Log",
+          "amount": 20
+        },
+        {
+          "name": "Wheat",
+          "amount": 30
+        }
+      ],
+      "produceItems": [
+        {
+          "name": "Horse",
+          "amount": 5
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 40
+        }
+      ]
+    },
+    {
+      "name": "GoldMine",
+      "requireItems": [],
+      "produceItems": [
+        {
+          "name": "Gold",
+          "amount": 10
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 50
+        }
+      ]
+    },
+    {
+      "name": "CoalMine",
+      "requireItems": [],
+      "produceItems": [
+        {
+          "name": "Coal",
+          "amount": 80
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 80
+        }
+      ]
+    },
+    {
+      "name": "GlassShop",
+      "requireItems": [
+        {
+          "name": "Sand",
+          "amount": 30
+        },
+        {
+          "name": "Coal",
+          "amount": 20
+        }
+      ],
+      "produceItems": [
+        {
+          "name": "Glass",
+          "amount": 25
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 40
+        }
+      ]
+    },
+    {
+      "name": "PaperShop",
+      "requireItems": [
+        {
+          "name": "Log",
+          "amount": 20
+        },
+        {
+          "name": "Water",
+          "amount": 30
+        }
+      ],
+      "produceItems": [
+        {
+          "name": "Paper",
+          "amount": 40
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 30
+        }
+      ]
+    },
+    {
+      "name": "BookShop",
+      "requireItems": [
+        {
+          "name": "Paper",
+          "amount": 15
+        }
+      ],
+      "produceItems": [
+        {
+          "name": "Book",
+          "amount": 10
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 20
+        }
+      ]
+    },
+    {
+      "name": "PotionShop",
+      "requireItems": [
+        {
+          "name": "Herb",
+          "amount": 25
+        },
+        {
+          "name": "Water",
+          "amount": 20
+        },
+        {
+          "name": "Catalyst",
+          "amount": 5
+        }
+      ],
+      "produceItems": [
+        {
+          "name": "Potion",
+          "amount": 15
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 30
+        }
+      ]
+    },
+    {
+      "name": "WoolField",
+      "requireItems": [],
+      "produceItems": [
+        {
+          "name": "Wool",
+          "amount": 60
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 60
+        }
+      ]
+    },
+    {
+      "name": "ClothShop",
+      "requireItems": [
+        {
+          "name": "Wool",
+          "amount": 20
+        }
+      ],
+      "produceItems": [
+        {
+          "name": "Cloth",
+          "amount": 15
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 25
+        }
+      ]
+    },
+    {
+      "name": "LeatherShop",
+      "requireItems": [
+        {
+          "name": "Hide",
+          "amount": 30
+        },
+        {
+          "name": "Coal",
+          "amount": 10
+        }
+      ],
+      "produceItems": [
+        {
+          "name": "Leather",
+          "amount": 20
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 30
+        }
+      ]
+    },
+    {
+      "name": "SilkField",
+      "requireItems": [],
+      "produceItems": [
+        {
+          "name": "Silk",
+          "amount": 40
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 40
+        }
+      ]
+    },
+    {
+      "name": "CatalystShop",
+      "requireItems": [
+        {
+          "name": "Herb",
+          "amount": 40
+        },
+        {
+          "name": "Water",
+          "amount": 30
+        }
+      ],
+      "produceItems": [
+        {
+          "name": "Catalyst",
+          "amount": 10
+        }
+      ],
+      "workerNeeded": [
+        {
+          "name": "peasant",
+          "amount": 50
+        }
+      ]
+    }
+  ]
+}

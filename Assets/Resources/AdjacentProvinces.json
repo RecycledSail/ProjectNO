@@ -1,0 +1,64 @@
+{
+  "adjacentProvinces": [
+    {
+      "province": "Stein",
+      "adjacents": [ "Sando", "Svovoda" ]
+    },
+    {
+      "province": "Sando",
+      "adjacents": [ "Stein", "Eiglepsk", "Zilia", "Ozisk" ]
+    },
+    {
+      "province": "Bebino",
+      "adjacents": [ "Eiglepsk", "Talem" ]
+    },
+    {
+      "province": "Eiglepsk",
+      "adjacents": [ "Bebino", "Sando", "Ozisk" ]
+    },
+    {
+      "province": "Talem",
+      "adjacents": [ "Bebino", "Uzyda", "Svovoda" ]
+    },
+    {
+      "province": "Uzyda",
+      "adjacents": [ "Talem", "Buske" ]
+    },
+    {
+      "province": "Buske",
+      "adjacents": [ "Uzyda", "Svovoda" ]
+    },
+    {
+      "province": "Svovoda",
+      "adjacents": [ "Buske", "Talem", "Stein", "Tarantsusi", "Jojisha" ]
+    },
+    {
+      "province": "Tarantsusi",
+      "adjacents": [ "Svovoda" ]
+    },
+    {
+      "province": "Jojisha",
+      "adjacents": [ "Stein", "Svovoda", "Matz" ]
+    },
+    {
+      "province": "Matz",
+      "adjacents": [ "Jojisha", "Stein", "Zilia" ]
+    },
+    {
+      "province": "Zilia",
+      "adjacents": [ "Matz", "Stein", "Sando", "Prano", "Meril" ]
+    },
+    {
+      "province": "Prano",
+      "adjacents": [ "Zilia", "Meril", "Ozisk" ]
+    },
+    {
+      "province": "Meril",
+      "adjacents": [ "Zilia", "Prano", "Ozisk" ]
+    },
+    {
+      "province": "Ozisk",
+      "adjacents": [ "Meril", "Prano", "Sando", "Eiglepsk", "Bebino" ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "initialProvinces": [
+    {
+      "nation": "Nation1",
+      "provinces": [ "Bebino", "Eiglepsk", "Sando" ]
+    },
+    {
+      "nation": "Nation2",
+      "provinces": [ "Stein" ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "buffs": [
+    {
+      "id": 1,
+      "name": "FOOD_UP_PER_20",
+      "kind": "FOOD_PRODUCE_PER_UP",
+      "value": 0.2
+    }
+  ]
+}

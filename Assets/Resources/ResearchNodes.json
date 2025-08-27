@@ -1,0 +1,10 @@
+{
+  "researchNodes": [
+    {
+      "id": 1,
+      "name": "FarmTools",
+      "cost": 350.0,
+      "buffNames": [ "FOOD_UP_PER_20" ]
+    }
+  ]
+}

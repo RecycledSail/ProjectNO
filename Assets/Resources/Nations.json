@@ -1,0 +1,45 @@
+{
+  "nations": [
+    {
+      "id": 1,
+      "name": "Nation1",
+      "researchNodeNames": [ "FarmTools" ],
+      "regiments": [
+        {
+          "name": "The First Regiment",
+          "location": "Bebino",
+          "squads": [
+            {
+              "unitType": "Warrior",
+              "capacity": 500,
+              "population": 350
+            },
+            {
+              "unitType": "Archer",
+              "capacity": 100,
+              "population": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Nation2",
+      "researchNodeNames": [],
+      "regiments": [
+        {
+          "name": "Power of the Might",
+          "location": "Stein",
+          "squads": [
+            {
+              "unitType": "Cavaly",
+              "capacity": 700,
+              "population": 230
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
