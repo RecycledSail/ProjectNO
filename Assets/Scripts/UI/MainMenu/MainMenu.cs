@@ -10,7 +10,7 @@ public class MainMenu : MonoBehaviour
     public void OnNewGameClicked()
     {
         GlobalVariables.saveFileName = null;
-        GlobalVariables.LoadDefaultData();
+        GlobalVariables.LoadData();
         // "PlayScene" ·Îµù
         SceneManager.LoadScene("PlayScene");
     }

@@ -81,7 +81,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         users = new List<User>();
-        GlobalVariables.LoadDefaultData();
+        GlobalVariables.LoadData();
         if (GlobalVariables.saveFileName != null && File.Exists(Path.Combine(Application.persistentDataPath, GlobalVariables.saveFileName + ".json")))
         {
             SaveManager.OnLoad();
