@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class ArmyUI : MonoBehaviour
 {
-    public GameObject uiPanel;  // Nation UI ÆĞ³Î
+    public GameObject uiPanel;  // Nation UI íŒ¨ë„
 
-    //Province List °ü·Ã
-    public Transform regimentListParent; // Province ¸ñ·ÏÀÌ µé¾î°¥ ºÎ¸ğ °´Ã¼
-    public GameObject regimentItemPrefab; // Province ¹öÆ° ÇÁ¸®ÆÕ
+    //Province List ê´€ë ¨
+    public Transform regimentListParent; // Province ëª©ë¡ì´ ë“¤ì–´ê°ˆ ë¶€ëª¨ ê°ì²´
+    public GameObject regimentItemPrefab; // Province ë²„íŠ¼ í”„ë¦¬íŒ¹
 
 
     // Panels to change
@@ -20,7 +20,7 @@ public class ArmyUI : MonoBehaviour
 
     private int delayedUpdate;
 
-    // ½Ì±ÛÅæ ÀÎ½ºÅÏ½º (´Ù¸¥ ½ºÅ©¸³Æ®¿¡¼­ ½±°Ô Á¢±Ù °¡´É)
+    // ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤ (ë‹¤ë¥¸ ìŠ¤í¬ë¦½íŠ¸ì—ì„œ ì‰½ê²Œ ì ‘ê·¼ ê°€ëŠ¥)
     private static ArmyUI _instance;
     public static ArmyUI Instance
     {
@@ -34,18 +34,18 @@ public class ArmyUI : MonoBehaviour
     }
 
     /// <summary>
-    /// °ÔÀÓ ½ÃÀÛ Àü ÃÊ±âÈ­ ¸Ş¼­µå (½Ì±ÛÅæ Áßº¹¹æÁö Ã³¸®)
+    /// ê²Œì„ ì‹œì‘ ì „ ì´ˆê¸°í™” ë©”ì„œë“œ (ì‹±ê¸€í†¤ ì¤‘ë³µë°©ì§€ ì²˜ë¦¬)
     /// </summary>
     private void Awake()
     {
-        // ½Ì±ÛÅæ Áßº¹ ¹æÁö ·ÎÁ÷
+        // ì‹±ê¸€í†¤ ì¤‘ë³µ ë°©ì§€ ë¡œì§
         if (_instance == null)
         {
             _instance = this;
         }
         else if (_instance != this)
         {
-            Destroy(gameObject);  // Áßº¹ ½Ã Á¦°Å
+            Destroy(gameObject);  // ì¤‘ë³µ ì‹œ ì œê±°
         }
     }
 
@@ -63,7 +63,7 @@ public class ArmyUI : MonoBehaviour
                 currentOpenSubUI = subUIs[i];
             }
         }
-        uiPanel.SetActive(false); // Ã³À½¿¡´Â UI¸¦ ¼û±è
+        uiPanel.SetActive(false); // ì²˜ìŒì—ëŠ” UIë¥¼ ìˆ¨ê¹€
         currentNation = null;
         delayedUpdate = 0;
     }
@@ -79,9 +79,9 @@ public class ArmyUI : MonoBehaviour
 
 
     /// <summary>
-    /// Æ¯Á¤ NationÀÇ UI¸¦ ¿­°í ±×¿¡ ¼ÓÇÑ Province ¸ñ·ÏÀ» Ç¥½ÃÇÕ´Ï´Ù.
+    /// íŠ¹ì • Nationì˜ UIë¥¼ ì—´ê³  ê·¸ì— ì†í•œ Province ëª©ë¡ì„ í‘œì‹œí•©ë‹ˆë‹¤.
     /// </summary>
-    /// <param name="nation">¼±ÅÃÇÑ ±¹°¡</param>
+    /// <param name="nation">ì„ íƒí•œ êµ­ê°€</param>
     public void OpenArmyUI()
     {
         currentNation = GameManager.Instance.player.nation;
@@ -92,17 +92,17 @@ public class ArmyUI : MonoBehaviour
     }
 
     /// <summary>
-    /// ProvinceÀÇ ¸ñ·ÏÀ» ÇØ´ç nationÀÇ provinceµé·Î ÃÊ±âÈ­ÇÑ´Ù.
+    /// Provinceì˜ ëª©ë¡ì„ í•´ë‹¹ nationì˜ provinceë“¤ë¡œ ì´ˆê¸°í™”í•œë‹¤.
     /// </summary>
     public void InitRegimentList()
     {
-        // ±âÁ¸ ¸®½ºÆ® Á¤¸®
+        // ê¸°ì¡´ ë¦¬ìŠ¤íŠ¸ ì •ë¦¬
         foreach (Transform child in regimentListParent)
         {
             Destroy(child.gameObject);
         }
 
-        // TODO: Nation¿¡ ¼ÓÇÑ Regiment Ãß°¡
+        // TODO: Nationì— ì†í•œ Regiment ì¶”ê°€
         foreach(var regiment in currentNation.regiments)
         {
             GameObject newObject = Instantiate(regimentItemPrefab, regimentListParent);
@@ -111,9 +111,9 @@ public class ArmyUI : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇöÀç È°¼ºÈ­µÈ SubUI¸¦ º¯°æÇÑ´Ù.
+    /// í˜„ì¬ í™œì„±í™”ëœ SubUIë¥¼ ë³€ê²½í•œë‹¤.
     /// </summary>
-    /// <param name="index">º¯°æÇÒ SubUIÀÇ index</param>
+    /// <param name="index">ë³€ê²½í•  SubUIì˜ index</param>
     public void ChangeSubUI(int index)
     {
         currentOpenSubUI.SetActive(false);
@@ -122,7 +122,7 @@ public class ArmyUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Nation UI¸¦ ´İ½À´Ï´Ù.
+    /// Nation UIë¥¼ ë‹«ìŠµë‹ˆë‹¤.
     /// </summary>
     public void CloseArmyUI()
     {
