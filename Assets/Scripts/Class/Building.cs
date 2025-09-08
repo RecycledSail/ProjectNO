@@ -102,3 +102,20 @@ public class Building
     }
 }
 
+
+
+
+
+
+
+public class BuildingRecipe
+{
+    public string name;
+    public Dictionary<string, int> requireItems = new();
+
+    public BuildingRecipe(string name)
+    {
+        this.name = name;
+    }
+}
+
