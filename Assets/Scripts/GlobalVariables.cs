@@ -6,104 +6,103 @@ using System;
 using Unity.Collections;
 
 /// <summary>
-/// GlobalVariables Ŭ������ ���� �� ���������� ���Ǵ� �����͸� �����ϴ� ���� Ŭ�����Դϴ�.
-/// ����, ��(Province), �׸��� ������ �� ������ �����ϰ� �ֽ��ϴ�.
+/// GlobalVariables 클래스는 게임 내 전역적으로 사용되는 데이터를 저장하는 정적 클래스입니다.
+/// 국가, 주(Province), 그리고 인접한 주 정보를 포함하고 있습니다.
 /// </summary>
 public static class GlobalVariables
 {
 
     /// <summary>
-    /// ������ �����ϴ� Dictionary
-    /// Key: ���� �̸�, Value: Buff ��ü
+    /// 버프를 저장하는 Dictionary
+    /// Key: 버프 이름, Value: Buff 객체
     /// </summary>
     public static Dictionary<string, Buff> BUFF = new();
 
     /// <summary>
-    /// ���� ���? �����ϴ� Dictionary
-    /// Key: ���� ���? �̸�, Value: ResearchNode ��ü
+    /// 연구 노드를 저장하는 Dictionary
+    /// Key: 연구 노드 이름, Value: ResearchNode 객체
     /// </summary>
     public static Dictionary<string, ResearchNode> RESEARCH_NODE = new();
 
     /// <summary>
-    /// ���� Ÿ���� �����ϴ� Dictionary
-    /// Key: string (���� Ÿ���� name), Value: ���� Ÿ���� ��
+    /// 유닛 타입을 저장하는 Dictionary
+    /// Key: string (유닛 타입의 name), Value: 유닛 타입의 값
     /// </summary>
     public static Dictionary<string, UnitType> UNIT_TYPE = new();
 
 
     /// <summary>
-    /// ���� ������ �����ϴ� Dictionary
-    /// Key: ���� �̸�, Value: Nation ��ü
+    /// 국가 정보를 저장하는 Dictionary
+    /// Key: 국가 이름, Value: Nation 객체
     /// </summary>
     public static Dictionary<string, Nation> NATIONS = new();
 
     /// <summary>
-    /// �� ������ ���� �� �����ϴ� �� ���?
-    /// Key: ���� �̸�, Value: �� �̸� ����Ʈ
+    /// 각 국가가 시작 시 소유하는 주 목록
+    /// Key: 국가 이름, Value: 주 이름 리스트
     /// </summary>
     public static Dictionary<string, List<string>> INITIAL_PROVINCES = new();
 
     /// <summary>
-    /// ���� �� ���? �� ������ �����ϴ� Dictionary
-    /// Key: �� �̸�, Value: Province ��ü
+    /// 게임 내 모든 주 정보를 저장하는 Dictionary
+    /// Key: 주 이름, Value: Province 객체
     /// </summary>
     public static Dictionary<string, Province> PROVINCES = new();
 
     /// <summary>
-    /// �� �ֿ� ������ �ֵ��� ������ �����ϴ� Dictionary
-    /// Key: �� �̸�, Value: ������ ���� ����Ʈ
+    /// 각 주와 인접한 주들의 정보를 저장하는 Dictionary
+    /// Key: 주 이름, Value: 인접한 주의 리스트
     /// </summary>
     public static Dictionary<string, List<Province>> ADJACENT_PROVINCES = new();
 
     /// <summary>
-    /// ���̺� ���ϸ� 
+    /// 세이브 파일명 
     /// </summary>
     public static string saveFileName = null;
 
     /// <summary>
-    /// ���� Ÿ���� �����ϴ� Dictionary
-    /// Key: string (���� Ÿ���� name), Value: ���� Ÿ���� ��
+    /// 유닛 타입을 저장하는 Dictionary
+    /// Key: string (유닛 타입의 name), Value: 유닛 타입의 값
     /// </summary>
     public static Dictionary<string, UnitType> UNIT_TYPES = new();
 
     /// <summary>
-    /// �������� �����ϴ� Dictionary
-    /// Key: string (������), Value: ������
+    /// 종족값을 저장하는 Dictionary
+    /// Key: string (종족명), Value: 종족값
     /// </summary>
     public static Dictionary<string, SpeciesSpec> SPECIES_SPEC = new();
 
     /// <summary>
-    /// ���� Ÿ���� �����ϴ� Dictionary
-    /// Key: string (���� ����), Value: ����Ÿ�� Ŭ����
+    /// 빌딩 타입을 저장하는 Dictionary
+    /// Key: string (빌딩 종류), Value: 빌딩타입 클래스
     /// </summary>
     public static Dictionary<string, BuildingType> BUILDING_TYPE = new();
 
 
     /// <summary>
-    /// �����з��� �����ϴ� Dictionary
-    /// Key: string (������), Value: ����Ÿ�� Ŭ����
+    /// 직업분류를 저장하는 Dictionary
+    /// Key: string (직업명), Value: 직업타입 클래스
     /// </summary>
     public static Dictionary<string, JobType> JOB_TYPE = new();
 
 
     /// <summary>
-    /// ��ǰ �̸��� �ʱ� ���ݼ��� Dictionary
-    /// Key: string (��ǰ�̸�), Value: �ʱ��ǰ����?
+    /// 상품 이름과 초기 가격설정 Dictionary
+    /// Key: string (상품이름), Value: 초기상품가격
     /// </summary>
     public static Dictionary<string, Products> PRODUCTS = new();
 
 
 
     /// <summary>
-    /// ���� �����Ǹ� �����ϴ� Dictionary
-    /// Key: string (���� ������ �̸�), Value: BuildingRecipe Ŭ����
+    /// 
     /// </summary>
     public static Dictionary<string, BuildingRecipe> BUILDING_RECIPE = new();
 
 
     /// <summary>
-    /// Assets/Resources/*.json�� �ҷ��� GlobalVariables class�� static �������? ä���? �Լ�
-    /// JSON ������ �ϴ� GameDataFormat ����
+    /// Assets/Resources/*.json을 불러와 GlobalVariables class의 static 멤버들을 채우는 함수
+    /// JSON 구성은 하단 GameDataFormat 참조
     /// </summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void LoadData()
@@ -131,12 +130,12 @@ public static class GlobalVariables
     }
 
     /// <summary>
-    /// {JsonName}.json�� �ҷ��ͼ� T Ŭ�������� �����ϴ� �Լ�
+    /// {JsonName}.json을 불러와서 T 클래스에다 저장하는 함수
     /// </summary>
-    /// <typeparam name="T">Wrapper Ŭ���� (���� List<~~~Data>)</typeparam>
+    /// <typeparam name="T">Wrapper 클래스 (보통 List<~~~Data>)</typeparam>
     /// <param name="jsonName">{jsonName}.json</param>
-    /// <returns>ä���� Ŭ���� T</returns>
-    /// <exception cref="Exception">jsonFile�� ���� �� ����</exception>
+    /// <returns>채워진 클래스 T</returns>
+    /// <exception cref="Exception">jsonFile이 없을 때 실행</exception>
     public static T LoadJsonFile<T>(string jsonName)
     {
         TextAsset jsonFile = Resources.Load<TextAsset>(jsonName);
@@ -343,7 +342,7 @@ public static class GlobalVariables
     public static void LoadProducts()
     {
         var gameData = LoadJsonFile<GameDataFormat.ProductsWrapper>("Products");
-        // Products �ε� (īŻ�α�/���ذ�)
+        // Products 占싸듸옙 (카탈占싸깍옙/占쏙옙占쌔곤옙)
         foreach (var prod in gameData.products)
         {
             GlobalVariables.PRODUCTS[prod.name] = new Products(prod.InitialPrice);
@@ -353,7 +352,7 @@ public static class GlobalVariables
     public static void LoadInitialDiplomacies()
     {
         var gameData = LoadJsonFile<GameDataFormat.InitialDiplomaciesWrapper>("InitialDiplomacies");
-        // Diplomacy �ε�
+        // Diplomacy 占싸듸옙
         foreach (var diplomacyData in gameData.initialDiplomacies)
         {
             try
@@ -598,14 +597,14 @@ public static class GlobalVariables
             }
             INITIAL_PROVINCES[data.nation] = rnodes;
         }
-        // Products �ε� (īŻ�α�/���ذ�)
+        // Products 占싸듸옙 (카탈占싸깍옙/占쏙옙占쌔곤옙)
         foreach (var prod in gameData.products)
         {
             GlobalVariables.PRODUCTS[prod.name] = new Products(prod.InitialPrice);
             // or: GlobalVariables.Products[prod.name] = new ProductSpec(prod.name, prod.InitialPrice);
         }
 
-        // Diplomacy �ε�
+        // Diplomacy 占싸듸옙
         foreach (var diplomacyData in gameData.initialDiplomacies)
         {
             try
@@ -647,7 +646,7 @@ public static class GlobalVariables
     }
 
     /// <summary>
-    /// ���? ���̺� ���ϸ��� �������� �޼���
+    /// 모든 세이브 파일명을 가져오는 메서드
     /// </summary>
     /// <returns></returns>
     public static List<string> GetAllJsonFileNames()
@@ -675,8 +674,8 @@ public static class GlobalVariables
     }
 
     /// <summary>
-    /// JSON���� �ҷ� �� ������ �����ϴ� Ŭ����
-    /// List -> ���� Ŭ������ ����, System.Serializable�� ����ȭ�ؾ� ����/�ҷ����� ����
+    /// JSON에서 불러 올 포맷을 저장하는 클래스
+    /// List -> 개별 클래스로 정의, System.Serializable로 직렬화해야 저장/불러오기 가능
     /// </summary>
     [System.Serializable]
     public class GameDataFormat
