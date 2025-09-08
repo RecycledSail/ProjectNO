@@ -1,0 +1,36 @@
+{
+  "buildingrecipes": [
+    {
+      "name": "WheatField",
+      "buildRequirements": [        
+        { "item": "Wood",  "amount": 2000 }
+
+      ]
+      
+    },
+    {
+      "name": "LogField",
+      "buildRequirements": [        
+        { "item": "Wood",  "amount": 2000 }
+
+      ]
+      
+    },
+    {
+      "name": "SlimeFarm",
+      "buildRequirements": [        
+        { "item": "Wood",  "amount": 2000 }
+
+      ]
+      
+    },
+    {
+      "name": "IronMine",
+      "buildRequirements": [        
+        { "item": "Wood",  "amount": 2000 }
+
+      ]
+      
+    }
+  ]
+}

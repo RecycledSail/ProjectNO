@@ -6,96 +6,104 @@ using System;
 using Unity.Collections;
 
 /// <summary>
-/// GlobalVariables Å¬·¡½º´Â °ÔÀÓ ³» Àü¿ªÀûÀ¸·Î »ç¿ëµÇ´Â µ¥ÀÌÅÍ¸¦ ÀúÀåÇÏ´Â Á¤Àû Å¬·¡½ºÀÔ´Ï´Ù.
-/// ±¹°¡, ÁÖ(Province), ±×¸®°í ÀÎÁ¢ÇÑ ÁÖ Á¤º¸¸¦ Æ÷ÇÔÇÏ°í ÀÖ½À´Ï´Ù.
+/// GlobalVariables Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ç´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.
+/// ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½(Province), ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½Ö½ï¿½ï¿½Ï´ï¿½.
 /// </summary>
 public static class GlobalVariables
 {
 
     /// <summary>
-    /// ¹öÇÁ¸¦ ÀúÀåÇÏ´Â Dictionary
-    /// Key: ¹öÇÁ ÀÌ¸§, Value: Buff °´Ã¼
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Dictionary
+    /// Key: ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½, Value: Buff ï¿½ï¿½Ã¼
     /// </summary>
     public static Dictionary<string, Buff> BUFF = new();
 
     /// <summary>
-    /// ¿¬±¸ ³ëµå¸¦ ÀúÀåÇÏ´Â Dictionary
-    /// Key: ¿¬±¸ ³ëµå ÀÌ¸§, Value: ResearchNode °´Ã¼
+    /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½å¸? ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Dictionary
+    /// Key: ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿? ï¿½Ì¸ï¿½, Value: ResearchNode ï¿½ï¿½Ã¼
     /// </summary>
     public static Dictionary<string, ResearchNode> RESEARCH_NODE = new();
 
     /// <summary>
-    /// À¯´Ö Å¸ÀÔÀ» ÀúÀåÇÏ´Â Dictionary
-    /// Key: string (À¯´Ö Å¸ÀÔÀÇ name), Value: À¯´Ö Å¸ÀÔÀÇ °ª
+    /// ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Dictionary
+    /// Key: string (ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ name), Value: ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
     /// </summary>
     public static Dictionary<string, UnitType> UNIT_TYPE = new();
 
 
     /// <summary>
-    /// ±¹°¡ Á¤º¸¸¦ ÀúÀåÇÏ´Â Dictionary
-    /// Key: ±¹°¡ ÀÌ¸§, Value: Nation °´Ã¼
+    /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Dictionary
+    /// Key: ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½, Value: Nation ï¿½ï¿½Ã¼
     /// </summary>
     public static Dictionary<string, Nation> NATIONS = new();
 
     /// <summary>
-    /// °¢ ±¹°¡°¡ ½ÃÀÛ ½Ã ¼ÒÀ¯ÇÏ´Â ÁÖ ¸ñ·Ï
-    /// Key: ±¹°¡ ÀÌ¸§, Value: ÁÖ ÀÌ¸§ ¸®½ºÆ®
+    /// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿?
+    /// Key: ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½, Value: ï¿½ï¿½ ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®
     /// </summary>
     public static Dictionary<string, List<string>> INITIAL_PROVINCES = new();
 
     /// <summary>
-    /// °ÔÀÓ ³» ¸ðµç ÁÖ Á¤º¸¸¦ ÀúÀåÇÏ´Â Dictionary
-    /// Key: ÁÖ ÀÌ¸§, Value: Province °´Ã¼
+    /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿? ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Dictionary
+    /// Key: ï¿½ï¿½ ï¿½Ì¸ï¿½, Value: Province ï¿½ï¿½Ã¼
     /// </summary>
     public static Dictionary<string, Province> PROVINCES = new();
 
     /// <summary>
-    /// °¢ ÁÖ¿Í ÀÎÁ¢ÇÑ ÁÖµéÀÇ Á¤º¸¸¦ ÀúÀåÇÏ´Â Dictionary
-    /// Key: ÁÖ ÀÌ¸§, Value: ÀÎÁ¢ÇÑ ÁÖÀÇ ¸®½ºÆ®
+    /// ï¿½ï¿½ ï¿½Ö¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Öµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Dictionary
+    /// Key: ï¿½ï¿½ ï¿½Ì¸ï¿½, Value: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®
     /// </summary>
     public static Dictionary<string, List<Province>> ADJACENT_PROVINCES = new();
 
     /// <summary>
-    /// ¼¼ÀÌºê ÆÄÀÏ¸í 
+    /// ï¿½ï¿½ï¿½Ìºï¿½ ï¿½ï¿½ï¿½Ï¸ï¿½ 
     /// </summary>
     public static string saveFileName = null;
 
     /// <summary>
-    /// À¯´Ö Å¸ÀÔÀ» ÀúÀåÇÏ´Â Dictionary
-    /// Key: string (À¯´Ö Å¸ÀÔÀÇ name), Value: À¯´Ö Å¸ÀÔÀÇ °ª
+    /// ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Dictionary
+    /// Key: string (ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ name), Value: ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
     /// </summary>
     public static Dictionary<string, UnitType> UNIT_TYPES = new();
 
     /// <summary>
-    /// Á¾Á·°ªÀ» ÀúÀåÇÏ´Â Dictionary
-    /// Key: string (Á¾Á·¸í), Value: Á¾Á·°ª
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Dictionary
+    /// Key: string (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½), Value: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     public static Dictionary<string, SpeciesSpec> SPECIES_SPEC = new();
 
     /// <summary>
-    /// ºôµù Å¸ÀÔÀ» ÀúÀåÇÏ´Â Dictionary
-    /// Key: string (ºôµù Á¾·ù), Value: ºôµùÅ¸ÀÔ Å¬·¡½º
+    /// ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Dictionary
+    /// Key: string (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½), Value: ï¿½ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     public static Dictionary<string, BuildingType> BUILDING_TYPE = new();
 
 
     /// <summary>
-    /// Á÷¾÷ºÐ·ù¸¦ ÀúÀåÇÏ´Â Dictionary
-    /// Key: string (Á÷¾÷¸í), Value: Á÷¾÷Å¸ÀÔ Å¬·¡½º
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½Ð·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Dictionary
+    /// Key: string (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½), Value: ï¿½ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     public static Dictionary<string, JobType> JOB_TYPE = new();
 
 
     /// <summary>
-    /// »óÇ° ÀÌ¸§°ú ÃÊ±â °¡°Ý¼³Á¤ Dictionary
-    /// Key: string (»óÇ°ÀÌ¸§), Value: ÃÊ±â»óÇ°°¡°Ý
+    /// ï¿½ï¿½Ç° ï¿½Ì¸ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½Ý¼ï¿½ï¿½ï¿½ Dictionary
+    /// Key: string (ï¿½ï¿½Ç°ï¿½Ì¸ï¿½), Value: ï¿½Ê±ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿?
     /// </summary>
     public static Dictionary<string, Products> PRODUCTS = new();
 
 
+
     /// <summary>
-    /// Assets/Resources/*.jsonÀ» ºÒ·¯¿Í GlobalVariables classÀÇ static ¸â¹öµéÀ» Ã¤¿ì´Â ÇÔ¼ö
-    /// JSON ±¸¼ºÀº ÇÏ´Ü GameDataFormat ÂüÁ¶
+    /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Dictionary
+    /// Key: string (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½), Value: BuildingRecipe Å¬ï¿½ï¿½ï¿½ï¿½
+    /// </summary>
+    public static Dictionary<string, BuildingRecipe> BUILDING_RECIPE = new();
+
+
+    /// <summary>
+    /// Assets/Resources/*.jsonï¿½ï¿½ ï¿½Ò·ï¿½ï¿½ï¿½ GlobalVariables classï¿½ï¿½ static ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿? Ã¤ï¿½ï¿½ï¿? ï¿½Ô¼ï¿½
+    /// JSON ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ GameDataFormat ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void LoadData()
@@ -123,12 +131,12 @@ public static class GlobalVariables
     }
 
     /// <summary>
-    /// {JsonName}.jsonÀ» ºÒ·¯¿Í¼­ T Å¬·¡½º¿¡´Ù ÀúÀåÇÏ´Â ÇÔ¼ö
+    /// {JsonName}.jsonï¿½ï¿½ ï¿½Ò·ï¿½ï¿½Í¼ï¿½ T Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½
     /// </summary>
-    /// <typeparam name="T">Wrapper Å¬·¡½º (º¸Åë List<~~~Data>)</typeparam>
+    /// <typeparam name="T">Wrapper Å¬ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ List<~~~Data>)</typeparam>
     /// <param name="jsonName">{jsonName}.json</param>
-    /// <returns>Ã¤¿öÁø Å¬·¡½º T</returns>
-    /// <exception cref="Exception">jsonFileÀÌ ¾øÀ» ¶§ ½ÇÇà</exception>
+    /// <returns>Ã¤ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ T</returns>
+    /// <exception cref="Exception">jsonFileï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½</exception>
     public static T LoadJsonFile<T>(string jsonName)
     {
         TextAsset jsonFile = Resources.Load<TextAsset>(jsonName);
@@ -335,7 +343,7 @@ public static class GlobalVariables
     public static void LoadProducts()
     {
         var gameData = LoadJsonFile<GameDataFormat.ProductsWrapper>("Products");
-        // Products ·Îµù (Ä«Å»·Î±×/±âÁØ°¡)
+        // Products ï¿½Îµï¿½ (Ä«Å»ï¿½Î±ï¿½/ï¿½ï¿½ï¿½Ø°ï¿½)
         foreach (var prod in gameData.products)
         {
             GlobalVariables.PRODUCTS[prod.name] = new Products(prod.InitialPrice);
@@ -345,7 +353,7 @@ public static class GlobalVariables
     public static void LoadInitialDiplomacies()
     {
         var gameData = LoadJsonFile<GameDataFormat.InitialDiplomaciesWrapper>("InitialDiplomacies");
-        // Diplomacy ·Îµù
+        // Diplomacy ï¿½Îµï¿½
         foreach (var diplomacyData in gameData.initialDiplomacies)
         {
             try
@@ -385,6 +393,25 @@ public static class GlobalVariables
             }
         }
     }
+
+    public static void LoadBuildingRecipes()
+    {
+        var gameData = LoadJsonFile<GameDataFormat.BuildingrecipesWrapper>("Buildingrecipes");
+        foreach (var data in gameData.buildingrecipes)
+        {
+            var required = new Dictionary<string,int>();
+            foreach (var it in data.requireItems)
+                required[it.name] = it.amount;
+
+            var recipe = new BuildingRecipe(data.name) { requireItems = required };
+            BUILDING_RECIPE[data.name] = recipe;
+        }
+    }
+
+
+
+
+
     [Obsolete("Replaced by micro loads")]
     public static void LoadDefaultData()
     {
@@ -477,42 +504,56 @@ public static class GlobalVariables
             BUILDING_TYPE[data.name] = buildingType;
         }
 
-        // Load Provinces
-        foreach (var p in gameData.provinces)
+        //Load Building Recipes
+        foreach (var data in gameData.buildingrecipes)
         {
-            List<Species> loadPops = new();
-            int population = 0;
-            foreach (var speciesData in p.pops)
+            Dictionary<string, int> requiredItems = new();
+            foreach (var requiredItem in data.requireItems)
             {
-                Species species = new(speciesData.name)
-                {
-                    population = speciesData.population,
-                    happiness = speciesData.happiness,
-                    literacy = speciesData.literacy,
-                    culture = speciesData.culture
-                };
-                loadPops.Add(species);
-                population += species.population;
+                requiredItems[requiredItem.name] = requiredItem.amount;
             }
-
-            var province = new Province(p.id, p.name, population, (Topography)System.Enum.Parse(typeof(Topography), p.topography));
-
-            Dictionary<BuildingType, Building> buildings = new();
-            foreach (var building in p.buildings)
+            BuildingRecipe buildingRecipe = new BuildingRecipe(data.name)
             {
-                BuildingType buildingType = BUILDING_TYPE[building.buildingTypeName];
-                buildings.Add(buildingType, new(buildingType, province)
-                {
-                    workerScale = building.workerScale,
-                    level = building.level
-                });
-            }
-
-            province.buildings = buildings;
-
-            province.pops = loadPops;
-            PROVINCES[p.name] = province;
+                requireItems = requiredItems
+            };
         }
+
+        // Load Provinces
+            foreach (var p in gameData.provinces)
+            {
+                List<Species> loadPops = new();
+                int population = 0;
+                foreach (var speciesData in p.pops)
+                {
+                    Species species = new(speciesData.name)
+                    {
+                        population = speciesData.population,
+                        happiness = speciesData.happiness,
+                        literacy = speciesData.literacy,
+                        culture = speciesData.culture
+                    };
+                    loadPops.Add(species);
+                    population += species.population;
+                }
+
+                var province = new Province(p.id, p.name, population, (Topography)System.Enum.Parse(typeof(Topography), p.topography));
+
+                Dictionary<BuildingType, Building> buildings = new();
+                foreach (var building in p.buildings)
+                {
+                    BuildingType buildingType = BUILDING_TYPE[building.buildingTypeName];
+                    buildings.Add(buildingType, new(buildingType, province)
+                    {
+                        workerScale = building.workerScale,
+                        level = building.level
+                    });
+                }
+
+                province.buildings = buildings;
+
+                province.pops = loadPops;
+                PROVINCES[p.name] = province;
+            }
 
         // Load Adjacent Provinces
         foreach (var pair in gameData.adjacentProvinces)
@@ -557,14 +598,14 @@ public static class GlobalVariables
             }
             INITIAL_PROVINCES[data.nation] = rnodes;
         }
-        // Products ·Îµù (Ä«Å»·Î±×/±âÁØ°¡)
+        // Products ï¿½Îµï¿½ (Ä«Å»ï¿½Î±ï¿½/ï¿½ï¿½ï¿½Ø°ï¿½)
         foreach (var prod in gameData.products)
         {
             GlobalVariables.PRODUCTS[prod.name] = new Products(prod.InitialPrice);
             // or: GlobalVariables.Products[prod.name] = new ProductSpec(prod.name, prod.InitialPrice);
         }
 
-        // Diplomacy ·Îµù
+        // Diplomacy ï¿½Îµï¿½
         foreach (var diplomacyData in gameData.initialDiplomacies)
         {
             try
@@ -606,7 +647,7 @@ public static class GlobalVariables
     }
 
     /// <summary>
-    /// ¸ðµç ¼¼ÀÌºê ÆÄÀÏ¸íÀ» °¡Á®¿À´Â ¸Þ¼­µå
+    /// ï¿½ï¿½ï¿? ï¿½ï¿½ï¿½Ìºï¿½ ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¼ï¿½ï¿½ï¿½
     /// </summary>
     /// <returns></returns>
     public static List<string> GetAllJsonFileNames()
@@ -634,8 +675,8 @@ public static class GlobalVariables
     }
 
     /// <summary>
-    /// JSON¿¡¼­ ºÒ·¯ ¿Ã Æ÷¸ËÀ» ÀúÀåÇÏ´Â Å¬·¡½º
-    /// List -> °³º° Å¬·¡½º·Î Á¤ÀÇ, System.Serializable·Î Á÷·ÄÈ­ÇØ¾ß ÀúÀå/ºÒ·¯¿À±â °¡´É
+    /// JSONï¿½ï¿½ï¿½ï¿½ ï¿½Ò·ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½
+    /// List -> ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, System.Serializableï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ï¿½Ø¾ï¿½ ï¿½ï¿½ï¿½ï¿½/ï¿½Ò·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     [System.Serializable]
     public class GameDataFormat
@@ -712,6 +753,12 @@ public static class GlobalVariables
             public List<GameDataFormat.InitialDiplomacyWrapper> initialDiplomacies;
         }
 
+        [System.Serializable]
+        public class BuildingrecipesWrapper
+        {
+            public List<GameDataFormat.BuildingrecipeData> buildingrecipes;
+        }
+
 
         public List<BuffData> buffs;
         public List<ResearchNodeData> researchNodes;
@@ -725,6 +772,7 @@ public static class GlobalVariables
         public List<BuildingTypeData> buildingTypes;
         public List<ProductsData> products;
         public List<InitialDiplomacyWrapper> initialDiplomacies;
+        public List<BuildingrecipeData> buildingrecipes;
 
 
 
@@ -774,8 +822,10 @@ public static class GlobalVariables
         public sealed class BuildingData { public string buildingTypeName; public double workerScale; public int level; }
 
         [System.Serializable]
-        public sealed class ProductsData{ public string name; public int InitialPrice;}
+        public sealed class ProductsData { public string name; public int InitialPrice; }
         [System.Serializable]
         public sealed class InitialDiplomacyWrapper { public List<string> lnations; public List<string> rnations; public string type; }
+        [System.Serializable]
+        public sealed class BuildingrecipeData { public string name; public List<ItemData> requireItems; }
     }
 }
