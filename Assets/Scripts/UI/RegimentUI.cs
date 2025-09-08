@@ -18,16 +18,28 @@ public class RegimentUI : MonoBehaviour
 
     private UnitType testUnitType;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void Start()
     {
         if(regiment == null)
         {
             CreateTestRegiment();
         }
+        else
+        {
+            GameManager.Instance.dayEvent.AddListener(CheckUpdateRegimentUI);
+        }
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
+    {
+        //if (CheckAliveRegiment())
+        //    UpdateRegimentUI();
+        //else
+        //    Destroy(gameObject);
+    }
+
+    private void CheckUpdateRegimentUI()
     {
         if (CheckAliveRegiment())
             UpdateRegimentUI();

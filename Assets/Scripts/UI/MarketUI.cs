@@ -66,17 +66,22 @@ public class MarketUI : MonoBehaviour
         uiPanel.SetActive(false); // 처음에는 UI를 숨김
         currentNation = null;
         delayedUpdate = 0;
+        GameManager.Instance.dayEvent.AddListener(UpdateMarketUI);
     }
 
     private void Update()
     {
-        delayedUpdate = (delayedUpdate + 1) % 5;
-        if (delayedUpdate == 0 && currentNation != null)
-        {
-            InitMarketList();
-        }
+        //delayedUpdate = (delayedUpdate + 1) % 5;
+        //if (delayedUpdate == 0 && currentNation != null)
+        //{
+        //    InitMarketList();
+        //}
     }
 
+    private void UpdateMarketUI()
+    {
+        InitMarketList();
+    }
 
     /// <summary>
     /// 특정 Nation의 UI를 열고 그에 속한 Market 목록을 표시합니다.

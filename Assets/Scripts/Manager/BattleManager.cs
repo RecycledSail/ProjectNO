@@ -35,11 +35,17 @@ public class BattleManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        GameManager.Instance.dayEvent.AddListener(UpdateBattleEvent);
     }
 
     // Update is called once per frame
     void Update()
+    {
+        //InitiateBattle();
+        //UpdateBattles();
+    }
+
+    void UpdateBattleEvent()
     {
         InitiateBattle();
         UpdateBattles();
@@ -174,7 +180,7 @@ public class BattleManager : MonoBehaviour
     /// 전투 개시 메서드
     /// IDLE 상태인 regiment A에 대해...
     /// 1. 현재 regiment A 위치에서 전투가 일어나고 있으면 참전
-    /// 2. 다른 regiment가 같은 위치에 있으면 전투 새로 생성
+    /// 2. 다른 regiment가 같은 위치에 있고, 두 regiment의 nation이 적일 때 전투 새로 생성
     /// </summary>
     private void InitiateBattle()
     {
@@ -194,7 +200,8 @@ public class BattleManager : MonoBehaviour
                 {
                     foreach (Regiment regimentB in regiments)
                     {
-                        if (regimentA.nation != regimentB.nation && regimentA.location == regimentB.location && regimentB.state != RegimentState.BATTLE)
+                        if (regimentA.nation != regimentB.nation && regimentA.location == regimentB.location && regimentB.state != RegimentState.BATTLE &&
+                            regimentA.nation.enemies.ContainsKey(regimentB.nation))
                         {
                             Battle newBattle = new(new() { regimentA }, new() { regimentB }, regimentA.location);
                             battleInProvinces[regimentA.location] = newBattle;

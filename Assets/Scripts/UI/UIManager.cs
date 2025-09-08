@@ -56,16 +56,24 @@ public class UIManager : MonoBehaviour
     /// <summary>
     /// Start는 첫 프레임 업데이트 전에 한 번 호출됨
     /// </summary>
-    void Start()
+    private void Start()
     {
         popUpVisited = new Stack<GameObject>();
+        GameManager.Instance.dayEvent.AddListener(UpdateTopUI);
     }
 
     /// <summary>
     /// 매 프레임마다 호출되는 Update 메서드
     /// 게임 UI를 최신 상태로 유지함
     /// </summary>
-    void Update()
+    private void Update()
+    {
+        //UpdateCurrencyText();  // 재산(화폐) UI 업데이트
+        //UpdatePopulation();    // 인구 UI 업데이트
+        //UpdateUIDate();        // 날짜 및 시간 속도 UI 업데이트
+    }
+
+    private void UpdateTopUI()
     {
         UpdateCurrencyText();  // 재산(화폐) UI 업데이트
         UpdatePopulation();    // 인구 UI 업데이트

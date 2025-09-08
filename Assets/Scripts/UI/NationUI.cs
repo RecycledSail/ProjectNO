@@ -28,8 +28,6 @@ public class NationUI : MonoBehaviour
 
     private Nation currentNation;
 
-    private int delayedUpdate;
-
     // 싱글톤 인스턴스 (다른 스크립트에서 쉽게 접근 가능)
     private static NationUI _instance;
     public static NationUI Instance
@@ -75,18 +73,20 @@ public class NationUI : MonoBehaviour
         }
         uiPanel.SetActive(false); // 처음에는 UI를 숨김
         currentNation = null;
-        delayedUpdate = 0;
+        GameManager.Instance.dayEvent.AddListener(UpdateNationUI);
     }
 
     private void Update()
     {
-        delayedUpdate = (delayedUpdate + 1) % 5;
-        if(delayedUpdate == 0 && currentNation != null)
+    }
+
+    private void UpdateNationUI()
+    {
+        if (currentNation != null)
         {
             InitNationStats();
         }
     }
-
 
     /// <summary>
     /// 특정 Nation의 UI를 열고 그에 속한 Province 목록을 표시합니다.

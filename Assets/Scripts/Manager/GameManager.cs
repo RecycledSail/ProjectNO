@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
 using System.IO;
+using UnityEngine.Events;
 
 /// <summary>
 /// 게임 전체를 총괄하는 싱글톤 GameManager 클래스입니다.
@@ -23,6 +23,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public UnityEvent dayEvent;
     // 모든 유저 목록 및 플레이어 본인 정보
     public List<User> users { get; set; }
     public User player { get; set; }
@@ -67,6 +68,7 @@ public class GameManager : MonoBehaviour
         if (_instance == null)
         {
             _instance = this;
+            dayEvent = new UnityEvent();
             //DontDestroyOnLoad(gameObject);  // 씬 변경 시 유지
         }
         else if (_instance != this)
@@ -274,6 +276,7 @@ public class GameManager : MonoBehaviour
             {
                 AdvanceDay();         // 날짜 진행
                 ProcessDailyEvents(); // 매일 실행될 게임 이벤트 처리
+                dayEvent.Invoke(); // 매일 실행되는 event invoke
             }
         }
     }
