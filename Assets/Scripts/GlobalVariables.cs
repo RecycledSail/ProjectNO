@@ -127,6 +127,7 @@ public static class GlobalVariables
         {
             Debug.LogError(e);
         }
+        Market.Init();
     }
 
     /// <summary>
