@@ -106,9 +106,6 @@ public class Market
                 float ratio = (st.LastDemand + EPS) / (st.LastSupply + EPS);
                 float targetPrice = basePrice * Mathf.Pow(ratio, ELASTICITY);
 
-                // 재고 부족 벌칙(재고가 거의 없으면 추가 프리미엄)
-                if (st.Stock <= 0) targetPrice *= 1.25f;
-                else if (st.Stock < st.TargetStock) targetPrice *= Mathf.Lerp(1.0f, 1.15f, 1f - (float)st.Stock / Mathf.Max(1, st.TargetStock));
 
                 // 하한/상한
                 float minP = basePrice * MIN_MULTIPLIER;
@@ -171,7 +168,7 @@ public class Market
         foreach (var kv in pm.Products)
         {
             var s = kv.Value;
-            Debug.Log($"{s.ProductName}: stock={s.Stock}, price={s.Price}, target={s.TargetStock}");
+            Debug.Log($"{s.ProductName}: stock={s.Stock}, price={s.Price}");
         }
     }
 }
@@ -207,10 +204,8 @@ public class ProvinceMarket
     {
         if (!Products.TryGetValue(product, out var s))
         {
-            s = new ProductState(product, basePrice)
-            {
-                TargetStock = _defaultTargetStock
-            };
+            s = new ProductState(product, basePrice);
+            
             Products[product] = s;
         }
         return s;
@@ -224,7 +219,6 @@ public class ProductState
     public string ProductName;
     public int Stock;        // 현재 재고
     public int Price;        // 현재 가격
-    public int TargetStock;  // 목표 재고(부족시 가격 프리미엄에 사용)
     public int LastDemand;   // 최근 턴 소비량(가격 계산용)
     public int LastSupply;   // 최근 턴 생산량(가격 계산용)
 
@@ -233,7 +227,6 @@ public class ProductState
         ProductName = name;
         Price = Math.Max(1, basePrice);
         Stock = 0;
-        TargetStock = 100;
         LastDemand = 0;
         LastSupply = 0;
     }

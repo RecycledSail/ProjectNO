@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 
 /// <summary>
-/// ±¹°¡ Å¬·¡½º
-/// ID, ÀÌ¸§, ¼ÒÀ¯ ÇÁ·Îºó½º, Àç»ê Á¤ÀÇ
+/// ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½
+/// ID, ï¿½Ì¸ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Îºï¿½, ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 /// </summary>
 public class Nation
 {
@@ -17,10 +17,10 @@ public class Nation
     public Dictionary<BuffKind, double> buffs;
 
     /// <summary>
-    /// ±¹°¡ »ý¼ºÀÚ
+    /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
-    /// <param name="id">±¹°¡ÀÇ ID</param>
-    /// <param name="name">±¹°¡ÀÇ ÀÌ¸§(ÄÚµå)</param>
+    /// <param name="id">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ID</param>
+    /// <param name="name">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½(ï¿½Úµï¿½)</param>
     public Nation(int id, string name, List<ResearchNode> researches)
     {
         this.id = id;
@@ -43,21 +43,21 @@ public class Nation
     }
 
     /// <summary>
-    /// ÇØ´ç ÇÁ·Îºó½º°¡ ÀÖ´ÂÁö °Ë»çÇÏ´Â ¸Þ¼­µå
+    /// ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½Îºó½º°ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½ï¿½Ï´ï¿½ ï¿½Þ¼ï¿½ï¿½ï¿½
     /// </summary>
-    /// <param name="province">°Ë»çÇÏ°íÀÚ ÇÏ´Â ÇÁ·Îºó½º</param>
-    /// <returns>ÇÁ·Îºó½º º¸À¯ ÁßÀÌ¸é true, ¾Æ´Ï¸é false</returns>
+    /// <param name="province">ï¿½Ë»ï¿½ï¿½Ï°ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½Îºï¿½</param>
+    /// <returns>ï¿½ï¿½ï¿½Îºï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì¸ï¿½ true, ï¿½Æ´Ï¸ï¿½ false</returns>
     public bool HasProvinces(Province province)
     {
         return provinces.Find(x => x.Equals(province)) != null;
     }
 
     /// <summary>
-    /// ÇÁ·Îºó½º¸¦ Ãß°¡ÇÏ´Â ¸Þ¼­µå
-    /// Ãß°¡ ½Ãµµ ÈÄ ¼º°ø ¿©ºÎ¿¡ µû¶ó boolean ¹ÝÈ¯
+    /// ï¿½ï¿½ï¿½Îºó½º¸ï¿½ ï¿½ß°ï¿½ï¿½Ï´ï¿½ ï¿½Þ¼ï¿½ï¿½ï¿½
+    /// ï¿½ß°ï¿½ ï¿½Ãµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½ boolean ï¿½ï¿½È¯
     /// </summary>
-    /// <param name="province">Ãß°¡ÇÏ°íÀÚ ÇÏ´Â ÇÁ·Îºó½º</param>
-    /// <returns>Ãß°¡ °¡´ÉÇÏ¸é true, ¾Æ´Ï¸é false</returns>
+    /// <param name="province">ï¿½ß°ï¿½ï¿½Ï°ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½Îºï¿½</param>
+    /// <returns>ï¿½ß°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ true, ï¿½Æ´Ï¸ï¿½ false</returns>
     public bool AddProvinces(Province province)
     {
         if (!HasProvinces(province))
@@ -70,11 +70,11 @@ public class Nation
     }
 
     /// <summary>
-    /// ÇÁ·Îºó½º¸¦ Á¦°ÅÇÏ´Â ¸Þ¼­µå
-    /// Á¦°Å ½Ãµµ ÈÄ ¼º°ø ¿©ºÎ¿¡ µû¶ó boolean ¹ÝÈ¯
+    /// ï¿½ï¿½ï¿½Îºó½º¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Þ¼ï¿½ï¿½ï¿½
+    /// ï¿½ï¿½ï¿½ï¿½ ï¿½Ãµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½ boolean ï¿½ï¿½È¯
     /// </summary>
-    /// <param name="province">Á¦°ÅÇÏ°íÀÚ ÇÏ´Â ÇÁ·Îºó½º</param>
-    /// <returns>Á¦°Å °¡´ÉÇÏ¸é true, ¾Æ´Ï¸é false</returns>
+    /// <param name="province">ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½Îºï¿½</param>
+    /// <returns>ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ true, ï¿½Æ´Ï¸ï¿½ false</returns>
     public bool RemoveProvinces(Province province)
     {
         bool avail = provinces.Remove(province);
@@ -86,9 +86,9 @@ public class Nation
     }
 
     /// <summary>
-    /// ±¹°¡ÀÇ ¸ðµç ÇÁ·Îºó½ºÀÇ ÀÎ±¸ÀÇ ÇÕÀ» ¹ÝÈ¯
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Îºï¿½ï¿½ï¿½ ï¿½Î±ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
     /// </summary>
-    /// <returns>±¹°¡ÀÇ ¸ðµç ÇÁ·Îºó½ºÀÇ ÀÎ±¸ ÇÕ</returns>
+    /// <returns>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Îºï¿½ï¿½ï¿½ ï¿½Î±ï¿½ ï¿½ï¿½</returns>
     public long GetPopulation()
     {
         long sum = 0;
@@ -100,11 +100,11 @@ public class Nation
     }
 
     /// <summary>
-    /// ¿¬´ë¸¦ Ãß°¡ÇÏ´Â ¸Þ¼­µå
-    /// Ãß°¡ ½Ãµµ ÈÄ ¼º°ø ¿©ºÎ¿¡ µû¶ó boolean ¹ÝÈ¯
+    /// ï¿½ï¿½ï¿½ë¸¦ ï¿½ß°ï¿½ï¿½Ï´ï¿½ ï¿½Þ¼ï¿½ï¿½ï¿½
+    /// ï¿½ß°ï¿½ ï¿½Ãµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½ boolean ï¿½ï¿½È¯
     /// </summary>
-    /// <param name="regiment">Ãß°¡ÇÏ°íÀÚ ÇÏ´Â ¿¬´ë</param>
-    /// <returns>¼º°ø ½Ã true, ½ÇÆÐ ½Ã false</returns>
+    /// <param name="regiment">ï¿½ß°ï¿½ï¿½Ï°ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½</param>
+    /// <returns>ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ true, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ false</returns>
     public bool AddRegiment(Regiment regiment)
     {
         if (regiment == null) return false;
