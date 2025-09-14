@@ -25,8 +25,6 @@ public class ProvinceDetailUI : MonoBehaviour
 
     private GameObject currentOpenSubUI;
 
-    private float timer = 0.0f;
-
     // 싱글톤 인스턴스 (다른 스크립트에서 쉽게 접근 가능)
     private static ProvinceDetailUI _instance;
     public static ProvinceDetailUI Instance
@@ -72,6 +70,11 @@ public class ProvinceDetailUI : MonoBehaviour
         }
         uiPanel.SetActive(false); // 처음에는 UI를 숨김
         GameManager.Instance.dayEvent.AddListener(UpdateProvinceUI);
+    }
+
+    private void OnDestroy()
+    {
+        GameManager.Instance.dayEvent.RemoveListener(UpdateProvinceUI);
     }
 
     private void Update()
@@ -121,7 +124,6 @@ public class ProvinceDetailUI : MonoBehaviour
                 break;
         }
         provinceDescriptionText.text = "Topology: " + topoString;
-        timer = 0.0f;
         InitMarketPanel();
         UpdateUI();
         UIManager.Instance.ReplacePopUp(gameObject);
@@ -171,6 +173,10 @@ public class ProvinceDetailUI : MonoBehaviour
         racesPieChart.UpdatePieChart(province.pops);
     }
 
+    
+    /// <summary>
+    /// Market Panel을 초기화한다
+    /// </summary>
     private void InitMarketPanel()
     {
         // 기존 리스트 정리

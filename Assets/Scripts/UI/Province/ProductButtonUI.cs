@@ -37,4 +37,12 @@ public class ProductButtonUI : MonoBehaviour
     public void OnClick()
     {
     }
+
+    /// <summary>
+    /// 이 인스턴스가 삭제될 때 실행할 기능
+    /// </summary>
+    private void OnDestroy()
+    {
+        GameManager.Instance.dayEvent.RemoveListener(UpdateProductButtonUI);
+    }
 }

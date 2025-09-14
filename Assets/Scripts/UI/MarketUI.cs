@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class MarketUI : MonoBehaviour
 {
-    public GameObject uiPanel;  // Nation UI ÆĞ³Î
+    public GameObject uiPanel;  // Nation UI íŒ¨ë„
 
-    //Build List °ü·Ã
-    public Transform MarketListParent; // Build ¸ñ·ÏÀÌ µé¾î°¥ ºÎ¸ğ °´Ã¼
-    public GameObject MarketItemPrefab; // Build ¹öÆ° ÇÁ¸®ÆÕ
+    //Build List ê´€ë ¨
+    public Transform MarketListParent; // Build ëª©ë¡ì´ ë“¤ì–´ê°ˆ ë¶€ëª¨ ê°ì²´
+    public GameObject MarketItemPrefab; // Build ë²„íŠ¼ í”„ë¦¬íŒ¹
 
 
     // Panels to change
@@ -18,9 +18,8 @@ public class MarketUI : MonoBehaviour
 
     private Nation currentNation;
 
-    private int delayedUpdate;
 
-    // ½Ì±ÛÅæ ÀÎ½ºÅÏ½º (´Ù¸¥ ½ºÅ©¸³Æ®¿¡¼­ ½±°Ô Á¢±Ù °¡´É)
+    // ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤ (ë‹¤ë¥¸ ìŠ¤í¬ë¦½íŠ¸ì—ì„œ ì‰½ê²Œ ì ‘ê·¼ ê°€ëŠ¥)
     private static MarketUI _instance;
     public static MarketUI Instance
     {
@@ -34,18 +33,18 @@ public class MarketUI : MonoBehaviour
     }
 
     /// <summary>
-    /// °ÔÀÓ ½ÃÀÛ Àü ÃÊ±âÈ­ ¸Ş¼­µå (½Ì±ÛÅæ Áßº¹¹æÁö Ã³¸®)
+    /// ê²Œì„ ì‹œì‘ ì „ ì´ˆê¸°í™” ë©”ì„œë“œ (ì‹±ê¸€í†¤ ì¤‘ë³µë°©ì§€ ì²˜ë¦¬)
     /// </summary>
     private void Awake()
     {
-        // ½Ì±ÛÅæ Áßº¹ ¹æÁö ·ÎÁ÷
+        // ì‹±ê¸€í†¤ ì¤‘ë³µ ë°©ì§€ ë¡œì§
         if (_instance == null)
         {
             _instance = this;
         }
         else if (_instance != this)
         {
-            Destroy(gameObject);  // Áßº¹ ½Ã Á¦°Å
+            Destroy(gameObject);  // ì¤‘ë³µ ì‹œ ì œê±°
         }
     }
 
@@ -63,9 +62,8 @@ public class MarketUI : MonoBehaviour
                 currentOpenSubUI = subUIs[i];
             }
         }
-        uiPanel.SetActive(false); // Ã³À½¿¡´Â UI¸¦ ¼û±è
+        uiPanel.SetActive(false); // ì²˜ìŒì—ëŠ” UIë¥¼ ìˆ¨ê¹€
         currentNation = null;
-        delayedUpdate = 0;
         GameManager.Instance.dayEvent.AddListener(UpdateMarketUI);
     }
 
@@ -78,13 +76,18 @@ public class MarketUI : MonoBehaviour
         //}
     }
 
+    private void OnDestroy()
+    {
+        GameManager.Instance.dayEvent.RemoveListener(UpdateMarketUI);
+    }
+
     private void UpdateMarketUI()
     {
         InitMarketList();
     }
 
     /// <summary>
-    /// Æ¯Á¤ NationÀÇ UI¸¦ ¿­°í ±×¿¡ ¼ÓÇÑ Market ¸ñ·ÏÀ» Ç¥½ÃÇÕ´Ï´Ù.
+    /// íŠ¹ì • Nationì˜ UIë¥¼ ì—´ê³  ê·¸ì— ì†í•œ Market ëª©ë¡ì„ í‘œì‹œí•©ë‹ˆë‹¤.
     /// </summary>
     public void OpenMarketUI()
     {
@@ -96,25 +99,25 @@ public class MarketUI : MonoBehaviour
     }
 
     /// <summary>
-    /// MarketÀÇ ¸ñ·ÏÀ» ÇØ´ç nationÀÇ market·Î ÃÊ±âÈ­ÇÑ´Ù.
+    /// Marketì˜ ëª©ë¡ì„ í•´ë‹¹ nationì˜ marketë¡œ ì´ˆê¸°í™”í•œë‹¤.
     /// </summary>
     public void InitMarketList()
     {
-        // ±âÁ¸ ¸®½ºÆ® Á¤¸®
+        // ê¸°ì¡´ ë¦¬ìŠ¤íŠ¸ ì •ë¦¬
         foreach (Transform child in MarketListParent)
         {
             Destroy(child.gameObject);
         }
 
-        // TODO: Nation¿¡ ¼ÓÇÑ Market Ãß°¡
+        // TODO: Nationì— ì†í•œ Market ì¶”ê°€
         
 
     }
 
     /// <summary>
-    /// ÇöÀç È°¼ºÈ­µÈ SubUI¸¦ º¯°æÇÑ´Ù.
+    /// í˜„ì¬ í™œì„±í™”ëœ SubUIë¥¼ ë³€ê²½í•œë‹¤.
     /// </summary>
-    /// <param name="index">º¯°æÇÒ SubUIÀÇ index</param>
+    /// <param name="index">ë³€ê²½í•  SubUIì˜ index</param>
     public void ChangeSubUI(int index)
     {
         currentOpenSubUI.SetActive(false);
@@ -123,7 +126,7 @@ public class MarketUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Nation UI¸¦ ´İ½À´Ï´Ù.
+    /// Nation UIë¥¼ ë‹«ìŠµë‹ˆë‹¤.
     /// </summary>
     public void CloseMarketUI()
     {
