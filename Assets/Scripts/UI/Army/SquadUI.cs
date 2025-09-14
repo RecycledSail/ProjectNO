@@ -3,23 +3,29 @@ using UnityEngine;
 
 public class SquadUI : MonoBehaviour
 {
-    public TMP_Text nameText; // ºĞ´ë ÀÌ¸§ ÅØ½ºÆ®
-    public TMP_Text popText; // ºĞ´ë ¼ö ÅØ½ºÆ®
-    private Squad squadData; // ¿¬´ë µ¥ÀÌÅÍ ÅØ½ºÆ®
+    public TMP_Text nameText; // ë¶„ëŒ€ ì´ë¦„ í…ìŠ¤íŠ¸
+    public TMP_Text popText; // ë¶„ëŒ€ ìˆ˜ í…ìŠ¤íŠ¸
+    private Squad squadData; // ì—°ëŒ€ ë°ì´í„° í…ìŠ¤íŠ¸
    
     /// <summary>
-    /// Regiment µ¥ÀÌÅÍ¸¦ ¼³Á¤ÇÏ°í UI¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+    /// Regiment ë°ì´í„°ë¥¼ ì„¤ì •í•˜ê³  UIë¥¼ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
     /// </summary>
     public void SetSquadData(Squad squad)
     {
         this.squadData = squad;
         nameText.text = squadData.unitType.name;
-        popText.text = squadData.population.ToString(); 
+        popText.text = squadData.population.ToString();
+        GameManager.Instance.dayEvent.AddListener(UpdatePopCount);
+    }
+
+    private void OnDestroy()
+    {
+        GameManager.Instance.dayEvent.RemoveListener(UpdatePopCount);
     }
 
     private void Update()
     {
-        UpdatePopCount();
+        
     }
 
     private void UpdatePopCount()
@@ -28,7 +34,7 @@ public class SquadUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Regiment ¹öÆ°ÀÌ Å¬¸¯µÉ ¶§ ½ÇÇàÇÒ ±â´É (¿¹: »ó¼¼ Á¤º¸ Ç¥½Ã).
+    /// Regiment ë²„íŠ¼ì´ í´ë¦­ë  ë•Œ ì‹¤í–‰í•  ê¸°ëŠ¥ (ì˜ˆ: ìƒì„¸ ì •ë³´ í‘œì‹œ).
     /// </summary>
     public void OnClick()
     {

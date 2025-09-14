@@ -1,6 +1,7 @@
+using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
-using System.Linq;
 
 
 public class ProvinceDetailUI : MonoBehaviour
@@ -10,13 +11,21 @@ public class ProvinceDetailUI : MonoBehaviour
     public TMP_Text provinceDescriptionText;
     public TMP_Text provincePopulationText;
 
+    //Stats panel
     public TMP_Text provinceCropsText;
     public PieChart racesPieChart;
     private Province province;
 
-    private float timer = 0.0f;
+    //Market panel
+    public Transform marketPanel;
+    public GameObject marketChild; 
 
-    // ½Ì±ÛÅæ ÀÎ½ºÅÏ½º (´Ù¸¥ ½ºÅ©¸³Æ®¿¡¼­ ½±°Ô Á¢±Ù °¡´É)
+    // Panels to change
+    public List<GameObject> subUIs;
+
+    private GameObject currentOpenSubUI;
+
+    // ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤ (ë‹¤ë¥¸ ìŠ¤í¬ë¦½íŠ¸ì—ì„œ ì‰½ê²Œ ì ‘ê·¼ ê°€ëŠ¥)
     private static ProvinceDetailUI _instance;
     public static ProvinceDetailUI Instance
     {
@@ -30,45 +39,71 @@ public class ProvinceDetailUI : MonoBehaviour
     }
 
     /// <summary>
-    /// °ÔÀÓ ½ÃÀÛ Àü ÃÊ±âÈ­ ¸Ş¼­µå (½Ì±ÛÅæ Áßº¹¹æÁö Ã³¸®)
+    /// ê²Œì„ ì‹œì‘ ì „ ì´ˆê¸°í™” ë©”ì„œë“œ (ì‹±ê¸€í†¤ ì¤‘ë³µë°©ì§€ ì²˜ë¦¬)
     /// </summary>
     private void Awake()
     {
-        // ½Ì±ÛÅæ Áßº¹ ¹æÁö ·ÎÁ÷
+        // ì‹±ê¸€í†¤ ì¤‘ë³µ ë°©ì§€ ë¡œì§
         if (_instance == null)
         {
             _instance = this;
         }
         else if (_instance != this)
         {
-            Destroy(gameObject);  // Áßº¹ ½Ã Á¦°Å
+            Destroy(gameObject);  // ì¤‘ë³µ ì‹œ ì œê±°
         }
     }
 
     private void Start()
     {
-        uiPanel.SetActive(false); // Ã³À½¿¡´Â UI¸¦ ¼û±è
+        for (int i = 0; i < subUIs.Count; i++)
+        {
+            if (i != 0)
+            {
+                subUIs[i].SetActive(false);
+            }
+            else
+            {
+                subUIs[i].SetActive(true);
+                currentOpenSubUI = subUIs[i];
+            }
+        }
+        uiPanel.SetActive(false); // ì²˜ìŒì—ëŠ” UIë¥¼ ìˆ¨ê¹€
+        GameManager.Instance.dayEvent.AddListener(UpdateProvinceUI);
+    }
+
+    private void OnDestroy()
+    {
+        GameManager.Instance.dayEvent.RemoveListener(UpdateProvinceUI);
     }
 
     private void Update()
     {
+        
+        //if (province != null)
+        //{
+        //    // 1.0ì´ˆë§ˆë‹¤ ê°±ì‹ 
+        //    timer += Time.deltaTime;
+        //    if(timer >= 1.0f)
+        //    {
+        //        UpdateUI();
+        //        timer -= 1.0f;
+        //    }
+        //}
+    }
+
+    private void UpdateProvinceUI()
+    {
         if (province != null)
         {
-            // 1.0ÃÊ¸¶´Ù °»½Å
-            timer += Time.deltaTime;
-            if(timer >= 1.0f)
-            {
-                UpdateUI();
-                timer -= 1.0f;
-            }
+            UpdateUI();
         }
     }
 
-
     /// <summary>
-    /// Province Detail UI¸¦ ¼³Á¤ÇÏ°í ¿©´Â ¸Ş¼­µå
+    /// Province Detail UIë¥¼ ì„¤ì •í•˜ê³  ì—¬ëŠ” ë©”ì„œë“œ
     /// </summary>
-    /// <param name="province">º¸¿©ÁÙ ÇÁ·Îºó½º</param>
+    /// <param name="province">ë³´ì—¬ì¤„ í”„ë¡œë¹ˆìŠ¤</param>
     public void OpenProvinceDetailUI(Province province)
     {
         this.province = province;
@@ -89,13 +124,13 @@ public class ProvinceDetailUI : MonoBehaviour
                 break;
         }
         provinceDescriptionText.text = "Topology: " + topoString;
-        timer = 0.0f;
+        InitMarketPanel();
         UpdateUI();
         UIManager.Instance.ReplacePopUp(gameObject);
     }
 
     /// <summary>
-    /// UI ¾÷µ¥ÀÌÆ®
+    /// UI ì—…ë°ì´íŠ¸
     /// </summary>
     private void UpdateUI()
     {
@@ -105,7 +140,7 @@ public class ProvinceDetailUI : MonoBehaviour
     }
 
     /// <summary>
-    /// ÀÎ±¸¼ö ÅØ½ºÆ®¸¦ ¾÷µ¥ÀÌÆ®
+    /// ì¸êµ¬ìˆ˜ í…ìŠ¤íŠ¸ë¥¼ ì—…ë°ì´íŠ¸
     /// </summary>
     private void UpdatePopulationText()
     {
@@ -121,7 +156,7 @@ public class ProvinceDetailUI : MonoBehaviour
     }
 
     /// <summary>
-    /// ÀÛ¹° ¼ö ÅØ½ºÆ®¸¦ ¾÷µ¥ÀÌÆ®
+    /// ì‘ë¬¼ ìˆ˜ í…ìŠ¤íŠ¸ë¥¼ ì—…ë°ì´íŠ¸
     /// </summary>
     private void UpdateCropsText()
     {
@@ -131,10 +166,47 @@ public class ProvinceDetailUI : MonoBehaviour
     }
 
     /// <summary>
-    /// ÆÄÀÌ Â÷Æ®¸¦ ¾÷µ¥ÀÌÆ®
+    /// íŒŒì´ ì°¨íŠ¸ë¥¼ ì—…ë°ì´íŠ¸
     /// </summary>
     private void UpdatePieChart()
     {
         racesPieChart.UpdatePieChart(province.pops);
+    }
+
+    
+    /// <summary>
+    /// Market Panelì„ ì´ˆê¸°í™”í•œë‹¤
+    /// </summary>
+    private void InitMarketPanel()
+    {
+        // ê¸°ì¡´ ë¦¬ìŠ¤íŠ¸ ì •ë¦¬
+        foreach (Transform child in marketPanel)
+        {
+            Destroy(child.gameObject);
+        }
+
+        ProvinceMarket pm = province.market;
+        foreach(var kv in GlobalVariables.PRODUCTS)
+        {
+            GameObject child = Instantiate(marketChild, marketPanel);
+            ProductButtonUI productButtonUI = child.GetComponent<ProductButtonUI>();
+            string product = kv.Key;
+            ProductState ps;
+            if(pm.Products.TryGetValue(product, out ps))
+            {
+                productButtonUI.SetProductOrigin(ps);
+            }
+        }
+    }
+
+    /// <summary>
+    /// í˜„ì¬ í™œì„±í™”ëœ SubUIë¥¼ ë³€ê²½í•œë‹¤.
+    /// </summary>
+    /// <param name="index">ë³€ê²½í•  SubUIì˜ index</param>
+    public void ChangeSubUI(int index)
+    {
+        currentOpenSubUI.SetActive(false);
+        subUIs[index].SetActive(true);
+        currentOpenSubUI = subUIs[index];
     }
 }

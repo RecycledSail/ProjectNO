@@ -3,14 +3,14 @@ using UnityEngine;
 
 public class RegimentButtonUI : MonoBehaviour
 {
-    public TMP_Text nameText; // ¿¬´ë ÀÌ¸§ ÅØ½ºÆ®
-    public TMP_Text popText; // ¿¬´ë ¼ö ÅØ½ºÆ®
+    public TMP_Text nameText; // ì—°ëŒ€ ì´ë¦„ í…ìŠ¤íŠ¸
+    public TMP_Text popText; // ì—°ëŒ€ ìˆ˜ í…ìŠ¤íŠ¸
     public TMP_Text hometownText;
-    private Nation nationData; // ¿¬´ë µ¥ÀÌÅÍ ÅØ½ºÆ®
+    private Nation nationData; // ì—°ëŒ€ ë°ì´í„° í…ìŠ¤íŠ¸
     private Regiment regiment;
    
     /// <summary>
-    /// Regiment µ¥ÀÌÅÍ¸¦ ¼³Á¤ÇÏ°í UI¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+    /// Regiment ë°ì´í„°ë¥¼ ì„¤ì •í•˜ê³  UIë¥¼ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
     /// </summary>
     public void SetRegimentData(Nation nation, Regiment regiment)
     {
@@ -19,11 +19,17 @@ public class RegimentButtonUI : MonoBehaviour
         nameText.text = this.regiment.name;
         popText.text = this.regiment.GetUnitCount().ToString();
         hometownText.text = this.regiment.location.name;
+        GameManager.Instance.dayEvent.AddListener(UpdatePopCount);
     }
 
     private void Update()
     {
-        UpdatePopCount();
+        
+    }
+
+    private void OnDestroy()
+    {
+        GameManager.Instance.dayEvent.RemoveListener(UpdatePopCount);
     }
 
     private void UpdatePopCount()
@@ -32,7 +38,7 @@ public class RegimentButtonUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Regiment ¹öÆ°ÀÌ Å¬¸¯µÉ ¶§ ½ÇÇàÇÒ ±â´É (¿¹: »ó¼¼ Á¤º¸ Ç¥½Ã).
+    /// Regiment ë²„íŠ¼ì´ í´ë¦­ë  ë•Œ ì‹¤í–‰í•  ê¸°ëŠ¥ (ì˜ˆ: ìƒì„¸ ì •ë³´ í‘œì‹œ).
     /// </summary>
     public void OnClick()
     {

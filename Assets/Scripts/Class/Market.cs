@@ -47,6 +47,8 @@ public class Market
         {
             var provinceName = kv.Key;
             var pm = new ProvinceMarket(provinceName);
+            var province = kv.Value;
+            province.market = pm;
 
             // 모든 제품에 대해 초기 상태 생성
             foreach (var p in GlobalVariables.PRODUCTS)

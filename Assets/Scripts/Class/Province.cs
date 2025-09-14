@@ -23,7 +23,7 @@ public class Province
     public long population { get; set; }
     public Topography topo { get; }
     public Nation nation { get; set; } = null;
-    public Market market { get; }
+    public ProvinceMarket market { get; set; }
     public List<Species> pops { get; set; } = null;
     public Dictionary<BuildingType, Building> buildings { get; set; } = null;
 
@@ -42,7 +42,7 @@ public class Province
         this.name = name;
         this.population = population;
         this.topo = topo;
-        this.market = new Market();
+        // this.market 할당은 GlobalVariables의 Market.Init()에서 수행
         buildings = new();
         pops = new();
     }
@@ -68,7 +68,7 @@ public class Province
         population = 0;
         foreach (Species species in pops)
         {
-            species.Consume(market);
+            //species.Consume(market);
             //market.ProduceCrops();
             foreach (Building building in buildings.Values)
             {

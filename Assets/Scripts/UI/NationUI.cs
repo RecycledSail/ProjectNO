@@ -5,19 +5,19 @@ using UnityEngine.UI;
 
 public class NationUI : MonoBehaviour
 {
-    public GameObject uiPanel;  // Nation UI ÆĞ³Î
-    public TMP_Text nationNameText; // Nation ÀÌ¸§ Ç¥½Ã ÅØ½ºÆ®
+    public GameObject uiPanel;  // Nation UI íŒ¨ë„
+    public TMP_Text nationNameText; // Nation ì´ë¦„ í‘œì‹œ í…ìŠ¤íŠ¸
 
-    //Province List °ü·Ã
-    public Transform provinceListParent; // Province ¸ñ·ÏÀÌ µé¾î°¥ ºÎ¸ğ °´Ã¼
-    public GameObject provinceItemPrefab; // Province ¹öÆ° ÇÁ¸®ÆÕ
+    //Province List ê´€ë ¨
+    public Transform provinceListParent; // Province ëª©ë¡ì´ ë“¤ì–´ê°ˆ ë¶€ëª¨ ê°ì²´
+    public GameObject provinceItemPrefab; // Province ë²„íŠ¼ í”„ë¦¬íŒ¹
 
-    //Diplomacy List °ü·Ã
-    public Transform allyListParent; // µ¿¸Í±¹ÀÌ µé¾î°¥ ºÎ¸ğ °´Ã¼
-    public Transform enemyListParent; // Àû±¹ÀÌ µé¾î°¥ ºÎ¸ğ °´Ã¼
-    public GameObject nationItemPrefab; // Nation ¹öÆ° ÇÁ¸®ÆÕ
+    //Diplomacy List ê´€ë ¨
+    public Transform allyListParent; // ë™ë§¹êµ­ì´ ë“¤ì–´ê°ˆ ë¶€ëª¨ ê°ì²´
+    public Transform enemyListParent; // ì êµ­ì´ ë“¤ì–´ê°ˆ ë¶€ëª¨ ê°ì²´
+    public GameObject nationItemPrefab; // Nation ë²„íŠ¼ í”„ë¦¬íŒ¹
 
-    //Nation stats °ü·Ã
+    //Nation stats ê´€ë ¨
     public Transform nationStatsParent;
     public TMP_Text nationStatsText;
 
@@ -28,7 +28,7 @@ public class NationUI : MonoBehaviour
 
     private Nation currentNation;
 
-    // ½Ì±ÛÅæ ÀÎ½ºÅÏ½º (´Ù¸¥ ½ºÅ©¸³Æ®¿¡¼­ ½±°Ô Á¢±Ù °¡´É)
+    // ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤ (ë‹¤ë¥¸ ìŠ¤í¬ë¦½íŠ¸ì—ì„œ ì‰½ê²Œ ì ‘ê·¼ ê°€ëŠ¥)
     private static NationUI _instance;
     public static NationUI Instance
     {
@@ -42,18 +42,18 @@ public class NationUI : MonoBehaviour
     }
 
     /// <summary>
-    /// °ÔÀÓ ½ÃÀÛ Àü ÃÊ±âÈ­ ¸Ş¼­µå (½Ì±ÛÅæ Áßº¹¹æÁö Ã³¸®)
+    /// ê²Œì„ ì‹œì‘ ì „ ì´ˆê¸°í™” ë©”ì„œë“œ (ì‹±ê¸€í†¤ ì¤‘ë³µë°©ì§€ ì²˜ë¦¬)
     /// </summary>
     private void Awake()
     {
-        // ½Ì±ÛÅæ Áßº¹ ¹æÁö ·ÎÁ÷
+        // ì‹±ê¸€í†¤ ì¤‘ë³µ ë°©ì§€ ë¡œì§
         if (_instance == null)
         {
             _instance = this;
         }
         else if (_instance != this)
         {
-            Destroy(gameObject);  // Áßº¹ ½Ã Á¦°Å
+            Destroy(gameObject);  // ì¤‘ë³µ ì‹œ ì œê±°
         }
     }
 
@@ -71,13 +71,18 @@ public class NationUI : MonoBehaviour
                 currentOpenSubUI = subUIs[i];
             }
         }
-        uiPanel.SetActive(false); // Ã³À½¿¡´Â UI¸¦ ¼û±è
+        uiPanel.SetActive(false); // ì²˜ìŒì—ëŠ” UIë¥¼ ìˆ¨ê¹€
         currentNation = null;
         GameManager.Instance.dayEvent.AddListener(UpdateNationUI);
     }
 
     private void Update()
     {
+    }
+
+    private void OnDestroy()
+    {
+        GameManager.Instance.dayEvent.AddListener(UpdateNationUI);
     }
 
     private void UpdateNationUI()
@@ -89,13 +94,13 @@ public class NationUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Æ¯Á¤ NationÀÇ UI¸¦ ¿­°í ±×¿¡ ¼ÓÇÑ Province ¸ñ·ÏÀ» Ç¥½ÃÇÕ´Ï´Ù.
+    /// íŠ¹ì • Nationì˜ UIë¥¼ ì—´ê³  ê·¸ì— ì†í•œ Province ëª©ë¡ì„ í‘œì‹œí•©ë‹ˆë‹¤.
     /// </summary>
-    /// <param name="nation">¼±ÅÃÇÑ ±¹°¡</param>
+    /// <param name="nation">ì„ íƒí•œ êµ­ê°€</param>
     public void OpenNationUI(Nation nation)
     {
 
-        // Nation ÀÌ¸§ Ç¥½Ã
+        // Nation ì´ë¦„ í‘œì‹œ
         nationNameText.text = nation.name;
         currentNation = nation;
 
@@ -107,7 +112,7 @@ public class NationUI : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇÃ·¹ÀÌ¾îÀÇ NationÀÇ UI¸¦ ¿­°í ±×¿¡ ¼ÓÇÑ Province ¸ñ·ÏÀ» Ç¥½ÃÇÕ´Ï´Ù.
+    /// í”Œë ˆì´ì–´ì˜ Nationì˜ UIë¥¼ ì—´ê³  ê·¸ì— ì†í•œ Province ëª©ë¡ì„ í‘œì‹œí•©ë‹ˆë‹¤.
     /// </summary>
     public void OpenNationUI()
     {
@@ -116,17 +121,17 @@ public class NationUI : MonoBehaviour
     }
 
     /// <summary>
-    /// ProvinceÀÇ ¸ñ·ÏÀ» ÇØ´ç nationÀÇ provinceµé·Î ÃÊ±âÈ­ÇÑ´Ù.
+    /// Provinceì˜ ëª©ë¡ì„ í•´ë‹¹ nationì˜ provinceë“¤ë¡œ ì´ˆê¸°í™”í•œë‹¤.
     /// </summary>
     public void InitProvinceList()
     {
-        // ±âÁ¸ ¸®½ºÆ® Á¤¸®
+        // ê¸°ì¡´ ë¦¬ìŠ¤íŠ¸ ì •ë¦¬
         foreach (Transform child in provinceListParent)
         {
             Destroy(child.gameObject);
         }
 
-        // Nation¿¡ ¼ÓÇÑ Province Ãß°¡
+        // Nationì— ì†í•œ Province ì¶”ê°€
         if (GlobalVariables.INITIAL_PROVINCES.TryGetValue(currentNation.name, out List<string> provinces))
         {
             foreach (string provinceName in provinces)
@@ -144,12 +149,12 @@ public class NationUI : MonoBehaviour
     }
 
     /// <summary>
-    /// °¢ Ally Ä­°ú Enemy Ä­¿¡ µ¿¸Í±¹/Àû±¹À¸·Î ÃÊ±âÈ­ÇÑ´Ù.
+    /// ê° Ally ì¹¸ê³¼ Enemy ì¹¸ì— ë™ë§¹êµ­/ì êµ­ìœ¼ë¡œ ì´ˆê¸°í™”í•œë‹¤.
     /// </summary>
     public void InitDiplomacyStats()
     {
 
-        // ±âÁ¸ ¸®½ºÆ® Á¤¸®
+        // ê¸°ì¡´ ë¦¬ìŠ¤íŠ¸ ì •ë¦¬
         for (int i = 1; i < allyListParent.childCount; i++)
         {
             Transform child = allyListParent.GetChild(1);
@@ -161,7 +166,7 @@ public class NationUI : MonoBehaviour
             newButton.GetComponent<NationButtonUI>().SetProvinceData(allyNation.Key);
         }
 
-        // ±âÁ¸ ¸®½ºÆ® Á¤¸®
+        // ê¸°ì¡´ ë¦¬ìŠ¤íŠ¸ ì •ë¦¬
         for (int i = 1; i < enemyListParent.childCount; i++)
         {
             Transform child = enemyListParent.GetChild(1);
@@ -175,7 +180,7 @@ public class NationUI : MonoBehaviour
     }
 
     /// <summary>
-    /// ProvinceÀÇ ¸ñ·ÏÀ» ÇØ´ç nationÀÇ provinceµé·Î ÃÊ±âÈ­ÇÑ´Ù.
+    /// Provinceì˜ ëª©ë¡ì„ í•´ë‹¹ nationì˜ provinceë“¤ë¡œ ì´ˆê¸°í™”í•œë‹¤.
     /// </summary>
     public void InitNationStats()
     {
@@ -187,9 +192,9 @@ public class NationUI : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇöÀç È°¼ºÈ­µÈ SubUI¸¦ º¯°æÇÑ´Ù.
+    /// í˜„ì¬ í™œì„±í™”ëœ SubUIë¥¼ ë³€ê²½í•œë‹¤.
     /// </summary>
-    /// <param name="index">º¯°æÇÒ SubUIÀÇ index</param>
+    /// <param name="index">ë³€ê²½í•  SubUIì˜ index</param>
     public void ChangeSubUI(int index)
     {
         currentOpenSubUI.SetActive(false);
@@ -198,7 +203,7 @@ public class NationUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Nation UI¸¦ ´İ½À´Ï´Ù.
+    /// Nation UIë¥¼ ë‹«ìŠµë‹ˆë‹¤.
     /// </summary>
     public void CloseNationUI()
     {

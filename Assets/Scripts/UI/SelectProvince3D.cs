@@ -7,13 +7,13 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 /// <summary>
-/// SelectProvince Å¬·¡½º´Â ¸¶¿ì½º Å¬¸¯À» ÅëÇØ Æ¯Á¤ Áö¿ª(Province)À» ¼±ÅÃÇÏ°í, 
-/// ÇØ´ç Áö¿ª°ú ÀÎÁ¢ÇÑ Áö¿ªÀ» »ö»ó º¯°æÇÏ´Â ±â´ÉÀ» ¼öÇàÇÕ´Ï´Ù.
+/// SelectProvince í´ë˜ìŠ¤ëŠ” ë§ˆìš°ìŠ¤ í´ë¦­ì„ í†µí•´ íŠ¹ì • ì§€ì—­(Province)ì„ ì„ íƒí•˜ê³ , 
+/// í•´ë‹¹ ì§€ì—­ê³¼ ì¸ì ‘í•œ ì§€ì—­ì„ ìƒ‰ìƒ ë³€ê²½í•˜ëŠ” ê¸°ëŠ¥ì„ ìˆ˜í–‰í•©ë‹ˆë‹¤.
 /// </summary>
 public class SelectProvince3D : MonoBehaviour
 {
-    public Camera cam; // È­¸éÀ» ºñÃß´Â Ä«¸Ş¶ó
-    private List<GameObject> children; // ÇöÀç ¿ÀºêÁ§Æ®ÀÇ Children
+    public Camera cam; // í™”ë©´ì„ ë¹„ì¶”ëŠ” ì¹´ë©”ë¼
+    private List<GameObject> children; // í˜„ì¬ ì˜¤ë¸Œì íŠ¸ì˜ Children
     private List<GameObject> outlined;
 
     void Start()
@@ -41,7 +41,7 @@ public class SelectProvince3D : MonoBehaviour
             OpenNationUI(child);
         }
 
-        OutlineProvince(child); // ÇÁ·Îºó½º »öÄ¥ ÇÔ¼ö È£Ãâ
+        OutlineProvince(child); // í”„ë¡œë¹ˆìŠ¤ ìƒ‰ì¹  í•¨ìˆ˜ í˜¸ì¶œ
     }
 
     private bool IsPointerOverUIObject()
@@ -56,7 +56,7 @@ public class SelectProvince3D : MonoBehaviour
     GameObject HitChild()
     {
         RaycastHit hit;
-        // ¸¶¿ì½º Å¬¸¯ À§Ä¡¿¡ Raycast¸¦ ½÷¼­ Ãæµ¹ÀÌ ÀÖ´ÂÁö È®ÀÎ
+        // ë§ˆìš°ìŠ¤ í´ë¦­ ìœ„ì¹˜ì— Raycastë¥¼ ì´ì„œ ì¶©ëŒì´ ìˆëŠ”ì§€ í™•ì¸
         if (!Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit))
         {
             return null;
@@ -65,7 +65,7 @@ public class SelectProvince3D : MonoBehaviour
         GameObject obj = hit.transform.gameObject;
         MeshCollider meshCollider = hit.collider as MeshCollider;
 
-        // Ãæµ¹ÇÑ ¿ÀºêÁ§Æ®¿¡ À¯È¿ÇÑ ÅØ½ºÃ³°¡ ÀÖ´ÂÁö È®ÀÎ
+        // ì¶©ëŒí•œ ì˜¤ë¸Œì íŠ¸ì— ìœ íš¨í•œ í…ìŠ¤ì²˜ê°€ ìˆëŠ”ì§€ í™•ì¸
         if (!children.Contains(obj))
         {
             return null;
@@ -90,15 +90,17 @@ public class SelectProvince3D : MonoBehaviour
         Province cur;
         if (GlobalVariables.PROVINCES.TryGetValue(name, out cur))
         {
-            if (cur.nation != null)
-                NationUI.Instance.OpenNationUI(cur.nation);
-            else
-                ProvinceDetailUI.Instance.OpenProvinceDetailUI(cur);
+            //if (cur.nation != null)
+            //    NationUI.Instance.OpenNationUI(cur.nation);
+            //else
+            //    ProvinceDetailUI.Instance.OpenProvinceDetailUI(cur);
+            ProvinceDetailUI.Instance.OpenProvinceDetailUI(cur);
         }
+        
     }
 
     /// <summary>
-    /// Å¬¸¯ÇÑ À§Ä¡ÀÇ ÇÁ·Îºó½º¸¦ °¨ÁöÇÏ°í »öÄ¥ÇÏ´Â ÇÔ¼ö
+    /// í´ë¦­í•œ ìœ„ì¹˜ì˜ í”„ë¡œë¹ˆìŠ¤ë¥¼ ê°ì§€í•˜ê³  ìƒ‰ì¹ í•˜ëŠ” í•¨ìˆ˜
     /// </summary>
     void OutlineProvince(GameObject child)
     {
@@ -129,7 +131,7 @@ public class SelectProvince3D : MonoBehaviour
     //void RemoveColors()
     //{
     //    List<Vector2> list;
-    //    // ÀÌÀü¿¡ Ä¥Çß´ø »ö»óÀ» ¿ø·¡´ë·Î µÇµ¹¸²
+    //    // ì´ì „ì— ì¹ í–ˆë˜ ìƒ‰ìƒì„ ì›ë˜ëŒ€ë¡œ ë˜ëŒë¦¼
     //    while (paintedColors.Count != 0)
     //    {
     //        Color32 painted = paintedColors.Pop();
@@ -144,16 +146,16 @@ public class SelectProvince3D : MonoBehaviour
     //}
 
     ///// <summary>
-    ///// ¼±ÅÃÇÑ ÇÁ·Îºó½º¿Í ÀÎÁ¢ÇÑ ÇÁ·Îºó½ºµéÀ» »öÄ¥ÇÏ´Â ÇÔ¼ö
+    ///// ì„ íƒí•œ í”„ë¡œë¹ˆìŠ¤ì™€ ì¸ì ‘í•œ í”„ë¡œë¹ˆìŠ¤ë“¤ì„ ìƒ‰ì¹ í•˜ëŠ” í•¨ìˆ˜
     ///// </summary>
-    ///// <param name = "c" > ¼±ÅÃÇÑ »ö»ó</param>
-    ///// <param name = "tex_0" > º¯°æÇÒ ÅØ½ºÃ³</param>
+    ///// <param name = "c" > ì„ íƒí•œ ìƒ‰ìƒ</param>
+    ///// <param name = "tex_0" > ë³€ê²½í•  í…ìŠ¤ì²˜</param>
     //void ColorNewProvinces(Color32 c)
     //{
     //    List<Vector2> list;
-    //    paintedColors.Push(c); // ÇöÀç »ö»óÀ» ½ºÅÃ¿¡ ÀúÀå
+    //    paintedColors.Push(c); // í˜„ì¬ ìƒ‰ìƒì„ ìŠ¤íƒì— ì €ì¥
 
-    //    // ÇöÀç »ö»ó¿¡ ÇØ´çÇÏ´Â ¸ğµç ÇÈ¼¿À» ÆÄ¶õ»öÀ¸·Î º¯°æ
+    //    // í˜„ì¬ ìƒ‰ìƒì— í•´ë‹¹í•˜ëŠ” ëª¨ë“  í”½ì…€ì„ íŒŒë€ìƒ‰ìœ¼ë¡œ ë³€ê²½
     //    if (colorToVec2.TryGetValue(c, out list))
     //    {
     //        foreach (Vector2 v in list)
@@ -162,12 +164,12 @@ public class SelectProvince3D : MonoBehaviour
     //        }
     //    }
 
-    //    // ÇöÀç ÇÁ·Îºó½º¸¦ °¡Á®¿È
+    //    // í˜„ì¬ í”„ë¡œë¹ˆìŠ¤ë¥¼ ê°€ì ¸ì˜´
     //    Province cur;
     //    if (GlobalVariables.COLORTOPROVINCE.TryGetValue(c, out cur))
     //    {
     //        List<Province> provinces;
-    //        // ÇöÀç ÇÁ·Îºó½º¿Í ÀÎÁ¢ÇÑ ÇÁ·Îºó½º ¸ñ·ÏÀ» °¡Á®¿È
+    //        // í˜„ì¬ í”„ë¡œë¹ˆìŠ¤ì™€ ì¸ì ‘í•œ í”„ë¡œë¹ˆìŠ¤ ëª©ë¡ì„ ê°€ì ¸ì˜´
     //        if (GlobalVariables.ADJACENT_PROVINCES.TryGetValue(cur.name, out provinces))
     //        {
     //            foreach (Province province in provinces)
@@ -175,14 +177,14 @@ public class SelectProvince3D : MonoBehaviour
     //                Color32 provColor = province.color;
     //                List<Vector2> provPixelVec;
 
-    //                // ÀÎÁ¢ÇÑ ÇÁ·Îºó½ºÀÇ ÇÈ¼¿À» ÇÏ´Ã»öÀ¸·Î º¯°æ
+    //                // ì¸ì ‘í•œ í”„ë¡œë¹ˆìŠ¤ì˜ í”½ì…€ì„ í•˜ëŠ˜ìƒ‰ìœ¼ë¡œ ë³€ê²½
     //                if (colorToVec2.TryGetValue(provColor, out provPixelVec))
     //                {
     //                    foreach (Vector2 v in provPixelVec)
     //                    {
     //                        tex_0.SetPixel((int)v.x, (int)v.y, Color.cyan);
     //                    }
-    //                    paintedColors.Push(provColor); // º¯°æÇÑ »ö»óÀ» ½ºÅÃ¿¡ ÀúÀå
+    //                    paintedColors.Push(provColor); // ë³€ê²½í•œ ìƒ‰ìƒì„ ìŠ¤íƒì— ì €ì¥
     //                }
     //            }
     //        }

@@ -24,22 +24,22 @@ public class UIManager : MonoBehaviour
     private GameObject currentPopUp;
 
     /// <summary>
-    /// À¯Àú°¡ ¼ÓÇÑ ±¹°¡ÀÇ Àç»ê(È­Æó)¸¦ Ç¥±âÇÏ´Â ÅØ½ºÆ® UI
+    /// ìœ ì €ê°€ ì†í•œ êµ­ê°€ì˜ ì¬ì‚°(í™”í)ë¥¼ í‘œê¸°í•˜ëŠ” í…ìŠ¤íŠ¸ UI
     /// </summary>
     public TMP_Text CurrencyText;
 
     /// <summary>
-    /// À¯Àú°¡ ¼ÓÇÑ ±¹°¡ÀÇ ÀÎ±¸¸¦ Ç¥±âÇÏ´Â ÅØ½ºÆ® UI
+    /// ìœ ì €ê°€ ì†í•œ êµ­ê°€ì˜ ì¸êµ¬ë¥¼ í‘œê¸°í•˜ëŠ” í…ìŠ¤íŠ¸ UI
     /// </summary>
     public TMP_Text PopulationText;
 
     /// <summary>
-    /// °ÔÀÓ ³» ³¯Â¥ ¹× ½Ã°£ ¼Óµµ¸¦ Ç¥±âÇÏ´Â ÅØ½ºÆ® UI
+    /// ê²Œì„ ë‚´ ë‚ ì§œ ë° ì‹œê°„ ì†ë„ë¥¼ í‘œê¸°í•˜ëŠ” í…ìŠ¤íŠ¸ UI
     /// </summary>
     public TMP_Text dateText;
 
     /// <summary>
-    /// ½Ì±ÛÅæ ÆĞÅÏÀ» Àû¿ëÇÏ¿© UIManagerÀÇ Áßº¹ »ı¼ºÀ» ¹æÁö
+    /// ì‹±ê¸€í†¤ íŒ¨í„´ì„ ì ìš©í•˜ì—¬ UIManagerì˜ ì¤‘ë³µ ìƒì„±ì„ ë°©ì§€
     /// </summary>
     private void Awake()
     {
@@ -54,7 +54,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Start´Â Ã¹ ÇÁ·¹ÀÓ ¾÷µ¥ÀÌÆ® Àü¿¡ ÇÑ ¹ø È£ÃâµÊ
+    /// StartëŠ” ì²« í”„ë ˆì„ ì—…ë°ì´íŠ¸ ì „ì— í•œ ë²ˆ í˜¸ì¶œë¨
     /// </summary>
     private void Start()
     {
@@ -62,30 +62,35 @@ public class UIManager : MonoBehaviour
         GameManager.Instance.dayEvent.AddListener(UpdateTopUI);
     }
 
+    private void OnDestroy()
+    {
+        GameManager.Instance.dayEvent.RemoveListener(UpdateTopUI);
+    }
+
     /// <summary>
-    /// ¸Å ÇÁ·¹ÀÓ¸¶´Ù È£ÃâµÇ´Â Update ¸Ş¼­µå
-    /// °ÔÀÓ UI¸¦ ÃÖ½Å »óÅÂ·Î À¯ÁöÇÔ
+    /// ë§¤ í”„ë ˆì„ë§ˆë‹¤ í˜¸ì¶œë˜ëŠ” Update ë©”ì„œë“œ
+    /// ê²Œì„ UIë¥¼ ìµœì‹  ìƒíƒœë¡œ ìœ ì§€í•¨
     /// </summary>
     private void Update()
     {
-        //UpdateCurrencyText();  // Àç»ê(È­Æó) UI ¾÷µ¥ÀÌÆ®
-        //UpdatePopulation();    // ÀÎ±¸ UI ¾÷µ¥ÀÌÆ®
-        //UpdateUIDate();        // ³¯Â¥ ¹× ½Ã°£ ¼Óµµ UI ¾÷µ¥ÀÌÆ®
+        //UpdateCurrencyText();  // ì¬ì‚°(í™”í) UI ì—…ë°ì´íŠ¸
+        //UpdatePopulation();    // ì¸êµ¬ UI ì—…ë°ì´íŠ¸
+        //UpdateUIDate();        // ë‚ ì§œ ë° ì‹œê°„ ì†ë„ UI ì—…ë°ì´íŠ¸
     }
 
     private void UpdateTopUI()
     {
-        UpdateCurrencyText();  // Àç»ê(È­Æó) UI ¾÷µ¥ÀÌÆ®
-        UpdatePopulation();    // ÀÎ±¸ UI ¾÷µ¥ÀÌÆ®
-        UpdateUIDate();        // ³¯Â¥ ¹× ½Ã°£ ¼Óµµ UI ¾÷µ¥ÀÌÆ®
+        UpdateCurrencyText();  // ì¬ì‚°(í™”í) UI ì—…ë°ì´íŠ¸
+        UpdatePopulation();    // ì¸êµ¬ UI ì—…ë°ì´íŠ¸
+        UpdateUIDate();        // ë‚ ì§œ ë° ì‹œê°„ ì†ë„ UI ì—…ë°ì´íŠ¸
     }
 
     /// <summary>
-    /// ¼ıÀÚ¸¦ Ãà¾àµÈ ÇüÅÂ(M, K ´ÜÀ§)·Î º¯È¯ÇÏ´Â ¸Ş¼­µå
-    /// ¿¹: 1,500 -> "1.5K", 2,000,000 -> "2.0M"
+    /// ìˆ«ìë¥¼ ì¶•ì•½ëœ í˜•íƒœ(M, K ë‹¨ìœ„)ë¡œ ë³€í™˜í•˜ëŠ” ë©”ì„œë“œ
+    /// ì˜ˆ: 1,500 -> "1.5K", 2,000,000 -> "2.0M"
     /// </summary>
-    /// <param name="val">º¯È¯ÇÒ ¼ıÀÚ</param>
-    /// <returns>Ãà¾àµÈ ¹®ÀÚ¿­ °ª</returns>
+    /// <param name="val">ë³€í™˜í•  ìˆ«ì</param>
+    /// <returns>ì¶•ì•½ëœ ë¬¸ìì—´ ê°’</returns>
     public static string ShortenValue(long val)
     {
         string returnText;
@@ -105,7 +110,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// À¯Àú°¡ º¸À¯ÇÑ Àç»ê(È­Æó) Á¤º¸¸¦ UI¿¡ ¾÷µ¥ÀÌÆ®ÇÏ´Â ¸Ş¼­µå
+    /// ìœ ì €ê°€ ë³´ìœ í•œ ì¬ì‚°(í™”í) ì •ë³´ë¥¼ UIì— ì—…ë°ì´íŠ¸í•˜ëŠ” ë©”ì„œë“œ
     /// </summary>
     void UpdateCurrencyText()
     {
@@ -115,7 +120,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// À¯Àú°¡ ¼ÓÇÑ ±¹°¡ÀÇ ÃÑ ÀÎ±¸ Á¤º¸¸¦ UI¿¡ ¾÷µ¥ÀÌÆ®ÇÏ´Â ¸Ş¼­µå
+    /// ìœ ì €ê°€ ì†í•œ êµ­ê°€ì˜ ì´ ì¸êµ¬ ì •ë³´ë¥¼ UIì— ì—…ë°ì´íŠ¸í•˜ëŠ” ë©”ì„œë“œ
     /// </summary>
     void UpdatePopulation()
     {
@@ -125,7 +130,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// °ÔÀÓÀÇ ÇöÀç ³¯Â¥¿Í ½Ã°£ ¼Óµµ¸¦ UI¿¡ ¾÷µ¥ÀÌÆ®ÇÏ´Â ¸Ş¼­µå
+    /// ê²Œì„ì˜ í˜„ì¬ ë‚ ì§œì™€ ì‹œê°„ ì†ë„ë¥¼ UIì— ì—…ë°ì´íŠ¸í•˜ëŠ” ë©”ì„œë“œ
     /// </summary>
     private void UpdateUIDate()
     {
@@ -136,9 +141,9 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÆË¾÷ µÚ·Î°¡±â ¹öÆ°À» ´­·¶À» ¶§ ÀÌÀü ÆË¾÷À» ºÒ·¯¿À´Â ¸Ş¼­µå
+    /// íŒì—… ë’¤ë¡œê°€ê¸° ë²„íŠ¼ì„ ëˆŒë €ì„ ë•Œ ì´ì „ íŒì—…ì„ ë¶ˆëŸ¬ì˜¤ëŠ” ë©”ì„œë“œ
     /// </summary>
-    /// <returns>¼º°ø ½Ã true, ½ÇÆĞ ½Ã false</returns>
+    /// <returns>ì„±ê³µ ì‹œ true, ì‹¤íŒ¨ ì‹œ false</returns>
     public void GoBackPopUp()
     {
         if (popUpVisited.Count != 0)
@@ -153,10 +158,10 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇöÀç ÆË¾÷À» ±³Ã¼ÇÏ´Â ¸Ş¼­µå
+    /// í˜„ì¬ íŒì—…ì„ êµì²´í•˜ëŠ” ë©”ì„œë“œ
     /// </summary>
-    /// <param name="go">±³Ã¼(È°¼ºÈ­ÇÒ) ¸Ş¼­µå</param>
-    /// <returns>¼º°ø ½Ã true, ½ÇÆĞ ½Ã false</returns>
+    /// <param name="go">êµì²´(í™œì„±í™”í• ) ë©”ì„œë“œ</param>
+    /// <returns>ì„±ê³µ ì‹œ true, ì‹¤íŒ¨ ì‹œ false</returns>
     public bool ReplacePopUp(GameObject go)
     {
         try
@@ -181,9 +186,9 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇöÀç ÆË¾÷ UI¸¦ ÀúÀåÇÏ°í ºñÈ°¼ºÈ­ÇÏ´Â ¸Ş¼­µå
+    /// í˜„ì¬ íŒì—… UIë¥¼ ì €ì¥í•˜ê³  ë¹„í™œì„±í™”í•˜ëŠ” ë©”ì„œë“œ
     /// </summary>
-    /// <returns>¼º°ø ½Ã true, ½ÇÆĞ ½Ã false</returns>
+    /// <returns>ì„±ê³µ ì‹œ true, ì‹¤íŒ¨ ì‹œ false</returns>
     private bool SavePopUp()
     {
         if (currentPopUp != null)
@@ -197,7 +202,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇöÀç ÆË¾÷ UI¸¦ ´İ°í ¹æ¹® ¸ñ·ÏÀ» ºñ¿ì´Â ¸Ş¼­µå
+    /// í˜„ì¬ íŒì—… UIë¥¼ ë‹«ê³  ë°©ë¬¸ ëª©ë¡ì„ ë¹„ìš°ëŠ” ë©”ì„œë“œ
     /// </summary>
     public void ClosePopUp()
     {
@@ -212,7 +217,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// DEPRECATED: ÇöÀç °ÔÀÓÀ» ÀúÀåÇÏ°í ¹Ù±ùÀ¸·Î ³ª°¡´Â ¸Ş¼­µå
+    /// DEPRECATED: í˜„ì¬ ê²Œì„ì„ ì €ì¥í•˜ê³  ë°”ê¹¥ìœ¼ë¡œ ë‚˜ê°€ëŠ” ë©”ì„œë“œ
     /// </summary>
     public void SaveGame()
     {
