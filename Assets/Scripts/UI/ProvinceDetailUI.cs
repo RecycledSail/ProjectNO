@@ -1,28 +1,35 @@
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 
 
 public class ProvinceDetailUI : MonoBehaviour
 {
+    [Header("General")]
     public GameObject uiPanel;
     public TMP_Text provinceNameText;
     public TMP_Text provinceDescriptionText;
     public TMP_Text provincePopulationText;
 
     //Stats panel
+    [Header("Stats Panel")]
     public TMP_Text provinceCropsText;
     public PieChart racesPieChart;
     private Province province;
 
     //Market panel
+    [Header("Market Panel")]
     public Transform marketPanel;
-    public GameObject marketChild; 
+    public GameObject marketChild;
+
+    //Building panel
+    [Header("Building Panel")]
+    public Transform buildingPanel;
+    public GameObject buildingChild;
 
     // Panels to change
+    [Header("SubUI Panel")]
     public List<GameObject> subUIs;
-
     private GameObject currentOpenSubUI;
 
     // 싱글톤 인스턴스 (다른 스크립트에서 쉽게 접근 가능)
@@ -125,6 +132,7 @@ public class ProvinceDetailUI : MonoBehaviour
         }
         provinceDescriptionText.text = "Topology: " + topoString;
         InitMarketPanel();
+        InitBuildingPanel();
         UpdateUI();
         UIManager.Instance.ReplacePopUp(gameObject);
     }
@@ -171,6 +179,26 @@ public class ProvinceDetailUI : MonoBehaviour
     private void UpdatePieChart()
     {
         racesPieChart.UpdatePieChart(province.pops);
+    }
+
+    /// <summary>
+    /// 빌딩 탭을 초기화
+    /// </summary>
+    private void InitBuildingPanel()
+    {
+        // 기존 리스트 정리
+        foreach (Transform child in buildingPanel)
+        {
+            Destroy(child.gameObject);
+        }
+
+        ProvinceMarket pm = province.market;
+        foreach (var value in province.buildings.Values)
+        {
+            GameObject child = Instantiate(buildingChild, buildingPanel);
+            ProvinceBuildingButtonUI productButtonUI = child.GetComponent<ProvinceBuildingButtonUI>();
+            productButtonUI.SetBuildingData(value);
+        }
     }
 
     
