@@ -21,7 +21,7 @@ public class ProvinceEthnicPop
     public Province province;
     public EthnicGroup ethnicGroup;
     public long population;
-
+        
     public ProvinceEthnicPop(Province province, EthnicGroup ethnicGroup, long populationCount)
     {
         this.province = province;
