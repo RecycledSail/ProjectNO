@@ -1,0 +1,24 @@
+{
+    "culture_0": {
+        "name": "paimon",
+        "traits": [
+        "Agriculture",
+        "Craftsmanship",
+        "Trade"
+        ]
+    },
+    "culture_1": {
+        "name": "lisa",
+        "traits": [
+        "Mining",
+        "Metallurgy",
+        "Engineering"
+        ]
+    }
+}
+
+
+
+
+
+
