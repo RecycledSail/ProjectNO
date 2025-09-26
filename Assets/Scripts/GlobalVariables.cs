@@ -211,7 +211,7 @@ public static class GlobalVariables
     {
         var gameData = LoadJsonFile<GameDataFormat.CultureWrapper>("Culture");
         // Load Species Spec
-        foreach (var data in gameData.cultureSpecs)
+        foreach (var data in gameData.cultures)
         {
             Culture culture = new Culture(data.name)
             {
@@ -376,7 +376,7 @@ public static class GlobalVariables
     public static void LoadInitialDiplomacies()
     {
         var gameData = LoadJsonFile<GameDataFormat.InitialDiplomaciesWrapper>("InitialDiplomacies");
-        // Diplomacy 占싸듸옙
+        // Diplomacy 정의
         foreach (var diplomacyData in gameData.initialDiplomacies)
         {
             try
@@ -494,7 +494,7 @@ public static class GlobalVariables
         [System.Serializable]
         public class CultureWrapper
         {
-            public List<GameDataFormat.CultureData> cultureSpecs;
+            public List<GameDataFormat.CultureData> cultures;
         }
 
         [System.Serializable]
@@ -607,7 +607,7 @@ public static class GlobalVariables
         
 
         [System.Serializable]
-        public sealed class SpeciesPopData { public string name; public int population; public int happiness; public int literacy; public int culture; }
+        public sealed class SpeciesPopData { public string name; public int population; public int happiness; public int literacy; public string culture; }
 
         [System.Serializable]
         public sealed class BuildingTypeData { public string name; public List<ItemData> requireItems; public List<ItemData> produceItems; public List<ItemData> workerNeeded; }

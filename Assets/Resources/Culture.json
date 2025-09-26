@@ -1,20 +1,22 @@
 {
-    "culture_0": {
-        "name": "paimon",
-        "traits": [
-        "Agriculture",
-        "Craftsmanship",
-        "Trade"
-        ]
-    },
-    "culture_1": {
-        "name": "lisa",
-        "traits": [
-        "Mining",
-        "Metallurgy",
-        "Engineering"
-        ]
-    }
+    "cultures": [
+		{
+			"name": "Paimon",
+			"traits": [
+			"Agriculture",
+			"Craftsmanship",
+			"Trade"
+			]
+		},
+		{
+			"name": "Lisa",
+			"traits": [
+			"Mining",
+			"Metallurgy",
+			"Engineering"
+			]
+		}
+	]
 }
 
 
