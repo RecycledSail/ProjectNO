@@ -607,7 +607,7 @@ public static class GlobalVariables
         
 
         [System.Serializable]
-        public sealed class SpeciesPopData { public string name; public int population; public int happiness; public int literacy; public string culture; }
+        public sealed class SpeciesPopData { public string name; public int population; public string culture; }
 
         [System.Serializable]
         public sealed class BuildingTypeData { public string name; public List<ItemData> requireItems; public List<ItemData> produceItems; public List<ItemData> workerNeeded; }
