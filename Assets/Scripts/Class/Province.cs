@@ -24,11 +24,12 @@ public class Province
     public string name { get; }
 
     public long population { get; private set; }
-
     public long Population => provinceEthnicPops.Sum(p => p.population);
     public Topography topo { get; }
     public Nation nation { get; set; } = null;
     public ProvinceMarket market { get; set; }
+
+    [Obsolete]
     public List<Species> pops { get; set; } = null;
     public Dictionary<BuildingType, Building> buildings { get; set; } = null;
     public List<ProvinceEthnicPop> provinceEthnicPops { get; set; } = null;
@@ -51,6 +52,7 @@ public class Province
         this.name = name;
         this.population = 0;
         this.topo = topo;
+        this.provinceEthnicPops = new List<ProvinceEthnicPop>();
         // this.market 할당은 GlobalVariables의 Market.Init()에서 수행
         buildings = new();
         pops = new();
