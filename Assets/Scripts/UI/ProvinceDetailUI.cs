@@ -154,11 +154,14 @@ public class ProvinceDetailUI : MonoBehaviour
     {
         provincePopulationText.text = "";
         bool isTop = true;
-        foreach (Species species in province.pops)
+        foreach (ProvinceEthnicPop pep in province.provinceEthnicPops)
         {
+            EthnicGroup ethnicGroup = pep.ethnicGroup;
+            SpeciesSpec species = ethnicGroup.species;
+            Culture culture = ethnicGroup.culture;
             if (!isTop)
                 provincePopulationText.text += "\n";
-            provincePopulationText.text += "PopKind: " + species.name + " Pop: " + UIManager.ShortenValue(species.population);
+            provincePopulationText.text += "Species: " + species.name + " Culture: " + culture.name + " Pop: " + UIManager.ShortenValue(pep.population);
             isTop = false;
         }
     }
@@ -178,7 +181,7 @@ public class ProvinceDetailUI : MonoBehaviour
     /// </summary>
     private void UpdatePieChart()
     {
-        racesPieChart.UpdatePieChart(province.pops);
+        racesPieChart.UpdatePieChart(province.provinceEthnicPops);
     }
 
     /// <summary>

@@ -27,10 +27,10 @@ public class PieChart : MonoBehaviour
     }
 
     /// <summary>
-    /// Pie Chart¸¦ ¾÷µ¥ÀÌÆ®, ProvinceDetailUI¿¡¼­ È£Ãâ
+    /// Pie Chartë¥¼ ì—…ë°ì´íŠ¸, ProvinceDetailUIì—ì„œ í˜¸ì¶œ
     /// </summary>
-    /// <param name="pops">ProvinceÀÇ pops</param>
-    public void UpdatePieChart(List<Species> pops)
+    /// <param name="pops">Provinceì˜ pops</param>
+    public void UpdatePieChart(List<ProvinceEthnicPop> pops)
     {
         foreach(GameObject element in pieElements)
         {
@@ -38,14 +38,14 @@ public class PieChart : MonoBehaviour
         }
         pieElements.Clear();
 
-        List<Species> newList = new();
+        List<ProvinceEthnicPop> newList = new();
         float totalpop = 0;
-        foreach(var species in pops)
+        foreach(var pep in pops)
         {
-            newList.Add(species);
-            totalpop += species.population;
+            newList.Add(pep);
+            totalpop += pep.population;
         }
-        newList.Sort((o1, o2) => o2.population - o1.population);
+        newList.Sort((o1, o2) => o2.population < o1.population ? -1 : 1);
 
         float curpop = totalpop;
         int count = 0;
@@ -58,10 +58,10 @@ public class PieChart : MonoBehaviour
     }
 
     /// <summary>
-    /// Pie Element¸¦ Instantiate½ÃÅ²´Ù. °¢ ¿ä¼Ò´Â Speciesº° ÀÎ±¸ ºñÀ²
+    /// Pie Elementë¥¼ Instantiateì‹œí‚¨ë‹¤. ê° ìš”ì†ŒëŠ” Speciesë³„ ì¸êµ¬ ë¹„ìœ¨
     /// </summary>
-    /// <param name="fillAmount">ÆÄÀÌÀÇ ºñÀ², UpdatePieChart¿¡¼­ °ü¸®ÇÏ¸ç 1ºÎÅÍ ÁÙ¿©³ª°¡´Â ¹æ¹ıÀ¸·Î °ãÄ¡±â</param>
-    /// <param name="index">colorPool¿¡¼­ ¾î¶² »öÀ» »ç¿ëÇÒÁö ÀÎµ¦½º</param>
+    /// <param name="fillAmount">íŒŒì´ì˜ ë¹„ìœ¨, UpdatePieChartì—ì„œ ê´€ë¦¬í•˜ë©° 1ë¶€í„° ì¤„ì—¬ë‚˜ê°€ëŠ” ë°©ë²•ìœ¼ë¡œ ê²¹ì¹˜ê¸°</param>
+    /// <param name="index">colorPoolì—ì„œ ì–´ë–¤ ìƒ‰ì„ ì‚¬ìš©í• ì§€ ì¸ë±ìŠ¤</param>
     private void InstantiatePieElement(float fillAmount, int index)
     {
         Vector2 widthHeight = gameObject.GetComponent<RectTransform>().sizeDelta;

@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class RegimentUI : MonoBehaviour
 {
-    //´«¿¡ Á÷Á¢ º¸ÀÌ´Â ÀÌ¹ÌÁö/ÅØ½ºÆ®
+    //ëˆˆì— ì§ì ‘ ë³´ì´ëŠ” ì´ë¯¸ì§€/í…ìŠ¤íŠ¸
     public TMP_Text unitPop;
     public Image statusImage;
 
@@ -53,8 +53,8 @@ public class RegimentUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Å×½ºÆ®¿ë Regiment »ı¼º
-    /// ½ÇÁ¦·Î´Â regiment¸¦ ÀÎ½ºÅÏ½º¸¶´Ù ÁÖÀÔ¹Ş±â ¶§¹®¿¡ ÀÌ°É º¼ ÀÏÀÌ ÀÖÀ¸¸é ¾È µÊ
+    /// í…ŒìŠ¤íŠ¸ìš© Regiment ìƒì„±
+    /// ì‹¤ì œë¡œëŠ” regimentë¥¼ ì¸ìŠ¤í„´ìŠ¤ë§ˆë‹¤ ì£¼ì…ë°›ê¸° ë•Œë¬¸ì— ì´ê±¸ ë³¼ ì¼ì´ ìˆìœ¼ë©´ ì•ˆ ë¨
     /// </summary>
     private void CreateTestRegiment()
     {
@@ -68,7 +68,7 @@ public class RegimentUI : MonoBehaviour
         }
         else
         {
-            province = new(-1, "testProvince", 10000, Topography.Mountain);
+            province = new(-1, "testProvince", Topography.Mountain);
             GlobalVariables.PROVINCES["testProvince"] = province;
         }
 

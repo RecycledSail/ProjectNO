@@ -276,8 +276,8 @@ public static class GlobalVariables
         {
             //TODO: Load ethnicgroup
             //List<Species> loadPops = new();
-            
-            int population = 0;
+
+
             //foreach (var speciesData in p.pops)
             //{
             //    Species species = new(speciesData.name, )
@@ -288,7 +288,20 @@ public static class GlobalVariables
             //    population += species.population;
             //}
 
-            var province = new Province(p.id, p.name, population, (Topography)System.Enum.Parse(typeof(Topography), p.topography));
+            long population = 0;
+            var province = new Province(p.id, p.name, (Topography)System.Enum.Parse(typeof(Topography), p.topography));
+
+            
+            foreach (var pop in p.pops)
+            {
+                var species = SPECIES_SPEC[pop.name];
+                var culture = CULTURE[pop.culture];
+                EthnicGroup ethnicGroup = new(species, culture);
+                ProvinceEthnicPop provinceEthnicPop = new(province, ethnicGroup, pop.population);
+                population += provinceEthnicPop.population;
+            }
+
+            
             //ethnicGroup에 뭐가 들어가야 할까
             //EthnicGroup ethnicGroup = new(speciesS);
             //ProvinceEthnicPop provinceEthnicPop = new(province, null, 0);
@@ -550,22 +563,6 @@ public static class GlobalVariables
         {
             public List<GameDataFormat.BuildingrecipeData> buildingrecipes;
         }
-
-
-        public List<BuffData> buffs;
-        public List<ResearchNodeData> researchNodes;
-        public List<UnitTypeData> unitTypes;
-        public List<NationData> nations;
-        public List<ProvinceData> provinces;
-        public List<InitialProvinceWrapper> initialProvinces;
-        public List<AdjacentProvinceWrapper> adjacentProvinces;
-        public List<SpeciesSpecData> speciesSpecs;
-        public List<JobTypeData> jobTypes;
-        public List<BuildingTypeData> buildingTypes;
-        public List<ProductsData> products;
-        public List<InitialDiplomacyWrapper> initialDiplomacies;
-        public List<BuildingrecipeData> buildingrecipes;
-
 
 
         [System.Serializable]

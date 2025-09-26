@@ -64,14 +64,13 @@ public static class SaveManager
         {
 
             var province = PROVINCES[p.name];
-            province.population = p.population;
 
             List<Species> loadPops = new();
             foreach(var species in p.pops) {
                 if (species.type != "")
                 {
                     Debug.Log(species.type);
-                    loadPops.Add(FromSpeciesData(species));
+                    //loadPops.Add(FromSpeciesData(species));
                 }
             }
             province.pops = loadPops;
@@ -163,7 +162,7 @@ public static class SaveManager
                     //    amount = product.amount
                     //}).ToList()
                 },
-                pops = ToSpeciesData(p.pops)
+                //pops = ToSpeciesData(p.pops)
             };
             saveData.provinces.Add(provinceData);
         }
