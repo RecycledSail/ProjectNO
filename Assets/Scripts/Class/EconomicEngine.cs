@@ -5,6 +5,21 @@ using System.Collections.Generic;
 public class EconomyManager
 {
     public List<Province> provinces = new List<Province>();
+    
+    public Market
+
+
+
+
+
+    public static void PriceUpdate()
+
+    {
+
+
+    }
+    
+
 
 
 }

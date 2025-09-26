@@ -9,7 +9,7 @@
           "population": 3500,
           "happiness": 70,
           "literacy": 25,
-          "culture": 0
+          "culture": "culture_0"
         }
       ],
       "topography": "Plane",

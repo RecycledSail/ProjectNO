@@ -194,7 +194,7 @@ public static class GlobalVariables
             SpeciesSpec speciesSpec = new SpeciesSpec
             {
                 name = data.name,
-                foodNeeded = data.foodNeeded
+                baseBirthRate = data.baseBirthRate
             };
             SPECIES_SPEC[data.name] = speciesSpec;
         }
@@ -257,12 +257,9 @@ public static class GlobalVariables
             int population = 0;
             foreach (var speciesData in p.pops)
             {
-                Species species = new(speciesData.name)
+                Species species = new(speciesData.name, )
                 {
-                    population = speciesData.population,
-                    happiness = speciesData.happiness,
-                    literacy = speciesData.literacy,
-                    culture = speciesData.culture
+                    baseBirthRate =speciesData.baseBirthRate
                 };
                 loadPops.Add(species);
                 population += species.population;
@@ -457,7 +454,7 @@ public static class GlobalVariables
             SpeciesSpec speciesSpec = new SpeciesSpec
             {
                 name = data.name,
-                foodNeeded = data.foodNeeded
+                baseBirthRate = data.baseBirthRate
             };
             SPECIES_SPEC[data.name] = speciesSpec;
         }
@@ -807,7 +804,7 @@ public static class GlobalVariables
         public sealed class AdjacentProvinceWrapper { public string province; public List<string> adjacents; }
 
         [System.Serializable]
-        public sealed class SpeciesSpecData { public string name; public int foodNeeded; }
+        public sealed class SpeciesSpecData { public string name; public double baseBirthRate; }
 
         [System.Serializable]
         public sealed class SpeciesPopData { public string name; public int population; public int happiness; public int literacy; public int culture; }

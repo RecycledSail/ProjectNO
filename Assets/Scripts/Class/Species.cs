@@ -6,21 +6,20 @@ using System;
 public class Species
 {
     public string name { get; set; }
-    public int population { get; set; } = 0;
-    public int happiness { get; set; } = 100;　// 행복도
-    public int literacy { get; set; } = 50; // 문해율
-    public int culture { get; set; } = 0; // 문화(앞으로 여러 문화를 추가할것 )
-    private int foodConsumed = 0;
-    private int foodNeeded = 2; // 예: 1명당 2 유닛 필요
+    public double baseBirthRate { get; set; }
+
+
+
 
     public Species(string name)
     {
-        
+
         SpeciesSpec speciesSpec;
         if (GlobalVariables.SPECIES_SPEC.TryGetValue(name, out speciesSpec))
         {
-            this.name = name;
-            foodNeeded = speciesSpec.foodNeeded;
+            this.name = speciesSpec.name;
+            this.baseBirthRate = speciesSpec.baseBirthRate;
+
         }
         else
         {
@@ -49,21 +48,21 @@ public class Species
     }
 
 
-    public void UpdateGrowth()
-    {
-        float foodRatio = (float)foodConsumed / (population * foodNeeded);
-        int growthBase = (int)(foodRatio * 5);  // 0 ~ 5%
-        population += (int)(population * (growthBase / 100f));
+    // public void UpdateGrowth()
+    // {
+    //     float foodRatio = (float)foodConsumed / (population * foodNeeded);
+    //     int growthBase = (int)(foodRatio * 5);  // 0 ~ 5%
+    //     population += (int)(population * (growthBase / 100f));
 
-        if (foodRatio < 0.5f)
-        {
-            // 영양 부족 시 인구 감소
-            int death = (int)(population * (0.02f * (1 - foodRatio)));  // 최대 2% 감소
-            population -= death;
-        }
+    //     if (foodRatio < 0.5f)
+    //     {
+    //         // 영양 부족 시 인구 감소
+    //         int death = (int)(population * (0.02f * (1 - foodRatio)));  // 최대 2% 감소
+    //         population -= death;
+    //     }
 
-        foodConsumed = 0; // 초기화
-    }
+    //     foodConsumed = 0; // 초기화
+    // }
 
 }
 
@@ -71,11 +70,7 @@ public class Species
 
 
 // 인간 종족을 정의하는 클래스 
-public class SpeciesSpec
-{
-    public string name; // 종족 이름 정의 
-    public int foodNeeded = 2; // 예: 1명당 2 유닛 필요
-}
+
 
 
 //직업 타입을 정의하는 클래스
@@ -85,6 +80,5 @@ public class JobType
     public bool literacyNeeded; // 문해능력 필요 여부
     public int salary; // 월급
 }
-
 
 
