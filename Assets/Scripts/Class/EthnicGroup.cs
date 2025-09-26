@@ -1,31 +1,17 @@
-using UnityEngine;
-using System;
-using System.Globalization;
-
-// 
-
 using System.Collections.Generic;
 
 // 민족집단
 public class EthnicGroup
 {
-
-    public Nation Nation { get; private set; } = null;
-
     public SpeciesSpec species;
     public Culture culture;
     public List<ProvinceEthnicPop> provincePops = new List<ProvinceEthnicPop>();
 
     public EthnicGroup(SpeciesSpec species, Culture culture)
     {
-        
         this.species = species;
         this.culture = culture;
     }
-    
-
-
-
 }
 
 

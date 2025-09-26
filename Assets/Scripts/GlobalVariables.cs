@@ -123,9 +123,9 @@ public static class GlobalVariables
             LoadCulture();
             LoadJobTypes();
             LoadBuildingTypes();
+            LoadNations();
             LoadProvinces();
             LoadAdjacentProvinces();
-            LoadNations();
             LoadInitialProvinces();
             LoadProducts();
             LoadInitialDiplomacies();
@@ -268,6 +268,34 @@ public static class GlobalVariables
             BUILDING_TYPE[data.name] = buildingType;
         }
     }
+
+    public static void LoadNations()
+    {
+        var gameData = LoadJsonFile<GameDataFormat.NationsWrapper>("Nations");
+        // Load Nations
+        foreach (var n in gameData.nations)
+        {
+            var rnodes = new List<ResearchNode>();
+            foreach (var rname in n.researchNodeNames)
+            {
+                if (RESEARCH_NODE.TryGetValue(rname, out var rnode))
+                    rnodes.Add(rnode);
+            }
+            Nation nation = new(n.id, n.name, rnodes);
+            foreach (var regimentData in n.regiments)
+            {
+
+                Regiment newRegiment = new(nation, regimentData.name, PROVINCES[regimentData.location]);
+                foreach (var squad in regimentData.squads)
+                {
+                    Squad newSquad = new(UNIT_TYPE[squad.unitType], squad.capacity, squad.population);
+                    newRegiment.units[UNIT_TYPE[squad.unitType]] = newSquad;
+                }
+                nation.AddRegiment(newRegiment);
+            }
+            NATIONS[n.name] = nation;
+        }
+    }
     public static void LoadProvinces()
     {
         var gameData = LoadJsonFile<GameDataFormat.ProvincesWrapper>("Provinces");
@@ -275,18 +303,6 @@ public static class GlobalVariables
         foreach (var p in gameData.provinces)
         {
             //TODO: Load ethnicgroup
-            //List<Species> loadPops = new();
-
-
-            //foreach (var speciesData in p.pops)
-            //{
-            //    Species species = new(speciesData.name, )
-            //    {
-            //        baseBirthRate =speciesData.baseBirthRate
-            //    };
-            //    loadPops.Add(species);
-            //    population += species.population;
-            //}
 
             long population = 0;
             var province = new Province(p.id, p.name, (Topography)System.Enum.Parse(typeof(Topography), p.topography));
@@ -296,6 +312,7 @@ public static class GlobalVariables
             {
                 var species = SPECIES_SPEC[pop.name];
                 var culture = CULTURE[pop.culture];
+                
                 EthnicGroup ethnicGroup = new(species, culture);
                 ProvinceEthnicPop provinceEthnicPop = new(province, ethnicGroup, pop.population);
                 population += provinceEthnicPop.population;
@@ -335,33 +352,7 @@ public static class GlobalVariables
             ADJACENT_PROVINCES[pair.province] = list;
         }
     }
-    public static void LoadNations()
-    {
-        var gameData = LoadJsonFile<GameDataFormat.NationsWrapper>("Nations");
-        // Load Nations
-        foreach (var n in gameData.nations)
-        {
-            var rnodes = new List<ResearchNode>();
-            foreach (var rname in n.researchNodeNames)
-            {
-                if (RESEARCH_NODE.TryGetValue(rname, out var rnode))
-                    rnodes.Add(rnode);
-            }
-            Nation nation = new(n.id, n.name, rnodes);
-            foreach (var regimentData in n.regiments)
-            {
-
-                Regiment newRegiment = new(nation, regimentData.name, PROVINCES[regimentData.location]);
-                foreach (var squad in regimentData.squads)
-                {
-                    Squad newSquad = new(UNIT_TYPE[squad.unitType], squad.capacity, squad.population);
-                    newRegiment.units[UNIT_TYPE[squad.unitType]] = newSquad;
-                }
-                nation.AddRegiment(newRegiment);
-            }
-            NATIONS[n.name] = nation;
-        }
-    }
+    
     public static void LoadInitialProvinces()
     {
         var gameData = LoadJsonFile<GameDataFormat.InitialProvincesWrapper>("InitialProvinces");

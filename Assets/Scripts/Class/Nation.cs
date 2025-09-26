@@ -11,6 +11,7 @@ public class Nation
     public List<Province> provinces { get; set; }
     public long balance { get; set; }
     public List<Regiment> regiments { get; set; }
+    public Dictionary<(Species, Culture), EthnicGroup> ethnicGroups { get; set; }
     public Dictionary<Nation, Diplomacy> allies;
     public Dictionary<Nation, Diplomacy> enemies;
     public List<ResearchNode> doneResearches;
@@ -38,6 +39,7 @@ public class Nation
                 buffs.Add(buff.baseBuff, prevValue + buff.power);
             }
         }
+        ethnicGroups = new();
         allies = new();
         enemies = new();
     }
