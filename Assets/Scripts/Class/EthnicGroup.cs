@@ -12,15 +12,15 @@ public class EthnicGroup
 
     public Nation Nation { get; private set; } = null;
 
-    public Species MainSpecies;
-    public Culture NationCulture;
-    public List<ProvinceEthnicPop> ProvincePops = new List<ProvinceEthnicPop>();
+    public SpeciesSpec species;
+    public Culture culture;
+    public List<ProvinceEthnicPop> provincePops = new List<ProvinceEthnicPop>();
 
-    public EthnicGroup( Species mainSpecies, Culture culture)
+    public EthnicGroup(SpeciesSpec species, Culture culture)
     {
         
-        MainSpecies = mainSpecies;
-        NationCulture = culture;
+        this.species = species;
+        this.culture = culture;
     }
     
 
@@ -46,7 +46,7 @@ public class ProvinceEthnicPop
     public void PopulationGrowth()
     {
         // 단순한 인구 증가 -앞으로 문화에 따른 변화도 고려해야 함
-        double growthRate = ethnicGroup.MainSpecies.baseBirthRate; // 종족당 설정되어 있는 값을 사용
+        double growthRate = ethnicGroup.species.baseBirthRate; // 종족당 설정되어 있는 값을 사용
         populationCount = (long)(populationCount * (1 + growthRate));
     }
 

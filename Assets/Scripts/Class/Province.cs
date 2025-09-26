@@ -90,7 +90,7 @@ public class Province
             population += species.population; // 이 줄로 동기화도 함께
         }
     }
-        public void AddPop(Culture culture, long amount, float? birthOverride = null)
+    public void AddPop(Culture culture, long amount, float? birthOverride = null)
     {
         var s = _popsByCulture.FirstOrDefault(p => p.Culture.Id == culture.Id);
         if (s == null) _popsByCulture.Add(new PopSliceByCulture(culture, amount, birthOverride));

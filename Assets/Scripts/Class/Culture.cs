@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 
 
@@ -8,15 +9,15 @@ using System;
 
 public class Culture
 {
-    public string Name;
-    public List<Culturetrait> Traits = new List<Culturetrait>();
+    public string name;
+    public List<CultureTrait> Traits = new List<CultureTrait>();
 
     public Culture(string name)
     {
-        Name = name;
+        this.name = name;
     }
 
-    public void AddTrait(Culturetrait trait)
+    public void AddTrait(CultureTrait trait)
     {
         Traits.Add(trait);
     }
@@ -27,7 +28,7 @@ public class Culture
 
 
 
-public class Culturetrait
+public class CultureTrait
 {
     public String Name;
 

@@ -8,35 +8,36 @@ using static SaveManager.SaveDataFormat;
 
 public static class SaveManager
 {
-    public static List<SpeciesData> ToSpeciesData(List<Species> pops)
-    {
-        List<SpeciesData> savePops = new();
-        foreach(Species species in pops)
-        {
-            savePops.Add(
-                new SpeciesData
-                {
-                    type = species.name,
-                    population = species.population,
-                    happiness = species.happiness,
-                    literacy = species.literacy,
-                    culture = species.culture
-                }
-            );
-        }
-        return savePops;
-    }
+    //TODO: Import Ethnic Group
+    //public static List<SpeciesData> ToSpeciesData(List<Species> pops)
+    //{
+    //    List<SpeciesData> savePops = new();
+    //    foreach(Species species in pops)
+    //    {
+    //        savePops.Add(
+    //            new SpeciesData
+    //            {
+    //                type = species.name,
+    //                population = species.population,
+    //                happiness = species.happiness,
+    //                literacy = species.literacy,
+    //                culture = species.culture
+    //            }
+    //        );
+    //    }
+    //    return savePops;
+    //}
 
-    public static Species FromSpeciesData(SpeciesData data)
-    {
-        return new Species(data.type)
-        {
-            population = data.population,
-            happiness = data.happiness,
-            literacy = data.literacy,
-            culture = data.culture
-        };
-    }
+    //public static Species FromSpeciesData(SpeciesData data)
+    //{
+    //    return new Species(data.type)
+    //    {
+    //        population = data.population,
+    //        happiness = data.happiness,
+    //        literacy = data.literacy,
+    //        culture = data.culture
+    //    };
+    //}
     public static void OnLoad()
     {
         GameManager gameManager = GameManager.Instance;
@@ -75,7 +76,7 @@ public static class SaveManager
             }
             province.pops = loadPops;
 
-            //TODO: Crops °íÄ¡¸é ±×¶§ ÇÏ±â
+            //TODO: Crops ê³ ì¹˜ë©´ ê·¸ë•Œ í•˜ê¸°
             //foreach (var productData in p.market.products)
             //{
             //    var product = province.market.GetProduct(productData.name);
@@ -155,7 +156,7 @@ public static class SaveManager
                 topography = p.topo.ToString(),
                 market = new SaveDataFormat.MarketData
                 {
-                    //TODO: CROPS °íÄ¡¸é ±×¶§ ÇÏ±â
+                    //TODO: CROPS ê³ ì¹˜ë©´ ê·¸ë•Œ í•˜ê¸°
                     //products = p.market.products.Select(product => new SaveDataFormat.ProductData
                     //{
                     //    name = product.name,
@@ -264,7 +265,7 @@ public static class SaveManager
         [System.Serializable]
         public sealed class SpeciesData
         {
-            public string type; // ¿¹: "Human"
+            public string type; // ì˜ˆ: "Human"
             public int population;
 
             public int happiness;
