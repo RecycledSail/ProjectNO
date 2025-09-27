@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -28,13 +27,8 @@ public class Province
     public Topography topo { get; }
     public Nation nation { get; set; } = null;
     public ProvinceMarket market { get; set; }
-
-    [Obsolete]
-    public List<Species> pops { get; set; } = null;
     public Dictionary<BuildingType, Building> buildings { get; set; } = null;
     public List<ProvinceEthnicPop> provinceEthnicPops { get; set; } = null;
-
-
 
 
     /// <summary>
@@ -55,7 +49,6 @@ public class Province
         this.provinceEthnicPops = new List<ProvinceEthnicPop>();
         // this.market 할당은 GlobalVariables의 Market.Init()에서 수행
         buildings = new();
-        pops = new();
     }
 
     public void AddNation(Nation nation)
@@ -72,19 +65,24 @@ public class Province
         }
         else return false;
     }
-    public void SimulateTurn()
+    public void SimulateDailyTurn()
     {
-        if (pops.Count == 0) return;
+        if (Population == 0) return;
+        // TODO: buildings 처리
+    }
 
-        population = 0;
-        foreach (Species species in pops)
+    public void SimulateWeeklyTurn()
+    {
+        if (Population == 0) return;
+        UpdatePopulation();
+    }
+
+    public void UpdatePopulation()
+    {
+        // 각 pep에 대해서 인구 증감
+        foreach (ProvinceEthnicPop pep in provinceEthnicPops)
         {
-            //species.Consume(market);
-            //market.ProduceCrops();
-            foreach (Building building in buildings.Values)
-            {
-                building.ProduceItem();
-            }
+            pep.PopulationGrowth();
         }
     }
 }

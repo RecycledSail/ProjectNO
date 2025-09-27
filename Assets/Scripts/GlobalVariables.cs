@@ -123,8 +123,8 @@ public static class GlobalVariables
             LoadCulture();
             LoadJobTypes();
             LoadBuildingTypes();
-            LoadNations();
             LoadProvinces();
+            LoadNations();
             LoadAdjacentProvinces();
             LoadInitialProvinces();
             LoadProducts();
@@ -303,8 +303,6 @@ public static class GlobalVariables
         foreach (var p in gameData.provinces)
         {
             //TODO: Load ethnicgroup
-
-            long population = 0;
             var province = new Province(p.id, p.name, (Topography)System.Enum.Parse(typeof(Topography), p.topography));
 
             
@@ -315,7 +313,7 @@ public static class GlobalVariables
                 
                 EthnicGroup ethnicGroup = new(species, culture);
                 ProvinceEthnicPop provinceEthnicPop = new(province, ethnicGroup, pop.population);
-                population += provinceEthnicPop.population;
+                province.provinceEthnicPops.Add(provinceEthnicPop);
             }
 
             

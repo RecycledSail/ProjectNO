@@ -78,7 +78,8 @@ public class MarketUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameManager.Instance.dayEvent.RemoveListener(UpdateMarketUI);
+        if (GameManager.Instance != null)
+            GameManager.Instance.dayEvent.RemoveListener(UpdateMarketUI);
     }
 
     private void UpdateMarketUI()

@@ -64,7 +64,8 @@ public class UIManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameManager.Instance.dayEvent.RemoveListener(UpdateTopUI);
+        if (GameManager.Instance != null)
+            GameManager.Instance.dayEvent.RemoveListener(UpdateTopUI);
     }
 
     /// <summary>
@@ -124,7 +125,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     void UpdatePopulation()
     {
-        long population = GameManager.Instance.player.nation.GetPopulation();
+        long population = GameManager.Instance.player.nation.Population;
         string popText = ShortenValue(population);
         PopulationText.text = "POP: " + popText;
     }

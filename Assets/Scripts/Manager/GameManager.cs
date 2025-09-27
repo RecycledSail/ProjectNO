@@ -26,6 +26,8 @@ public class GameManager : MonoBehaviour
     public UnityEvent dayEvent;
     // 모든 유저 목록 및 플레이어 본인 정보
     public List<User> users { get; set; }
+
+    // 현재 플레이중인 플레이어 본인
     public User player { get; set; }
 
     // 게임이 일시정지 상태인지 나타내는 플래그
@@ -54,6 +56,9 @@ public class GameManager : MonoBehaviour
     public int year { get; set; } = 1836;
     public int month { get; set; } = 1;
     public int day { get; set; } = 1;
+
+    // 게임 일주일 단위 관리
+    public int dayoftheWeek = 0;
 
     // 게임에서 하루가 진행되는 실제 시간 간격(초 단위)
     private int timeSpeed = 1;
@@ -205,6 +210,7 @@ public class GameManager : MonoBehaviour
     public void AdvanceDay()
     {
         day++; // 하루 증가
+        dayoftheWeek++; // 요일 증가
         int daysInMonth = GetDaysInMonth(month, year);
 
         // 현재 달의 일수가 넘으면 다음 달로 변경
@@ -276,6 +282,11 @@ public class GameManager : MonoBehaviour
             {
                 AdvanceDay();         // 날짜 진행
                 ProcessDailyEvents(); // 매일 실행될 게임 이벤트 처리
+                if(dayoftheWeek >= 7)
+                {
+                    dayoftheWeek = 0;
+                    ProcessWeeklyEvents();
+                }
                 dayEvent.Invoke(); // 매일 실행되는 event invoke
             }
         }
@@ -283,16 +294,25 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// 매일 하루마다 실행되는 게임 이벤트 로직 처리 메서드
-    /// 예) 자원 생산, 인구 증가, AI 행동 등
+    /// 예) 자원 생산, AI 행동 등
     /// </summary>
     private void ProcessDailyEvents()
     {
-        foreach (User user in users)
+        foreach (Province province in provinces.Values)
         {
-            foreach (Province province in user.nation.provinces)
-            {
-                province.SimulateTurn(); // 이것만 호출
-            }
+            province.SimulateDailyTurn(); // 이것만 호출
+        }
+    }
+
+    /// <summary>
+    /// 매주마다 실행되는 게임 이벤트 로직 처리 메서드
+    /// 예) 인구 증가 등
+    /// </summary>
+    private void ProcessWeeklyEvents()
+    {
+        foreach (Province province in provinces.Values)
+        {
+            province.SimulateWeeklyTurn(); // 이것만 호출
         }
     }
 

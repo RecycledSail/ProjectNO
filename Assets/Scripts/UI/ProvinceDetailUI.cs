@@ -81,7 +81,8 @@ public class ProvinceDetailUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameManager.Instance.dayEvent.RemoveListener(UpdateProvinceUI);
+        if (GameManager.Instance != null)
+            GameManager.Instance.dayEvent.RemoveListener(UpdateProvinceUI);
     }
 
     private void Update()

@@ -82,7 +82,8 @@ public class NationUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameManager.Instance.dayEvent.AddListener(UpdateNationUI);
+        if (GameManager.Instance != null)
+            GameManager.Instance.dayEvent.AddListener(UpdateNationUI);
     }
 
     private void UpdateNationUI()
@@ -185,7 +186,7 @@ public class NationUI : MonoBehaviour
     public void InitNationStats()
     {
         string text = "";
-        text += "Population: " + currentNation.GetPopulation() + "\n";
+        text += "Population: " + currentNation.Population + "\n";
         text += "Currency: " + currentNation.balance + "\n";
 
         nationStatsText.text = text;

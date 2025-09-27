@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
-/// ���� Ŭ����
-/// ID, �̸�, ���� ���κ�, ��� ����
+/// 국가 클래스
+/// ID, 이름, 소유 프로빈스, 재산 정의
 /// </summary>
 public class Nation
 {
@@ -17,11 +18,14 @@ public class Nation
     public List<ResearchNode> doneResearches;
     public Dictionary<BuffKind, double> buffs;
 
+    // Getter
+    public long Population => provinces.Sum(x => x.Population);
+
     /// <summary>
-    /// ���� ������
+    /// 국가 생성자
     /// </summary>
-    /// <param name="id">������ ID</param>
-    /// <param name="name">������ �̸�(�ڵ�)</param>
+    /// <param name="id">국가의 ID</param>
+    /// <param name="name">국가의 이름(코드)</param>
     public Nation(int id, string name, List<ResearchNode> researches)
     {
         this.id = id;
@@ -45,21 +49,21 @@ public class Nation
     }
 
     /// <summary>
-    /// �ش� ���κ󽺰� �ִ��� �˻��ϴ� �޼���
+    /// 해당 프로빈스가 있는지 검사하는 메서드
     /// </summary>
-    /// <param name="province">�˻��ϰ��� �ϴ� ���κ�</param>
-    /// <returns>���κ� ���� ���̸� true, �ƴϸ� false</returns>
+    /// <param name="province">검사하고자 하는 프로빈스</param>
+    /// <returns>프로빈스 보유 중이면 true, 아니면 false</returns>
     public bool HasProvinces(Province province)
     {
         return provinces.Find(x => x.Equals(province)) != null;
     }
 
     /// <summary>
-    /// ���κ󽺸� �߰��ϴ� �޼���
-    /// �߰� �õ� �� ���� ���ο� ���� boolean ��ȯ
+    /// 프로빈스를 추가하는 메서드
+    /// 추가 시도 후 성공 여부에 따라 boolean 반환
     /// </summary>
-    /// <param name="province">�߰��ϰ��� �ϴ� ���κ�</param>
-    /// <returns>�߰� �����ϸ� true, �ƴϸ� false</returns>
+    /// <param name="province">추가하고자 하는 프로빈스</param>
+    /// <returns>추가 가능하면 true, 아니면 false</returns>
     public bool AddProvinces(Province province)
     {
         if (!HasProvinces(province))
@@ -72,11 +76,11 @@ public class Nation
     }
 
     /// <summary>
-    /// ���κ󽺸� �����ϴ� �޼���
-    /// ���� �õ� �� ���� ���ο� ���� boolean ��ȯ
+    /// 프로빈스를 제거하는 메서드
+    /// 제거 시도 후 성공 여부에 따라 boolean 반환
     /// </summary>
-    /// <param name="province">�����ϰ��� �ϴ� ���κ�</param>
-    /// <returns>���� �����ϸ� true, �ƴϸ� false</returns>
+    /// <param name="province">제거하고자 하는 프로빈스</param>
+    /// <returns>제거 가능하면 true, 아니면 false</returns>
     public bool RemoveProvinces(Province province)
     {
         bool avail = provinces.Remove(province);
@@ -88,25 +92,11 @@ public class Nation
     }
 
     /// <summary>
-    /// ������ ��� ���κ��� �α��� ���� ��ȯ
+    /// 연대를 추가하는 메서드
+    /// 추가 시도 후 성공 여부에 따라 boolean 반환
     /// </summary>
-    /// <returns>������ ��� ���κ��� �α� ��</returns>
-    public long GetPopulation()
-    {
-        long sum = 0;
-        foreach (Province province in provinces)
-        {
-            sum += province.population;
-        }
-        return sum;
-    }
-
-    /// <summary>
-    /// ���븦 �߰��ϴ� �޼���
-    /// �߰� �õ� �� ���� ���ο� ���� boolean ��ȯ
-    /// </summary>
-    /// <param name="regiment">�߰��ϰ��� �ϴ� ����</param>
-    /// <returns>���� �� true, ���� �� false</returns>
+    /// <param name="regiment">추가하고자 하는 연대</param>
+    /// <returns>성공 시 true, 실패 시 false</returns>
     public bool AddRegiment(Regiment regiment)
     {
         if (regiment == null) return false;

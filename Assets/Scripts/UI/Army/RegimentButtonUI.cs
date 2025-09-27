@@ -29,7 +29,8 @@ public class RegimentButtonUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameManager.Instance.dayEvent.RemoveListener(UpdatePopCount);
+        if (GameManager.Instance != null)
+            GameManager.Instance.dayEvent.RemoveListener(UpdatePopCount);
     }
 
     private void UpdatePopCount()

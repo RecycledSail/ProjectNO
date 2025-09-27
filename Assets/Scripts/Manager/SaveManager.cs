@@ -73,7 +73,7 @@ public static class SaveManager
                     //loadPops.Add(FromSpeciesData(species));
                 }
             }
-            province.pops = loadPops;
+            //province.pops = loadPops;
 
             //TODO: Crops 고치면 그때 하기
             //foreach (var productData in p.market.products)
