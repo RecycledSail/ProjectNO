@@ -134,7 +134,7 @@ public static class GlobalVariables
         {
             Debug.LogError(e);
         }
-        Market.Init();
+        // Market.Init();
     }
 
     /// <summary>
@@ -333,6 +333,15 @@ public static class GlobalVariables
             }
 
             province.buildings = buildings;
+
+            //provinceMarket 할당\
+            province.market = new ProvinceMarket(province.name);
+            foreach (var productName in PRODUCTS.Keys)
+            {
+                province.market.AddProduct(productName, PRODUCTS[productName].InitialPrice);
+            }
+
+
 
             //province.pops = loadPops;
             PROVINCES[p.name] = province;
