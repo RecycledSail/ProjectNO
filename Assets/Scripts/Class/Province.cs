@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -75,6 +76,7 @@ public class Province
     {
         if (Population == 0) return;
         UpdatePopulation();
+        baseproduction();
     }
 
     public void UpdatePopulation()
@@ -85,6 +87,22 @@ public class Province
             pep.PopulationGrowth();
         }
     }
+
+    public void baseproduction()
+
+    {
+        long provinceproduction = 1000;
+
+        foreach (ProvinceEthnicPop pep in provinceEthnicPops)
+        {
+            long ethnicproduction = (long)(provinceproduction * ((double)pep.population / Population));
+            pep.ethnicGroup.property += ethnicproduction;
+        }
+
+
+    }
+
+
 }
 
 

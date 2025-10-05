@@ -11,13 +11,6 @@ using UnityEngine;
  *      - β(small)      : 0 분모/분자 보호 상수
  *      - smoothing     : 이전 가격과 새 가격을 혼합(급변 방지)
  *
- * 사용 예:
- *   Market.Init();                           // 시작 시 1회
- *   Market.Produce("Bebino", "Wheat", 100);  // 생산
- *   Market.Consume("Bebino", "Wheat", 30);   // 소비(가능한 만큼 소모, 실패 시 false)
- *   Market.UpdatePrices();                    // 턴 종료 시 1회
- *   int stock = Market.GetStock("Bebino", "Wheat");
- *   int price = Market.GetPrice("Bebino", "Wheat");
  */
 
 public class Market

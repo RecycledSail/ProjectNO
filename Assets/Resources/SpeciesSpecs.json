@@ -2,11 +2,11 @@
   "speciesSpecs": [
     {
       "name": "Human",
-      "baseBirthRate": 2
+      "baseBirthRate": 0.001
     },
     {
       "name": "Elf",
-      "baseBirthRate": 1.5
+      "baseBirthRate": 0.0001
     }
   ]
 }

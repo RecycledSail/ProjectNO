@@ -11,12 +11,16 @@ public class EthnicGroup
     public Culture culture;
     public List<ProvinceEthnicPop> provincePops = new List<ProvinceEthnicPop>();
     public long Population => provincePops.Sum(p => p.population);
+    public long property;
 
     public EthnicGroup(SpeciesSpec species, Culture culture)
     {
         this.species = species;
         this.culture = culture;
+        this.property = 0;
     }
+
+
 }
 
 
