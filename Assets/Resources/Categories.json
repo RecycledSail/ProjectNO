@@ -1,0 +1,12 @@
+{
+  "categories": [
+    { "name": "basic_food" },
+    { "name": "construction_material" },
+    { "name": "clothing_material" },
+    { "name": "industrial_material" },
+    { "name": "luxury_basic" },
+    { "name": "luxury_premium" },
+    { "name": "military_equipment" },
+    { "name": "monster_material" }
+  ]
+}
