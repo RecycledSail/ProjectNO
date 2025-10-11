@@ -2,92 +2,92 @@
   "products": [
     {
       "name": "Wheat",
-      "InitialPrice": 15,
+      "initialPrice": 15,
       "category": "basic_food"
     },
     {
       "name": "Slime",
-      "InitialPrice": 50,
+      "initialPrice": 50,
       "category": "monster_material"
     },
     {
       "name": "Iron",
-      "InitialPrice": 35,
+      "initialPrice": 35,
       "category": "industrial_material"
     },
     {
       "name": "Sword",
-      "InitialPrice": 70,
+      "initialPrice": 70,
       "category": "military_equipment"
     },
     {
       "name": "Furniture",
-      "InitialPrice": 50,
+      "initialPrice": 50,
       "category": "luxury_basic"
     },
     {
       "name": "Log",
-      "InitialPrice": 60,
+      "initialPrice": 60,
       "category": "construction_material"
     },
     {
       "name": "Horse",
-      "InitialPrice": 300,
+      "initialPrice": 300,
       "category": "luxury_premium"
     },
     {
       "name": "Gold",
-      "InitialPrice": 1000,
+      "initialPrice": 1000,
       "category": "luxury_premium"
     },
     {
       "name": "Coal",
-      "InitialPrice": 20,
+      "initialPrice": 20,
       "category": "industrial_material"
     },
     {
       "name": "Glass",
-      "InitialPrice": 40,
+      "initialPrice": 40,
       "category": "construction_material"
     },
     {
       "name": "Paper",
-      "InitialPrice": 30,
+      "initialPrice": 30,
       "category": "industrial_material"
     },
     {
       "name": "Book",
-      "InitialPrice": 60,
+      "initialPrice": 60,
       "category": "luxury_basic"
     },
     {
       "name": "Potion",
-      "InitialPrice": 100,
+      "initialPrice": 100,
       "category": "luxury_basic"
     },
     {
       "name": "Wool",
-      "InitialPrice": 40,
+      "initialPrice": 40,
       "category": "clothing_material"
     },
     {
       "name": "Cloth",
-      "InitialPrice": 30,
+      "initialPrice": 30,
       "category": "clothing_material"
     },
     {
       "name": "Leather",
-      "InitialPrice": 45,
+      "initialPrice": 45,
       "category": "clothing_material"
     },
     {
       "name": "Silk",
-      "InitialPrice": 80,
+      "initialPrice": 80,
       "category": "clothing_material"
     },
     {
       "name": "Catalyst",
-      "InitialPrice": 150,
+      "initialPrice": 150,
       "category": "luxury_premium"
     }
   ]

@@ -55,6 +55,12 @@ public static class GlobalVariables
     public static Dictionary<string, List<string>> INITIAL_PROVINCES = new();
 
     /// <summary>
+    /// 상품의 카테고리 (의, 식, 주, 1차 사치품, 2차 사치품...) Dictionary
+    /// Key: 카테고리명, Value: Product의 이름 (string) 리스트
+    /// </summary>
+    public static Dictionary<string, List<string>> CATEGORIES = new();
+
+    /// <summary>
     /// 게임 내 모든 주 정보를 저장하는 Dictionary
     /// Key: 주 이름, Value: Province 객체
     /// </summary>
@@ -127,6 +133,7 @@ public static class GlobalVariables
             LoadNations();
             LoadAdjacentProvinces();
             LoadInitialProvinces();
+            LoadCategories();
             LoadProducts();
             LoadInitialDiplomacies();
         }
@@ -374,16 +381,27 @@ public static class GlobalVariables
             INITIAL_PROVINCES[data.nation] = rnodes;
         }
     }
+
+    public static void LoadCategories()
+    {
+        var gameData = LoadJsonFile<GameDataFormat.CategoriesWrapper>("Categories");
+        foreach (var category in gameData.categories)
+        {
+            GlobalVariables.CATEGORIES[category.name] = new();
+        }
+    }
+
     public static void LoadProducts()
     {
         var gameData = LoadJsonFile<GameDataFormat.ProductsWrapper>("Products");
         // Products 占싸듸옙 (카탈占싸깍옙/占쏙옙占쌔곤옙)
         foreach (var prod in gameData.products)
         {
-            GlobalVariables.PRODUCTS[prod.name] = new Products(prod.InitialPrice);
-            // or: GlobalVariables.Products[prod.name] = new ProductSpec(prod.name, prod.InitialPrice);
+            GlobalVariables.PRODUCTS[prod.name] = new Products(prod.initialPrice);
+            GlobalVariables.CATEGORIES[prod.category].Add(prod.name);
         }
     }
+
     public static void LoadInitialDiplomacies()
     {
         var gameData = LoadJsonFile<GameDataFormat.InitialDiplomaciesWrapper>("InitialDiplomacies");
@@ -529,7 +547,7 @@ public static class GlobalVariables
         [System.Serializable]
         public class AdjacentProvincesWrapper
         {
-            public List<GameDataFormat.AdjacentProvinceWrapper> adjacentProvinces;
+            public List<GameDataFormat.AdjacentProvinceData> adjacentProvinces;
         }
 
         [System.Serializable]
@@ -541,7 +559,13 @@ public static class GlobalVariables
         [System.Serializable]
         public class InitialProvincesWrapper
         {
-            public List<GameDataFormat.InitialProvinceWrapper> initialProvinces;
+            public List<GameDataFormat.InitialProvinceData> initialProvinces;
+        }
+
+        [System.Serializable]
+        public class CategoriesWrapper
+        {
+            public List<GameDataFormat.CategoriesData> categories;
         }
 
         [System.Serializable]
@@ -553,7 +577,7 @@ public static class GlobalVariables
         [System.Serializable]
         public class InitialDiplomaciesWrapper
         {
-            public List<GameDataFormat.InitialDiplomacyWrapper> initialDiplomacies;
+            public List<GameDataFormat.InitialDiplomacyData> initialDiplomacies;
         }
 
         [System.Serializable]
@@ -594,12 +618,10 @@ public static class GlobalVariables
         public sealed class ProvinceData { public int id; public string name; public List<SpeciesPopData> pops; public string topography; public List<BuildingData> buildings; }
 
         [System.Serializable]
-        public sealed class InitialProvinceWrapper { public string nation; public List<string> provinces; }
+        public sealed class InitialProvinceData { public string nation; public List<string> provinces; }
 
         [System.Serializable]
-        public sealed class AdjacentProvinceWrapper { public string province; public List<string> adjacents; }
-
-        
+        public sealed class AdjacentProvinceData { public string province; public List<string> adjacents; }
 
         [System.Serializable]
         public sealed class SpeciesPopData { public string name; public int population; public string culture; }
@@ -614,9 +636,14 @@ public static class GlobalVariables
         public sealed class BuildingData { public string buildingTypeName; public double workerScale; public int level; }
 
         [System.Serializable]
-        public sealed class ProductsData { public string name; public int InitialPrice; }
+        public sealed class CategoriesData { public string name; }
+
         [System.Serializable]
-        public sealed class InitialDiplomacyWrapper { public List<string> lnations; public List<string> rnations; public string type; }
+        public sealed class ProductsData { public string name; public int initialPrice; public string category; }
+
+        [System.Serializable]
+        public sealed class InitialDiplomacyData { public List<string> lnations; public List<string> rnations; public string type; }
+
         [System.Serializable]
         public sealed class BuildingrecipeData { public string name; public List<ItemData> requireItems; }
     }

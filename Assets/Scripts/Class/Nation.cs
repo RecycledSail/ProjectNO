@@ -19,7 +19,7 @@ public class Nation
     public Dictionary<BuffKind, double> buffs;
 
     // Getter
-    public long Population => provinces.Sum(x => x.Population);
+    public long Population => provinces.Sum(x => x.population);
 
     /// <summary>
     /// 국가 생성자

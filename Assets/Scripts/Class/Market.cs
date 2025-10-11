@@ -44,9 +44,6 @@ public class ProvinceMarket
             Products[productName] = new ProductState(productName, basePrice);
         }
     }
-
-
-
 }
 
 // ===== 제품별 상태(한 주 내) =====

@@ -41,55 +41,63 @@ public class ProvinceEthnicPop
         this.population = populationCount;
         this.property = 0;
         this.livingStandard = 1.0;
-
     }
 
-    public void PopulationGrowth()
+    /// <summary>
+    /// 인구수 증가 및 감소 처리
+    /// </summary>
+    /// <returns>증감 이후의 현재 인구</returns>
+    public long PopulationGrowth()
     {
         // 단순한 인구 증가 -앞으로 문화에 따른 변화도 고려해야 함
         double growthRate = ethnicGroup.species.baseBirthRate; // 종족당 설정되어 있는 값을 사용
         //AS-IS: 지금 1초당 2배씩 늘어남!!!!
         population = (long)(population * (1 + growthRate));
+        return population;
     }
 
- // 기본적으로 인구당 소모하는 필수재 
-    public int foodNeeds()
+    /// <summary>
+    /// 필요한 음식 갯수를 구하는 함수
+    /// </summary>
+    /// <returns>필요한 음식 갯수</returns>
+    public int GetNeededFood()
     {
         int basecoefficient = 1; // 기본 수요 계수
         if (basecoefficient > 0)
         {
             return (int)(basecoefficient * (population / 1000));
         }
-
         return 0;
-
     }
 
-    public int luxuryNeeds()
+    /// <summary>
+    /// 음식을 구매하는 함수
+    /// </summary>
+    /// <returns>property로 음식을 전부 살 수 있으면 true, 아니면 false</returns>
+    public bool BuyFood(int remainingFood)
+    {
+        // 1. 먼저 (음식 가격 * 음식 수량) 계산
+        // 2. property로 1.을 살 수 있는지 판단
+        // 3-1. 살 수 있으면 remainingFood만큼 전부 사고 true
+        // 3-2. 살 수 없으면 살 수 있는만큼만 사고 false
+        return false;
+    }
+
+    /// <summary>
+    /// 필요한 사치품 갯수를 구하는 함수
+    /// </summary>
+    /// <returns>사치품 갯수</returns>
+    public int GetNeededLuxury()
     {
         int basecoefficient = 1; // 기본 수요 계수
         if (basecoefficient > 0)
         {
             return (int)(basecoefficient * (population / 1000) * livingStandard);
         }
-
         return 0;
-
     }
 
-
 }
-
-
-
-
-
-
-
-
-
-
-
 
 /// <summary>
 /// 종족을 정의하는 클래스
