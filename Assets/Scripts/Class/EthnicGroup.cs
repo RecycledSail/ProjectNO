@@ -11,13 +11,11 @@ public class EthnicGroup
     public Culture culture;
     public List<ProvinceEthnicPop> provincePops = new List<ProvinceEthnicPop>();
     public long Population => provincePops.Sum(p => p.population);
-    public long property;
 
     public EthnicGroup(SpeciesSpec species, Culture culture)
     {
         this.species = species;
         this.culture = culture;
-        this.property = 0;
     }
 
 
@@ -34,12 +32,16 @@ public class ProvinceEthnicPop
     public Province province;
     public EthnicGroup ethnicGroup;
     public long population;
-        
+    public long property; // 재산
+    public double livingStandard; // 생활 수준 (1.0 = 평균)
     public ProvinceEthnicPop(Province province, EthnicGroup ethnicGroup, long populationCount)
     {
         this.province = province;
         this.ethnicGroup = ethnicGroup;
         this.population = populationCount;
+        this.property = 0;
+        this.livingStandard = 1.0;
+
     }
 
     public void PopulationGrowth()
@@ -49,7 +51,44 @@ public class ProvinceEthnicPop
         //AS-IS: 지금 1초당 2배씩 늘어남!!!!
         population = (long)(population * (1 + growthRate));
     }
+
+ // 기본적으로 인구당 소모하는 필수재 
+    public int foodNeeds()
+    {
+        int basecoefficient = 1; // 기본 수요 계수
+        if (basecoefficient > 0)
+        {
+            return (int)(basecoefficient * (population / 1000));
+        }
+
+        return 0;
+
+    }
+
+    public int luxuryNeeds()
+    {
+        int basecoefficient = 1; // 기본 수요 계수
+        if (basecoefficient > 0)
+        {
+            return (int)(basecoefficient * (population / 1000) * livingStandard);
+        }
+
+        return 0;
+
+    }
+
+
 }
+
+
+
+
+
+
+
+
+
+
 
 
 /// <summary>

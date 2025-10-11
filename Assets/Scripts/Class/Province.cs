@@ -96,15 +96,29 @@ public class Province
         foreach (ProvinceEthnicPop pep in provinceEthnicPops)
         {
             long ethnicproduction = (long)(provinceproduction * ((double)pep.population / Population));
-            pep.ethnicGroup.property += ethnicproduction;
+            pep.property = ethnicproduction;
         }
 
 
     }
 
 
+
+    public class EthnicpopNeeds
+    {
+        public static Dictionary<Province, int> totalFoodNeedsByProvince = new();
+
+        public void CalculateTotalFoodsNeeds(Province province)
+        {
+            int totalFoodNeeds = 0;
+            foreach (ProvinceEthnicPop pep in province.provinceEthnicPops)
+            {
+                totalFoodNeeds += pep.foodNeeds();
+            }
+            totalFoodNeedsByProvince[province] = totalFoodNeeds;
+        }
+
+    }
+
 }
-
-
-
 
