@@ -157,7 +157,7 @@ public class Province
         foreach (string prodName in GlobalVariables.CATEGORIES["basic_food"])
         {
             ProductState ps;
-            if(market.Products.TryGetValue(prodName, out ps))
+            if (market.Products.TryGetValue(prodName, out ps))
             {
                 currentFoods += ps.Stock;
             }
@@ -165,16 +165,29 @@ public class Province
 
         // currentFoods 분자, totalFoodNeeds가 분모, Min 1해서 계산하면 될듯
         double percentage = Math.Min((double)currentFoods / (double)totalFoodNeeds, 1.0);
+        totalFoodNeeds = totalFoodNeeds * (int)percentage; // 실제 구매 시도할 음식 수
 
         // 3. 계산된 요구치 구매
         // 여기서 구매 시도
-        // 전부 구매 가능하면 true
         // 전부 구매 불가능하면 살 만큼만 구매
         foreach (ProvinceEthnicPop pep in provinceEthnicPops)
         {
 
+            int neededFood = pep.GetNeededFood();
+            int foodToBuy = (int)(neededFood * percentage);
+            pep.BuyFood(foodToBuy);
+
+        }
+
+        // 4. 시장에서 음식 재고 차감
+        int foodsToConsume = (int)(totalFoodNeeds / GlobalVariables.CATEGORIES["basic_food"].Count);
+        foreach (string foodName in GlobalVariables.CATEGORIES["basic_food"])
+        {
+            market.ConsumeProduct(foodName, foodsToConsume);
         }
     }
+    
+    
 
 }
 

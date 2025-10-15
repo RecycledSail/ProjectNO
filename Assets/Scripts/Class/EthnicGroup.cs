@@ -76,10 +76,9 @@ public class ProvinceEthnicPop
     /// <returns>property로 음식을 전부 살 수 있으면 true, 아니면 false</returns>
     public bool BuyFood(int remainingFood)
     {
-        // 1. 먼저 (음식 가격 * 음식 수량) 계산
-        // 2. property로 1.을 살 수 있는지 판단
-        // 3-1. 살 수 있으면 remainingFood만큼 전부 사고 true
-        // 3-2. 살 수 없으면 살 수 있는만큼만 사고 false
+
+
+        
         return false;
     }
 

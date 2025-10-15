@@ -44,6 +44,14 @@ public class ProvinceMarket
             Products[productName] = new ProductState(productName, basePrice);
         }
     }
+
+    public void ConsumeProduct(string productName, int amount)
+    {
+        // 소비 처리 로직 구현
+
+    }
+
+
 }
 
 // ===== 제품별 상태(한 주 내) =====
