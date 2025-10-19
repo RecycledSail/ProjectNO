@@ -45,9 +45,14 @@ public class ProvinceMarket
         }
     }
 
-    public void ConsumeProduct(string productName, int amount)
+    public void ConsumeBasicFoods(string productName, int amount)
     {
         // 소비 처리 로직 구현
+        if (Products.ContainsKey(productName))
+        {
+            Products[productName].LastDemand += amount;
+            Products[productName].Stock = Math.Max(0, Products[productName].Stock - amount);
+        }
 
     }
 
@@ -61,6 +66,7 @@ public class ProductState
     public string ProductName;
     public int Stock;        // 현재 재고
     public int Price;        // 현재 가격
+    public int LastPrice;    // 지난 턴 가격(가격 업데이트용)
     public int LastDemand;   // 최근 턴 소비량(가격 계산용)
     public int LastSupply;   // 최근 턴 생산량(가격 계산용)
 

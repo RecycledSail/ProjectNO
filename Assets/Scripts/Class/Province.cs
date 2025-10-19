@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.Rendering;
 
 /// <summary>
 /// Topography Enum 
@@ -167,6 +168,50 @@ public class Province
         double percentage = Math.Min((double)currentFoods / (double)totalFoodNeeds, 1.0);
         totalFoodNeeds = totalFoodNeeds * (int)percentage; // 실제 구매 시도할 음식 수
 
+
+        // 3. 시장에서 음식 재고 차감
+        // 가장 값싼 음식을 가장 많이 소비,소비된 수만큼 재고를 감소하고 총 결제해야하는 금액 확인
+
+        
+        int totalCost = 0;
+        // 저번턴 수요량이 많은 순으로 리스트 정렬
+        List<string> sortedFoodNames = GlobalVariables.CATEGORIES["basic_food"]
+            .Select(name => {
+                market.Products.TryGetValue(name, out var ps);
+                return new { Name = name, PS = ps };
+            })
+            .OrderByDescending(x => x.PS.LastDemand)   // 지난 턴 수요 많은 순
+            .ThenByDescending(x => x.PS.Stock)         // (선택) 재고 많은 순으로 동률 정렬
+            .Select(x => x.Name)
+            .ToList();
+        foreach (string foodName in sortedFoodNames)
+        {
+
+            ProductState ps;
+            if (market.Products.TryGetValue(foodName, out ps))
+            {
+                // 지난 턴 소비량으로 이번턴 얼마나 살지에 대해 계산
+                // 속도공식을 이용
+                int pricefluctuation = ps.LastPrice / ps.Price;
+                int consumeAmount = Math.Min(ps.LastDemand * pricefluctuation, ps.Stock);
+                ps.Stock -= consumeAmount;
+                totalCost += consumeAmount * ps.Price;
+            }
+            // 현재 가지고있는 돈이 부족하면 종료
+            // 아직 이부분은 구현 못하겟음
+
+            // 필요한 음식 수량 다 채웠으면 종료
+            if (totalCost >= totalFoodNeeds)
+            {
+                break;
+            }
+        }
+
+
+
+
+
+
         // 3. 계산된 요구치 구매
         // 여기서 구매 시도
         // 전부 구매 불가능하면 살 만큼만 구매
@@ -176,15 +221,9 @@ public class Province
             int neededFood = pep.GetNeededFood();
             int foodToBuy = (int)(neededFood * percentage);
             pep.BuyFood(foodToBuy);
-
         }
 
-        // 4. 시장에서 음식 재고 차감
-        int foodsToConsume = (int)(totalFoodNeeds / GlobalVariables.CATEGORIES["basic_food"].Count);
-        foreach (string foodName in GlobalVariables.CATEGORIES["basic_food"])
-        {
-            market.ConsumeProduct(foodName, foodsToConsume);
-        }
+
     }
     
     
