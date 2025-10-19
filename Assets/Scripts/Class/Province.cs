@@ -192,36 +192,38 @@ public class Province
             {
                 // 지난 턴 소비량으로 이번턴 얼마나 살지에 대해 계산
                 // 속도공식을 이용
+                // 문제점 애초에 지난 턴 수요가 0이면 못삼
                 int pricefluctuation = ps.LastPrice / ps.Price;
                 int consumeAmount = Math.Min(ps.LastDemand * pricefluctuation, ps.Stock);
+                if (consumeAmount > totalFoodNeeds)
+                {
+                    consumeAmount = totalFoodNeeds;
+                }
                 ps.Stock -= consumeAmount;
                 totalCost += consumeAmount * ps.Price;
+                totalFoodNeeds -= consumeAmount;
+                
+
             }
             // 현재 가지고있는 돈이 부족하면 종료
             // 아직 이부분은 구현 못하겟음
+            // 각 민족 집단간 가지고 있는 돈이 다르기 때문에 그부분을 반영해야함 
+
 
             // 필요한 음식 수량 다 채웠으면 종료
-            if (totalCost >= totalFoodNeeds)
+                if (totalFoodNeeds <= 0)
             {
+
                 break;
             }
-        }
+    }
 
 
 
 
 
 
-        // 3. 계산된 요구치 구매
-        // 여기서 구매 시도
-        // 전부 구매 불가능하면 살 만큼만 구매
-        foreach (ProvinceEthnicPop pep in provinceEthnicPops)
-        {
 
-            int neededFood = pep.GetNeededFood();
-            int foodToBuy = (int)(neededFood * percentage);
-            pep.BuyFood(foodToBuy);
-        }
 
 
     }
