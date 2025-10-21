@@ -176,7 +176,8 @@ public class Province
         int totalCost = 0;
         // 저번턴 수요량이 많은 순으로 리스트 정렬
         List<string> sortedFoodNames = GlobalVariables.CATEGORIES["basic_food"]
-            .Select(name => {
+            .Select(name =>
+            {
                 market.Products.TryGetValue(name, out var ps);
                 return new { Name = name, PS = ps };
             })
@@ -184,39 +185,42 @@ public class Province
             .ThenByDescending(x => x.PS.Stock)         // (선택) 재고 많은 순으로 동률 정렬
             .Select(x => x.Name)
             .ToList();
-        foreach (string foodName in sortedFoodNames)
+        while (totalFoodNeeds > 0)
         {
-
-            ProductState ps;
-            if (market.Products.TryGetValue(foodName, out ps))
+            foreach (string foodName in sortedFoodNames)
             {
-                // 지난 턴 소비량으로 이번턴 얼마나 살지에 대해 계산
-                // 속도공식을 이용
-                // 문제점 애초에 지난 턴 수요가 0이면 못삼
-                int pricefluctuation = ps.LastPrice / ps.Price;
-                int consumeAmount = Math.Min(ps.LastDemand * pricefluctuation, ps.Stock);
-                if (consumeAmount > totalFoodNeeds)
+
+                ProductState ps;
+                if (market.Products.TryGetValue(foodName, out ps))
                 {
-                    consumeAmount = totalFoodNeeds;
+                    // 지난 턴 소비량으로 이번턴 얼마나 살지에 대해 계산
+                    // 속도공식을 이용
+                    int pricefluctuation = ps.LastPrice / ps.Price;
+                    int consumeAmount = Math.Min(ps.LastDemand * pricefluctuation + 1, ps.Stock);
+                    // +1은 전턴 수요가 0일때를 방지하기위해 넣어둠 앞으로 개선필요
+                    if (consumeAmount > totalFoodNeeds)
+                    {
+                        consumeAmount = totalFoodNeeds;
+                    }
+                    ps.Stock -= consumeAmount;
+                    totalCost += consumeAmount * ps.Price;
+                    totalFoodNeeds -= consumeAmount;
+
+
                 }
-                ps.Stock -= consumeAmount;
-                totalCost += consumeAmount * ps.Price;
-                totalFoodNeeds -= consumeAmount;
-                
-
-            }
-            // 현재 가지고있는 돈이 부족하면 종료
-            // 아직 이부분은 구현 못하겟음
-            // 각 민족 집단간 가지고 있는 돈이 다르기 때문에 그부분을 반영해야함 
+                // 현재 가지고있는 돈이 부족하면 종료
+                // 아직 이부분은 구현 못하겟음
+                // 각 민족 집단간 가지고 있는 돈이 다르기 때문에 그부분을 반영해야함 
 
 
-            // 필요한 음식 수량 다 채웠으면 종료
+                // 필요한 음식 수량 다 채웠으면 종료
                 if (totalFoodNeeds <= 0)
-            {
+                {
 
-                break;
+                    break;
+                }
             }
-    }
+        }
 
 
 
