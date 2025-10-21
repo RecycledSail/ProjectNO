@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -39,7 +40,7 @@ public class ProvinceEthnicPop
         this.province = province;
         this.ethnicGroup = ethnicGroup;
         this.population = populationCount;
-        this.property = 0;
+        this.property = 100000;
         this.livingStandard = 1.0;
     }
 
@@ -77,8 +78,6 @@ public class ProvinceEthnicPop
     public bool BuyFood(int remainingFood)
     {
 
-
-        
         return false;
     }
 

@@ -28,7 +28,7 @@ public class ProductButtonUI : MonoBehaviour
     private void UpdateProductButtonUI()
     {
         priceText.text = productData.Price.ToString();
-        supplyText.text = (productData.LastSupply - productData.LastDemand).ToString();
+        supplyText.text = productData.Stock.ToString();
     }
 
     /// <summary>

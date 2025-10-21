@@ -129,12 +129,12 @@ public static class GlobalVariables
             LoadCulture();
             LoadJobTypes();
             LoadBuildingTypes();
+            LoadCategories();
+            LoadProducts();
             LoadProvinces();
             LoadNations();
             LoadAdjacentProvinces();
             LoadInitialProvinces();
-            LoadCategories();
-            LoadProducts();
             LoadInitialDiplomacies();
         }
         catch(Exception e)
