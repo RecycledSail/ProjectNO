@@ -158,10 +158,15 @@ public class Province
         // 1. 필요 음식 수 계산
         int totalFoodNeeds = 0;
         long totalMoney = 0;
+        List<ProvinceEthnicPop> availableEthnicPops = new();
         foreach (ProvinceEthnicPop pep in provinceEthnicPops)
         {
-            totalFoodNeeds += pep.GetNeededFood();
-            totalMoney += pep.property;
+            if (pep.property > 0)
+            {
+                totalFoodNeeds += pep.GetNeededFood();
+                totalMoney += pep.property;
+                availableEthnicPops.Add(pep);
+            }
         }
 
 
@@ -249,7 +254,7 @@ public class Province
 
             // 4. pep에서 돈 차감
             // 인구 비율만큼 맞춰서 차감
-            foreach (ProvinceEthnicPop pep in provinceEthnicPops)
+            foreach (ProvinceEthnicPop pep in availableEthnicPops)
             {
                 int neededFood = pep.GetNeededFood();
                 double neededFoodRatio = neededFood / (double)totalFoodNeeds;
