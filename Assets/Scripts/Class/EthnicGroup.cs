@@ -79,7 +79,7 @@ public class ProvinceEthnicPop
     {
         // 음식을 샀다는 것만 확인하면 됨 
         // 생활수준이 10 이하라면 0.01 증가
-        if (foodAmount > GetNeededFood() && livingStandard < 10.0)
+        if (foodAmount >= GetNeededFood() && livingStandard < 10.0)
         {
             livingStandard += 0.01;
         }
