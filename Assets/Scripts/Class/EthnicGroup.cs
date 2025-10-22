@@ -75,13 +75,17 @@ public class ProvinceEthnicPop
     /// 음식을 구매하는 함수
     /// </summary>
     /// <returns>property로 음식을 전부 살 수 있으면 true, 아니면 false</returns>
-    public void BuyFood(bool allocate)
+    public void BuyFood(int foodAmount)
     {
         // 음식을 샀다는 것만 확인하면 됨 
         // 생활수준이 10 이하라면 0.01 증가
-        if (allocate && livingStandard < 10.0)
+        if (foodAmount > GetNeededFood() && livingStandard < 10.0)
         {
             livingStandard += 0.01;
+        }
+        else if (foodAmount < GetNeededFood() && livingStandard > 5.0)
+        {
+            livingStandard -= 0.01;
         }
     }
 
