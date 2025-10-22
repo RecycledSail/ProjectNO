@@ -167,6 +167,11 @@ public class Province
                 totalMoney += pep.property;
                 availableEthnicPops.Add(pep);
             }
+            // 자산이 부족한 경우
+            else if (pep.property < 0)
+            {
+                pep.BuyFood(0);
+            }
         }
 
 

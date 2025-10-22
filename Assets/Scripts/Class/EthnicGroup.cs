@@ -87,6 +87,10 @@ public class ProvinceEthnicPop
         {
             livingStandard -= 0.01;
         }
+        else if (foodAmount == 0 && livingStandard > 1.0)
+        {
+            livingStandard -= 0.05;
+        }
     }
 
     /// <summary>
