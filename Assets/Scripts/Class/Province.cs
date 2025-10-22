@@ -258,8 +258,9 @@ public class Province
             {
                 int neededFood = pep.GetNeededFood();
                 double neededFoodRatio = neededFood / (double)totalFoodNeeds;
-                int remainingFood = (int)(neededFoodRatio * totalBoughtFoods);
-                pep.BuyFood(remainingFood);
+                // int remainingFood = (int)(neededFoodRatio * totalBoughtFoods);
+                
+                pep.BuyFood(true);
                 pep.property -= (long)(neededFoodRatio * totalCost);
             }
         }
