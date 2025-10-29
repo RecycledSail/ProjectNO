@@ -56,6 +56,29 @@ public class ProvinceMarket
 
     }
 
+    public void UpdatePrices()
+    {
+        // 가격 업데이트 로직 구현
+        foreach (var product in Products.Values)
+        {
+            int demand = product.LastDemand;
+            int supply = product.LastSupply;
+
+            // 가격 계산 공식 적용
+            float PrePrice = product.Price;
+            float newPrice = PrePrice * Mathf.Pow((demand + 1) / (supply + 1), product.Elasticity);
+
+            // 지수 평활화 적용
+            product.Price = Mathf.RoundToInt(0.7f * product.Price + 0.3f * newPrice);
+
+
+        }
+    }
+
+
+
+
+
 
 }
 
@@ -69,6 +92,7 @@ public class ProductState
     public int LastPrice;    // 지난 턴 가격(가격 업데이트용)
     public int LastDemand;   // 최근 턴 소비량(가격 계산용)
     public int LastSupply;   // 최근 턴 생산량(가격 계산용)
+    public float Elasticity = 1.0f; // α: 수요/공급 변화에 대한 민감도
 
     public ProductState(string name, int basePrice)
     {
