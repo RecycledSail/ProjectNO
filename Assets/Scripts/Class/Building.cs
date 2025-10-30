@@ -28,7 +28,7 @@ public class Building
     public Province province;
     public long currentWorkers; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
     public int level = 0;
-    public int balance = 0;
+    public int balance = GlobalVariables.buildingStartBalance;
     public int previousGain = 0;
 
     public Building(BuildingType buildingType, Province province)
