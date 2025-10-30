@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
-using Unity.VisualScripting;
 
 
 
@@ -12,7 +11,7 @@ public class BuildingType
     public string name;
     public Dictionary<string, int> requireItems;
     public Dictionary<string, int> produceItems;
-    public int workerNeeded;
+    public long workerNeeded;
 
     public BuildingType(string name)
     {
@@ -27,7 +26,7 @@ public class Building
 {
     public BuildingType buildingType;
     public Province province;
-    public double workerScale; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
+    public long currentWorkers; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
     public int level = 0;
     public int balance = 0;
     public int previousGain = 0;
@@ -43,11 +42,10 @@ public class Building
     /// </summary>
     /// <param name="jobType">직업명 (JobTypes)</param>
     /// <returns>근무자 수</returns>
-    public int GetWorkers()
+    public long GetWorkers()
     {
-        return (int)(workerScale * buildingType.workerNeeded);
+        return currentWorkers;
     }
-
     /// <summary>
     /// 직원을 고용하려고 시도한다.
     /// 고용이 가능할 경우 고용하고 workers를 늘린다.
@@ -58,8 +56,8 @@ public class Building
         if (IsNewWorkerAvailable())
         {
             // 일단 한번에 50명씩 고용
-            double hireScale = math.min(level - workerScale, 50.0 / (double)buildingType.workerNeeded);
-            workerScale += hireScale;
+            long hirePeople = math.min(level * buildingType.workerNeeded - currentWorkers, 50);
+            currentWorkers += hirePeople;
             //TODO: 로직 추가
             return true;
         }
@@ -72,7 +70,7 @@ public class Building
     /// <returns>고용 가능하면 O, 불가능하면 X</returns>
     public bool IsNewWorkerAvailable()
     {
-        if (balance <= 0 || previousGain <= 0 || workerScale >= level || province.population <= province.hiredPopulation) return false;
+        if (balance <= 0 || previousGain <= 0 || ((double)currentWorkers / buildingType.workerNeeded) >= level || province.population <= province.hiredPopulation) return false;
         else return true;
     }
 
@@ -93,10 +91,10 @@ public class Building
     {
         //하루에 얼만큼 수확할건지?
         double produceScale = 1;
-        if (workerScale <= 0.0) return 0.0;
+        if (currentWorkers <= 0) return 0.0;
         else
         {
-            double minCropsScale = workerScale;
+            double minCropsScale = (double)currentWorkers / (double)buildingType.workerNeeded;
             return minCropsScale * produceScale;
         }
     }

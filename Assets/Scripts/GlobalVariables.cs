@@ -330,7 +330,7 @@ public static class GlobalVariables
                 BuildingType buildingType = BUILDING_TYPE[building.buildingTypeName];
                 buildings.Add(buildingType, new(buildingType, province)
                 {
-                    workerScale = building.workerScale,
+                    currentWorkers = (long)(buildingType.workerNeeded * building.workerScale),
                     level = building.level
                 });
             }
