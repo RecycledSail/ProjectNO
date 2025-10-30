@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Mathematics;
 using Unity.VisualScripting;
 
 
@@ -11,7 +12,7 @@ public class BuildingType
     public string name;
     public Dictionary<string, int> requireItems;
     public Dictionary<string, int> produceItems;
-    public Dictionary<string, int> workerNeeded;
+    public int workerNeeded;
 
     public BuildingType(string name)
     {
@@ -28,6 +29,8 @@ public class Building
     public Province province;
     public double workerScale; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
     public int level = 0;
+    public int balance = 0;
+    public int previousGain = 0;
 
     public Building(BuildingType buildingType, Province province)
     {
@@ -40,14 +43,9 @@ public class Building
     /// </summary>
     /// <param name="jobType">직업명 (JobTypes)</param>
     /// <returns>근무자 수</returns>
-    public double GetWorkers(string jobType)
+    public int GetWorkers()
     {
-        int workerNeededForType;
-        if (buildingType.workerNeeded.TryGetValue(jobType, out workerNeededForType))
-        {
-            return workerScale * workerNeededForType;
-        }
-        else return -1;
+        return (int)(workerScale * buildingType.workerNeeded);
     }
 
     /// <summary>
@@ -59,6 +57,9 @@ public class Building
     {
         if (IsNewWorkerAvailable())
         {
+            // 일단 한번에 50명씩 고용
+            double hireScale = math.min(level - workerScale, 50.0 / (double)buildingType.workerNeeded);
+            workerScale += hireScale;
             //TODO: 로직 추가
             return true;
         }
@@ -71,9 +72,8 @@ public class Building
     /// <returns>고용 가능하면 O, 불가능하면 X</returns>
     public bool IsNewWorkerAvailable()
     {
-        //TODO: 프로빈스에 고용/실업 나눈 뒤 다시 결정
-        //TODO: BuildingType에 고용 인원, 고용 종족 등 나눈뒤 다시 결정
-        return false;
+        if (balance <= 0 || previousGain <= 0 || workerScale >= level || province.population <= province.hiredPopulation) return false;
+        else return true;
     }
 
     /// <summary>

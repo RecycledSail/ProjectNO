@@ -37,13 +37,7 @@ public class ProvinceBuildingButtonUI : MonoBehaviour
     private void UpdateBuilding()
     {
         countText.text = building.level.ToString();
-
-        int totalWorkers = 0;
-        foreach (var workerType in building.buildingType.workerNeeded.Keys)
-        {
-            totalWorkers += (int)building.GetWorkers(workerType);
-        }
-        workerText.text = totalWorkers.ToString();
+        workerText.text = building.GetWorkers().ToString();
     }
 
     /// <summary>

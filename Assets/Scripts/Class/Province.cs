@@ -33,6 +33,9 @@ public class Province
     public Dictionary<BuildingType, Building> buildings { get; set; } = null;
     public List<ProvinceEthnicPop> provinceEthnicPops { get; set; } = null;
 
+    // 프로빈스 현재 상태 정의 (고용된 인구)
+    public long hiredPopulation { get; set; }
+
     /// <summary>
     /// Province 초기화
     /// </summary>

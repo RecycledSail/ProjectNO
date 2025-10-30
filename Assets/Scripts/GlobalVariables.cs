@@ -260,11 +260,7 @@ public static class GlobalVariables
                 requiredItems[requiredItem.name] = requiredItem.amount;
             }
 
-            Dictionary<string, int> workerNeeded = new();
-            foreach (var workerNeed in data.workerNeeded)
-            {
-                workerNeeded[workerNeed.name] = workerNeed.amount;
-            }
+            int workerNeeded = data.workerNeeded;
 
             BuildingType buildingType = new BuildingType(data.name)
             {
@@ -627,7 +623,7 @@ public static class GlobalVariables
         public sealed class SpeciesPopData { public string name; public int population; public string culture; }
 
         [System.Serializable]
-        public sealed class BuildingTypeData { public string name; public List<ItemData> requireItems; public List<ItemData> produceItems; public List<ItemData> workerNeeded; }
+        public sealed class BuildingTypeData { public string name; public List<ItemData> requireItems; public List<ItemData> produceItems; public int workerNeeded; }
 
         [System.Serializable]
         public sealed class JobTypeData { public string name; public bool literacyNeeded; public int salary; }
