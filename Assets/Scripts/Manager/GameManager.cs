@@ -310,6 +310,10 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void ProcessWeeklyEvents()
     {
+        foreach (Nation nation in nations.Values)
+        {
+            nation.SimulateWeeklyTurn();
+        }
         foreach (Province province in provinces.Values)
         {
             province.SimulateWeeklyTurn(); // 이것만 호출

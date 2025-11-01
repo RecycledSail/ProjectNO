@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
-using Unity.VisualScripting;
 using System;
-using Unity.Collections;
 
 /// <summary>
 /// GlobalVariables 클래스는 게임 내 전역적으로 사용되는 데이터를 저장하는 정적 클래스입니다.
