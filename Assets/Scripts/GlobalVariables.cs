@@ -11,6 +11,7 @@ using Unity.Collections;
 /// </summary>
 public static class GlobalVariables
 {
+    public static int buildingStartBalance = 1000;
 
     /// <summary>
     /// 버프를 저장하는 Dictionary
