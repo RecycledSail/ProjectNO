@@ -4,8 +4,9 @@
       "name": "WheatField",
       "buildRequirements": [        
         { "item": "Wood",  "amount": 2000 }
-
-      ]
+      
+      ],
+      "TimeToBuild": 20
       
     },
     {
@@ -13,23 +14,24 @@
       "buildRequirements": [        
         { "item": "Wood",  "amount": 2000 }
 
-      ]
-      
+      ],
+      "TimeToBuild": 20
     },
     {
       "name": "SlimeFarm",
       "buildRequirements": [        
         { "item": "Wood",  "amount": 2000 }
 
-      ]
-      
+      ],
+      "TimeToBuild": 20
     },
     {
       "name": "IronMine",
       "buildRequirements": [        
         { "item": "Wood",  "amount": 2000 }
 
-      ]
+      ],
+      "TimeToBuild": 20
       
     }
   ]

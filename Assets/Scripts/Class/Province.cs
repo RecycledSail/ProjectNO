@@ -194,9 +194,9 @@ public class Province
         totalFoodNeeds = (int)(totalFoodNeeds * percentage); // 실제 구매 시도할 음식 수
 
 
-        
 
-        
+
+
         long totalCost = 0;
         // 저번턴 수요량이 많은 순으로 리스트 정렬
         List<string> sortedFoodNames = GlobalVariables.CATEGORIES["basic_food"]
@@ -232,7 +232,7 @@ public class Province
                     {
                         consumeAmount = totalFoodNeeds - totalBoughtFoods;
                     }
-                    if(totalCost + consumeAmount * ps.Price > totalMoney)
+                    if (totalCost + consumeAmount * ps.Price > totalMoney)
                     {
                         consumeAmount = (int)(totalMoney - totalCost) / ps.Price;
                         foodBuyAmount[foodName] = consumeAmount;
@@ -272,5 +272,21 @@ public class Province
             }
         }
     }
+
+    public void ConstructBuilding(BuildingType buildingType)
+    {
+        
+        // Timetobuild 이 0이 아니면 건설중인 상태를 반영할것 
+        // 아직 미구현
+
+        // Initialbalance를 건물이 다지어지는순간 balance에 반영해야됨
+    }
+
+
+    
+
+
+
+
 }
 

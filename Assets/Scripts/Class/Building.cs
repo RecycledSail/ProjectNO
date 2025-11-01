@@ -27,9 +27,10 @@ public class Building
     public BuildingType buildingType;
     public Province province;
     public long currentWorkers; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
-    public int level = 0;
-    public int balance = 0;
-    public int previousGain = 0;
+    public int level = 0; // 건물 레벨
+    public int balance = 0; // 건물의 현재 자금
+    public int previousGain = 0; // 이전 수익
+
 
     public Building(BuildingType buildingType, Province province)
     {
@@ -110,6 +111,7 @@ public class BuildingRecipe
 {
     public string name;
     public Dictionary<string, int> requireItems = new();
+    public int TimeToBuild { get; set; }
 
     public BuildingRecipe(string name)
     {

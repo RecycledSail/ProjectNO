@@ -451,7 +451,7 @@ public static class GlobalVariables
             foreach (var it in data.requireItems)
                 required[it.name] = it.amount;
 
-            var recipe = new BuildingRecipe(data.name) { requireItems = required };
+            var recipe = new BuildingRecipe(data.name) { requireItems = required, TimeToBuild = data.TimeToBuild };
             BUILDING_RECIPE[data.name] = recipe;
         }
     }
@@ -641,6 +641,6 @@ public static class GlobalVariables
         public sealed class InitialDiplomacyData { public List<string> lnations; public List<string> rnations; public string type; }
 
         [System.Serializable]
-        public sealed class BuildingrecipeData { public string name; public List<ItemData> requireItems; }
+        public sealed class BuildingrecipeData { public string name; public List<ItemData> requireItems; public int TimeToBuild;}
     }
 }
