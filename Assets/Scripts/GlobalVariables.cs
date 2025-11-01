@@ -11,7 +11,11 @@ using Unity.Collections;
 /// </summary>
 public static class GlobalVariables
 {
+    // building 들이 처음에 가지는 재산
     public static int buildingStartBalance = 1000;
+
+    // province에 기본적으로 공급되는 man-hour (인시)
+    public static double minimumNationManHour = 10;
 
     /// <summary>
     /// 버프를 저장하는 Dictionary
