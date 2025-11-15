@@ -189,6 +189,19 @@
       ],
       "workerNeeded": 50,
       "Initalbalance": 500
+
+
+    },
+    {
+      "name":"construcntionCompany",
+      "requireItems":[
+        {"name":"Build_demand", "amount":1e08 }
+      ],
+      "produceItems":[
+        {"name":"Build_supply", "amount":100 }
+      ],
+      "workerNeeded":500,
+      "Initalbalance":1000
     }
   ]
 }

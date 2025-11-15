@@ -89,6 +89,16 @@
       "name": "Catalyst",
       "initialPrice": 150,
       "category": "luxury_premium"
+    },
+    {
+      "naem": "Build_demand",
+      "initialPrice": 0,
+      "category": "system_parameter"
+    },
+    {
+      "name": "Build_supply",
+      "initialPrice": 0,
+      "category": "system_parameter"
     }
   ]
 }
