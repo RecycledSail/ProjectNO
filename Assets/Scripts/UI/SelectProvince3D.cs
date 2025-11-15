@@ -36,7 +36,7 @@ public class SelectProvince3D : MonoBehaviour
             return;
         }
 
-        if (child && Input.GetMouseButton(0))
+        if (child && Input.GetMouseButtonDown(0))
         {
             OpenNationUI(child);
         }
