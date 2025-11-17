@@ -28,11 +28,12 @@ public class EthnicGroup
 /// 프로빈스에 속한 민족 집단의 인구를 구하는 클래스
 /// Province 하나에 같은 EthnicGroup을 가진 ProvinceEthnicPop은 단 하나 있어야 함
 /// </summary>
-public class ProvinceEthnicPop
+public class ProvinceEthnicPop : IBuildingInvestor
 {
     public Province province;
     public EthnicGroup ethnicGroup;
     public long population;
+    public long dividend; //배당수익
     public long property; // 재산
     public double livingStandard; // 생활 수준 (1.0 = 평균)
     public ProvinceEthnicPop(Province province, EthnicGroup ethnicGroup, long populationCount)

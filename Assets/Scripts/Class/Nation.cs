@@ -6,7 +6,7 @@ using System.Linq;
 /// 국가 클래스
 /// ID, 이름, 소유 프로빈스, 재산 정의
 /// </summary>
-public class Nation
+public class Nation : IBuildingInvestor
 {
     public int id;
     public string name { get; }
@@ -18,6 +18,9 @@ public class Nation
     public Dictionary<Nation, Diplomacy> enemies;
     public List<ResearchNode> doneResearches;
     public Dictionary<BuffKind, double> buffs;
+    public ConstructionRequest constructionRequest;
+        // ★ 인터페이스 구현
+    
 
     // Getter
     public long Population => provinces.Sum(x => x.population);
@@ -51,6 +54,7 @@ public class Nation
         ethnicGroups = new();
         allies = new();
         enemies = new();
+        constructionRequest = new ConstructionRequest(this);
     }
 
     /// <summary>
@@ -163,4 +167,8 @@ public class Nation
         building.manhoursLeft = GlobalVariables.BUILDING_RECIPE[building.buildingType.name].TimeToBuild;
         buildingsInProgress.Enqueue(building);
     }
+    
+
+
+
 }
