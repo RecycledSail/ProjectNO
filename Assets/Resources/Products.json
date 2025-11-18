@@ -91,7 +91,7 @@
       "category": "luxury_premium"
     },
     {
-      "naem": "Build_demand",
+      "name": "Build_demand",
       "initialPrice": 0,
       "category": "system_parameter"
     },

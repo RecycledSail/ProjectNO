@@ -7,6 +7,7 @@
     { "name": "luxury_basic" },
     { "name": "luxury_premium" },
     { "name": "military_equipment" },
-    { "name": "monster_material" }
+    { "name": "monster_material" },
+	{ "name": "system_parameter" }
   ]
 }

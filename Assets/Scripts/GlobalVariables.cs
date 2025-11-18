@@ -123,8 +123,6 @@ public static class GlobalVariables
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void LoadData()
     {
-        try
-        {
             LoadBuff();
             LoadResearchNodes();
             LoadUnitTypes();
@@ -139,11 +137,6 @@ public static class GlobalVariables
             LoadAdjacentProvinces();
             LoadInitialProvinces();
             LoadInitialDiplomacies();
-        }
-        catch(Exception e)
-        {
-            Debug.LogError(e);
-        }
         // Market.Init();
     }
 
