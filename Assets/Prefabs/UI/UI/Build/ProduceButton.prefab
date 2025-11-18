@@ -148,7 +148,7 @@ GameObject:
   - component: {fileID: 671297307211623262}
   - component: {fileID: 2537183223514950102}
   m_Layer: 5
-  m_Name: ProduceDemandText
+  m_Name: ProduceSupplyDemandText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -284,7 +284,7 @@ GameObject:
   - component: {fileID: 5834403996007781989}
   - component: {fileID: 8642987192897564962}
   - component: {fileID: 6470656327858392071}
-  - component: {fileID: 5390778840519765329}
+  - component: {fileID: 1720196664320591038}
   m_Layer: 5
   m_Name: ProduceButton
   m_TagString: Untagged
@@ -395,7 +395,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &5390778840519765329
+--- !u!114 &1720196664320591038
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -404,8 +404,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 7993767619520825201}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b15c3de4d760eef4c8783d89188d1dbe, type: 3}
+  m_Script: {fileID: 11500000, guid: 04f79be029fbc3a459a7ca654ed3b7f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nameText: {fileID: 4101102910664642215}
-  countText: {fileID: 0}
+  produceTypeText: {fileID: 4101102910664642215}
+  produceSupplyDemandText: {fileID: 2537183223514950102}

@@ -83,7 +83,7 @@ public class NationUI : MonoBehaviour
     private void OnDestroy()
     {
         if (GameManager.Instance != null)
-            GameManager.Instance.dayEvent.AddListener(UpdateNationUI);
+            GameManager.Instance.dayEvent.RemoveListener(UpdateNationUI);
     }
 
     private void UpdateNationUI()

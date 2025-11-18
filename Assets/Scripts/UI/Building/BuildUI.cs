@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class BuildUI : MonoBehaviour
 {
-    public GameObject uiPanel;  // Nation UI ÆĞ³Î
+    public GameObject uiPanel;  // Nation UI íŒ¨ë„
 
-    //Build List °ü·Ã
-    public Transform BuildListParent; // Build ¸ñ·ÏÀÌ µé¾î°¥ ºÎ¸ğ °´Ã¼
-    public GameObject BuildItemPrefab; // Build ¹öÆ° ÇÁ¸®ÆÕ
+    //Build List ê´€ë ¨
+    public Transform BuildListParent; // Build ëª©ë¡ì´ ë“¤ì–´ê°ˆ ë¶€ëª¨ ê°ì²´
+    public GameObject BuildItemPrefab; // Build ë²„íŠ¼ í”„ë¦¬íŒ¹
 
 
     // Panels to change
@@ -18,11 +18,9 @@ public class BuildUI : MonoBehaviour
 
     private Nation currentNation;
 
-    private int delayedUpdate;
-
     private List<BuildingType> buildings;
 
-    // ½Ì±ÛÅæ ÀÎ½ºÅÏ½º (´Ù¸¥ ½ºÅ©¸³Æ®¿¡¼­ ½±°Ô Á¢±Ù °¡´É)
+    // ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤ (ë‹¤ë¥¸ ìŠ¤í¬ë¦½íŠ¸ì—ì„œ ì‰½ê²Œ ì ‘ê·¼ ê°€ëŠ¥)
     private static BuildUI _instance;
     public static BuildUI Instance
     {
@@ -36,18 +34,18 @@ public class BuildUI : MonoBehaviour
     }
 
     /// <summary>
-    /// °ÔÀÓ ½ÃÀÛ Àü ÃÊ±âÈ­ ¸Ş¼­µå (½Ì±ÛÅæ Áßº¹¹æÁö Ã³¸®)
+    /// ê²Œì„ ì‹œì‘ ì „ ì´ˆê¸°í™” ë©”ì„œë“œ (ì‹±ê¸€í†¤ ì¤‘ë³µë°©ì§€ ì²˜ë¦¬)
     /// </summary>
     private void Awake()
     {
-        // ½Ì±ÛÅæ Áßº¹ ¹æÁö ·ÎÁ÷
+        // ì‹±ê¸€í†¤ ì¤‘ë³µ ë°©ì§€ ë¡œì§
         if (_instance == null)
         {
             _instance = this;
         }
         else if (_instance != this)
         {
-            Destroy(gameObject);  // Áßº¹ ½Ã Á¦°Å
+            Destroy(gameObject);  // ì¤‘ë³µ ì‹œ ì œê±°
         }
     }
 
@@ -65,67 +63,61 @@ public class BuildUI : MonoBehaviour
                 currentOpenSubUI = subUIs[i];
             }
         }
-        delayedUpdate = 0;
-        /*
-        buildings = new();
-        foreach(BuildingType buildingType in GlobalVariables.BUILDING_TYPE.Values)
-        {
-            buildings.Add(buildingType);
-        }
-        */
         currentNation = null;
-        uiPanel.SetActive(false); // Ã³À½¿¡´Â UI¸¦ ¼û±è
+        uiPanel.SetActive(false); // ì²˜ìŒì—ëŠ” UIë¥¼ ìˆ¨ê¹€
+        GameManager.Instance.dayEvent.AddListener(InitBuildList);
     }
 
     private void Update()
     {
-        delayedUpdate = (delayedUpdate + 1) % 5;
-        if (delayedUpdate == 0 && currentNation != null)
-        {
-            //InitBuildList();
-        }
+    }
+
+    private void OnDestroy()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.dayEvent.RemoveListener(InitBuildList);
     }
 
 
     /// <summary>
-    /// Æ¯Á¤ NationÀÇ UI¸¦ ¿­°í ±×¿¡ ¼ÓÇÑ Province ¸ñ·ÏÀ» Ç¥½ÃÇÕ´Ï´Ù.
+    /// íŠ¹ì • Nationì˜ UIë¥¼ ì—´ê³  ê·¸ì— ì†í•œ Province ëª©ë¡ì„ í‘œì‹œí•©ë‹ˆë‹¤.
     /// </summary>
-    /// <param name="nation">¼±ÅÃÇÑ ±¹°¡</param>
+    /// <param name="nation">ì„ íƒí•œ êµ­ê°€</param>
     public void OpenBuildUI()
     {
         currentNation = GameManager.Instance.player.nation;
 
-        //InitBuildList();
+        InitBuildList();
 
         UIManager.Instance.ReplacePopUp(gameObject);
     }
     
 
     /// <summary>
-    /// ProvinceÀÇ ¸ñ·ÏÀ» ÇØ´ç nationÀÇ provinceµé·Î ÃÊ±âÈ­ÇÑ´Ù.
+    /// Provinceì˜ ëª©ë¡ì„ í•´ë‹¹ nationì˜ provinceë“¤ë¡œ ì´ˆê¸°í™”í•œë‹¤.
     /// </summary>
     public void InitBuildList()
     {
-        // ±âÁ¸ ¸®½ºÆ® Á¤¸®
+        // ê¸°ì¡´ ë¦¬ìŠ¤íŠ¸ ì •ë¦¬
         foreach (Transform child in BuildListParent)
         {
             Destroy(child.gameObject);
         }
 
-        // TODO: Nation¿¡ ¼ÓÇÑ Build Ãß°¡
-        foreach(BuildingType buildingType in buildings)
+        // êµì²´
+        foreach (string productType in GlobalVariables.PRODUCTS.Keys)
         {
             GameObject child = Instantiate(BuildItemPrefab, BuildListParent);
-            BuildingUI buildingUI = child.GetComponent<BuildingUI>();
-            buildingUI.SetBuildingData(currentNation, buildingType);
+            ProduceUI produceUI = child.GetComponent<ProduceUI>();
+            produceUI.SetProduceData(currentNation, productType);
         }
-        
+
     }
 
     /// <summary>
-    /// ÇöÀç È°¼ºÈ­µÈ SubUI¸¦ º¯°æÇÑ´Ù.
+    /// í˜„ì¬ í™œì„±í™”ëœ SubUIë¥¼ ë³€ê²½í•œë‹¤.
     /// </summary>
-    /// <param name="index">º¯°æÇÒ SubUIÀÇ index</param>
+    /// <param name="index">ë³€ê²½í•  SubUIì˜ index</param>
     public void ChangeSubUI(int index)
     {
         currentOpenSubUI.SetActive(false);
@@ -134,7 +126,7 @@ public class BuildUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Nation UI¸¦ ´İ½À´Ï´Ù.
+    /// Nation UIë¥¼ ë‹«ìŠµë‹ˆë‹¤.
     /// </summary>
     public void CloseBuildUI()
     {
