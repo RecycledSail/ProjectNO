@@ -65,7 +65,7 @@ public class BuildUI : MonoBehaviour
         }
         currentNation = null;
         uiPanel.SetActive(false); // 처음에는 UI를 숨김
-        GameManager.Instance.dayEvent.AddListener(InitBuildList);
+        GameManager.Instance.dayEvent.AddListener(UpdateBuildUI);
     }
 
     private void Update()
@@ -75,7 +75,7 @@ public class BuildUI : MonoBehaviour
     private void OnDestroy()
     {
         if (GameManager.Instance != null)
-            GameManager.Instance.dayEvent.RemoveListener(InitBuildList);
+            GameManager.Instance.dayEvent.RemoveListener(UpdateBuildUI);
     }
 
 
@@ -87,11 +87,18 @@ public class BuildUI : MonoBehaviour
     {
         currentNation = GameManager.Instance.player.nation;
 
-        InitBuildList();
+        UpdateBuildUI();
 
         UIManager.Instance.ReplacePopUp(gameObject);
     }
     
+    public void UpdateBuildUI()
+    {
+        if (currentNation != null)
+        {
+            InitBuildList();
+        }
+    }
 
     /// <summary>
     /// Province의 목록을 해당 nation의 province들로 초기화한다.

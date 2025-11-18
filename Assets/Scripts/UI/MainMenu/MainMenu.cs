@@ -1,7 +1,5 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
-using TMPro;
 using System.IO;
 
 public class MainMenu : MonoBehaviour
@@ -11,7 +9,7 @@ public class MainMenu : MonoBehaviour
     {
         GlobalVariables.saveFileName = null;
         GlobalVariables.LoadData();
-        // "PlayScene" ·Îµù
+        // "PlayScene" ë¡œë”©
         SceneManager.LoadScene("PlayScene");
     }
 
@@ -34,7 +32,7 @@ public class MainMenu : MonoBehaviour
         Application.Quit();
 
 #if UNITY_EDITOR
-        // ¿¡µğÅÍ¿¡¼­ QuitÀÌ µ¿ÀÛÇÏÁö ¾Ê±â ¶§¹®¿¡
+        // ì—ë””í„°ì—ì„œ Quitì´ ë™ì‘í•˜ì§€ ì•Šê¸° ë•Œë¬¸ì—
         UnityEditor.EditorApplication.isPlaying = false;
 #endif
     }
