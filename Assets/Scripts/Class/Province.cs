@@ -120,7 +120,6 @@ public class Province
     /// 매 주 실행
     /// </summary>
     public void BaseProduction()
-
     {
         long provinceProduction = 1000;
 

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class BuildUI : MonoBehaviour
 {
@@ -18,7 +19,10 @@ public class BuildUI : MonoBehaviour
 
     private Nation currentNation;
 
-    private List<BuildingType> buildings;
+    public TMP_Text detailedText;
+
+    [HideInInspector]
+    public ProduceUI selectedProduceUI = null;
 
     // 싱글톤 인스턴스 (다른 스크립트에서 쉽게 접근 가능)
     private static BuildUI _instance;
@@ -97,6 +101,7 @@ public class BuildUI : MonoBehaviour
         if (currentNation != null)
         {
             InitBuildList();
+            UpdateDetailUI();
         }
     }
 
@@ -105,6 +110,7 @@ public class BuildUI : MonoBehaviour
     /// </summary>
     public void InitBuildList()
     {
+        string oldProductType = selectedProduceUI == null ? "" : selectedProduceUI.productName;
         // 기존 리스트 정리
         foreach (Transform child in BuildListParent)
         {
@@ -117,6 +123,8 @@ public class BuildUI : MonoBehaviour
             GameObject child = Instantiate(BuildItemPrefab, BuildListParent);
             ProduceUI produceUI = child.GetComponent<ProduceUI>();
             produceUI.SetProduceData(currentNation, productType);
+            if(productType == oldProductType)
+                selectedProduceUI = produceUI;
         }
 
     }
@@ -133,10 +141,42 @@ public class BuildUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Nation UI를 닫습니다.
+    /// Build UI를 닫습니다.
     /// </summary>
     public void CloseBuildUI()
     {
         uiPanel.SetActive(false);
+        selectedProduceUI = null;
+    }
+
+
+    public void OnManualButtonClick()
+    {
+        if(selectedProduceUI != null)
+        {
+            if (GlobalVariables.PRODUCT_TO_BUILDING.TryGetValue(selectedProduceUI.productName, out string buildingTypeName)){
+                if (GlobalVariables.BUILDING_TYPE.TryGetValue(buildingTypeName, out BuildingType buildingType)){
+                    BuildProvinceUI.Instance.OpenBuildProvinceUI(buildingType);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Detail UI를 변경합니다.
+    /// </summary>
+    public void UpdateDetailUI()
+    {
+        if(selectedProduceUI == null)
+        {
+            string text = "Select product\nto see details";
+            detailedText.text = text;
+        }
+        else
+        {
+            string text = selectedProduceUI.productName + "\n";
+            text += "Supply: " + selectedProduceUI.productSupplyCount + " Demand: " + selectedProduceUI.productDemandCount + "\n";
+            detailedText.text = text;
+        }
     }
 }

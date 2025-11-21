@@ -6,9 +6,10 @@ public class ProduceUI : MonoBehaviour
     public TMP_Text produceTypeText; // 빌딩 이름 텍스트
     public TMP_Text produceSupplyDemandText; // 빌딩 수 텍스트
     private Nation nationData; // 프로빈스 데이터 텍스트
-    private string productName;
-    private long productSupplyCount;
-    private long productDemandCount;
+    public string productName;
+    public long productSupplyCount;
+    public long productDemandCount;
+    private long buildingsCount;
 
     /// <summary>
     /// Province 데이터를 설정하고 UI를 업데이트합니다.
@@ -30,7 +31,7 @@ public class ProduceUI : MonoBehaviour
 
     private void UpdateCount()
     {
-        productSupplyCount = 0; productDemandCount = 0;
+        productSupplyCount = 0; productDemandCount = 0; buildingsCount = 0;
         foreach(Province province in nationData.provinces)
         {
             if (province.market.Products.TryGetValue(productName, out ProductState product))
@@ -47,8 +48,8 @@ public class ProduceUI : MonoBehaviour
     /// </summary>
     public void OnClick()
     {
-        //TODO: Building build UI
-
+        BuildUI.Instance.selectedProduceUI = this;
+        BuildUI.Instance.UpdateDetailUI();
     }
 
     private void OnDestroy()

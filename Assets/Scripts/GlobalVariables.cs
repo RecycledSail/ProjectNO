@@ -96,6 +96,13 @@ public static class GlobalVariables
 
 
     /// <summary>
+    /// 생산품과 빌딩 타입의 관계를 저장하는 Dictionary
+    /// Key: string (생산품 종류), Value: string (빌딩 종류)
+    /// </summary>
+    public static Dictionary<string, string> PRODUCT_TO_BUILDING = new();
+
+
+    /// <summary>
     /// 직업분류를 저장하는 Dictionary
     /// Key: string (직업명), Value: 직업타입 클래스
     /// </summary>
@@ -248,6 +255,7 @@ public static class GlobalVariables
             foreach (var produceItem in data.produceItems)
             {
                 produceItems[produceItem.name] = produceItem.amount;
+                PRODUCT_TO_BUILDING[produceItem.name] = data.name;
             }
 
             Dictionary<string, int> requiredItems = new();
@@ -264,6 +272,7 @@ public static class GlobalVariables
                 requireItems = requiredItems,
                 workerNeeded = workerNeeded
             };
+
             BUILDING_TYPE[data.name] = buildingType;
         }
     }
