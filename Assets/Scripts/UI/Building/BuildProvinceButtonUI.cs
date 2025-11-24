@@ -48,7 +48,9 @@ public class BuildProvinceButtonUI : MonoBehaviour
     /// </summary>
     public void OnClick()
     {
+        var nation = GameManager.Instance.player.nation;
         //TODO: Building build UI
+        nation.constructionRequest.AddBuildingReservation(buildingType, provinceData,nation);
 
     }
 }

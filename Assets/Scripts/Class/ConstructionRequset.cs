@@ -18,13 +18,11 @@ public class ConstructionRequest
 //투자자가 건설을 요청하는 메서드
     public void AddBuildingReservation(BuildingType buildingType,
                                        Province targetProvince,
-                                       long quantity,
                                        IBuildingInvestor investor)
     {
         var reservation = new BuildingReservation(
             buildingType,
             targetProvince,
-            quantity,
             investor);
 
         this.buildingReservations.Add(reservation);
@@ -38,17 +36,14 @@ public class BuildingReservation
 {
     public BuildingType buildingType { get; set; }
     public Province targetProvince { get; set; }
-    public long quantity { get; set; }
     public IBuildingInvestor Investor { get; set; }  // ← 여기!
 
     public BuildingReservation(BuildingType buildingType,
                                Province targetProvince,
-                               long quantity,
                                IBuildingInvestor investor = null)
     {
         this.buildingType   = buildingType;
         this.targetProvince = targetProvince;
-        this.quantity       = quantity;
         this.Investor       = investor;
     }
 }
