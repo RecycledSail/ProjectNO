@@ -12,6 +12,10 @@ public class BuildUI : MonoBehaviour
     public GameObject BuildItemPrefab; // Build 버튼 프리팹
 
 
+    //Build Queue 관련
+    public Transform BuildQueueParent;
+    public Transform BuildQueueItemPrefab;
+
     // Panels to change
     public List<GameObject> subUIs;
 
@@ -178,5 +182,13 @@ public class BuildUI : MonoBehaviour
             text += "Supply: " + selectedProduceUI.productSupplyCount + " Demand: " + selectedProduceUI.productDemandCount + "\n";
             detailedText.text = text;
         }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public void UpdateQueue()
+    {
+
     }
 }
