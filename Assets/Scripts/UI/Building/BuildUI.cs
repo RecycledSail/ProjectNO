@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
+using static NUnit.Framework.Internal.OSPlatform;
 
 public class BuildUI : MonoBehaviour
 {
@@ -14,7 +16,7 @@ public class BuildUI : MonoBehaviour
 
     //Build Queue 관련
     public Transform BuildQueueParent;
-    public Transform BuildQueueItemPrefab;
+    public GameObject BuildQueueItemPrefab;
 
     // Panels to change
     public List<GameObject> subUIs;
@@ -106,6 +108,7 @@ public class BuildUI : MonoBehaviour
         {
             InitBuildList();
             UpdateDetailUI();
+            UpdateQueue();
         }
     }
 
@@ -185,10 +188,34 @@ public class BuildUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 
+    /// buildingsInProgress를 출력한다.
     /// </summary>
     public void UpdateQueue()
     {
+        int count = 0;
 
+        foreach (Building building in currentNation.buildingsInProgress)
+        {
+            while (count < BuildQueueParent.childCount && BuildQueueParent.GetChild(count).GetComponent<BuildQueueItem>().Building != building)
+            {
+                Destroy(BuildQueueParent.GetChild(count).gameObject);
+            }
+            if(count < BuildQueueParent.childCount && BuildQueueParent.GetChild(count).GetComponent<BuildQueueItem>().Building == building)
+            {
+                count++;
+            }
+            else
+            {
+                GameObject child = Instantiate(BuildQueueItemPrefab, BuildQueueParent);
+                BuildQueueItem bqi = child.GetComponent<BuildQueueItem>();
+                bqi.SetBuildingData(building);
+                count++;
+            }
+        }
+        int remains = BuildQueueParent.childCount;
+        for (int i=count; i < remains; i++)
+        {
+            Destroy(BuildQueueParent.GetChild(count).gameObject);
+        }
     }
 }

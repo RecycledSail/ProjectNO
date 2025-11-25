@@ -146,14 +146,18 @@ public class Nation : IBuildingInvestor
     private void ProgressBuild()
     {
         double remainingManhour = nationManhour;
-        while (buildingsInProgress.Count != 0 && remainingManhour > 0.0)
+        if (buildingsInProgress.Count > 0 && remainingManhour > 0.0)
         {
-            Building building = buildingsInProgress.Peek();
-            double spentManhour = Math.Min(remainingManhour, building.manhoursLeft - remainingManhour);
-            building.manhoursLeft -= spentManhour;
-            if (building.manhoursLeft <= 0.0)
-                buildingsInProgress.Dequeue();
-            remainingManhour -= spentManhour;
+            if (buildingsInProgress.TryPeek(out Building building))
+            {
+                double spentManhour = Math.Min(remainingManhour, building.manhoursLeft + 1);
+                building.manhoursLeft -= spentManhour;
+                if (building.manhoursLeft <= 0.0)
+                {
+                    buildingsInProgress.Dequeue();
+                }
+                remainingManhour -= spentManhour;
+            }
         }
     }
 
@@ -167,8 +171,4 @@ public class Nation : IBuildingInvestor
         building.manhoursLeft = GlobalVariables.BUILDING_RECIPE[building.buildingType.name].TimeToBuild;
         buildingsInProgress.Enqueue(building);
     }
-    
-
-
-
 }

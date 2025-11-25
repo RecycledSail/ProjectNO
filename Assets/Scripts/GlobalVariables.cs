@@ -138,6 +138,7 @@ public static class GlobalVariables
             LoadJobTypes();
             LoadBuildingTypes();
             LoadCategories();
+            LoadBuildingRecipes();
             LoadProducts();
             LoadProvinces();
             LoadNations();

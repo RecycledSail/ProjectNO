@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class BuildProvinceButtonUI : MonoBehaviour
 {
@@ -48,9 +50,16 @@ public class BuildProvinceButtonUI : MonoBehaviour
     /// </summary>
     public void OnClick()
     {
-        var nation = GameManager.Instance.player.nation;
         //TODO: Building build UI
-        nation.constructionRequest.AddBuildingReservation(buildingType, provinceData,nation);
-
+        //nation.constructionRequest.AddBuildingReservation(buildingType, provinceData,nation);
+        
+        Building building = provinceData.buildings.GetValueOrDefault(buildingType, null);
+        if (building == null)
+        {
+            building = new Building(buildingType, provinceData);
+            provinceData.buildings[buildingType] = building;
+        }
+        provinceData.nation.AddToBuildQueue(provinceData.buildings[buildingType]);
+        BuildUI.Instance.UpdateQueue();
     }
 }

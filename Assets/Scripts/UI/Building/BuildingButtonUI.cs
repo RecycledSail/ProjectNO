@@ -1,15 +1,15 @@
 using TMPro;
 using UnityEngine;
 
-public class BuildingUI : MonoBehaviour
+public class BuildingButtonUI : MonoBehaviour
 {
-    public TMP_Text nameText; // ºôµù ÀÌ¸§ ÅØ½ºÆ®
-    public TMP_Text countText; // ºôµù ¼ö ÅØ½ºÆ®
-    private Nation nationData; // ÇÁ·Îºó½º µ¥ÀÌÅÍ ÅØ½ºÆ®
+    public TMP_Text nameText; // ë¹Œë”© ì´ë¦„ í…ìŠ¤íŠ¸
+    public TMP_Text countText; // ë¹Œë”© ìˆ˜ í…ìŠ¤íŠ¸
+    private Nation nationData; // í”„ë¡œë¹ˆìŠ¤ ë°ì´í„° í…ìŠ¤íŠ¸
     private BuildingType buildingType;
    
     /// <summary>
-    /// Province µ¥ÀÌÅÍ¸¦ ¼³Á¤ÇÏ°í UI¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+    /// Province ë°ì´í„°ë¥¼ ì„¤ì •í•˜ê³  UIë¥¼ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
     /// </summary>
     public void SetBuildingData(Nation nation, BuildingType buildingType)
     {
@@ -41,7 +41,7 @@ public class BuildingUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Province ¹öÆ°ÀÌ Å¬¸¯µÉ ¶§ ½ÇÇàÇÒ ±â´É (¿¹: »ó¼¼ Á¤º¸ Ç¥½Ã).
+    /// Province ë²„íŠ¼ì´ í´ë¦­ë  ë•Œ ì‹¤í–‰í•  ê¸°ëŠ¥ (ì˜ˆ: ìƒì„¸ ì •ë³´ í‘œì‹œ).
     /// </summary>
     public void OnClick()
     {
