@@ -116,7 +116,7 @@ public class BuildProvinceUI : MonoBehaviour
     {
         if (currentNation != null)
         {
-            InitBuildProvinceList();
+            UpdateBuildProvinceList();
         }
     }
 
@@ -124,20 +124,34 @@ public class BuildProvinceUI : MonoBehaviour
     /// <summary>
     /// Province의 목록을 해당 nation의 province들로 초기화한다.
     /// </summary>
-    public void InitBuildProvinceList()
+    public void UpdateBuildProvinceList()
     {
-        // 기존 리스트 정리
+        // 1. 이전에 만들어뒀던 province-child 반환
+        Dictionary<Province, Transform> prevChilds = new();
         foreach (Transform child in BuildListParent)
         {
-            Destroy(child.gameObject);
+            Province province = child.gameObject.GetComponent<BuildProvinceButtonUI>().Province;
+            if (province != null)
+                prevChilds.Add(province, child);
         }
 
-        // 교체
-        foreach (Province province in currentNation.provinces)
+        // 2. 현재 Province 반환
+        foreach(Province province in currentNation.provinces)
         {
-            GameObject child = Instantiate(BuildItemPrefab, BuildListParent);
-            BuildProvinceButtonUI bpbUI = child.GetComponent<BuildProvinceButtonUI>();
-            bpbUI.SetBuildingData(province, currentBuildingType);
+            if(prevChilds.ContainsKey(province))
+                prevChilds.Remove(province);
+            else
+            {
+                GameObject child = Instantiate(BuildItemPrefab, BuildListParent);
+                BuildProvinceButtonUI bpbUI = child.GetComponent<BuildProvinceButtonUI>();
+                bpbUI.SetBuildingData(province, currentBuildingType);
+            }
+        }
+
+        // 3. 남은 prevChilds 제거
+        foreach(Province province in prevChilds.Keys)
+        {
+            Destroy(prevChilds[province]);
         }
     }
 

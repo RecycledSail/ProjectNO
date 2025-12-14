@@ -9,6 +9,7 @@ public class BuildProvinceButtonUI : MonoBehaviour
     public TMP_Text countText; // 프로빈스 내에 존재하는 빌딩 레벨 텍스트
     public TMP_Text unemployedText; // 프로빈스 내에 존재하는 실업자 수 텍스트
     private Province provinceData; // 프로빈스 데이터 텍스트
+    public Province Province { get { return provinceData; } }
     private BuildingType buildingType;
    
     /// <summary>
