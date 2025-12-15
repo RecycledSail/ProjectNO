@@ -34,5 +34,24 @@
       "TimeToBuild": 20
       
     }
+    ,
+    {
+      "name": "SwordSmith",
+      "buildRequirements": [        
+        { "item": "Wood",  "amount": 3000 },
+        { "item": "Iron",  "amount": 1000 }
+
+      ],
+      "TimeToBuild": 40
+      
+    },
+    {
+      "name": "FurnitureShop",
+      "buildRequirements": [        
+        { "item": "Wood",  "amount": 3000 }
+      ],
+      "TimeToBuild": 40
+      
+    }
   ]
 }

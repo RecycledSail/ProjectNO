@@ -60,7 +60,8 @@ public class BuildProvinceButtonUI : MonoBehaviour
             building = new Building(buildingType, provinceData);
             provinceData.buildings[buildingType] = building;
         }
-        provinceData.nation.AddToBuildQueue(provinceData.buildings[buildingType]);
+        // provinceData.nation.AddToBuildQueue(provinceData.buildings[buildingType]);
+        provinceData.nation.constructionRequest.AddBuildingReservation(buildingType, provinceData, provinceData.nation);
         BuildUI.Instance.UpdateQueue();
     }
 }

@@ -194,7 +194,7 @@ public class BuildUI : MonoBehaviour
     {
         int count = 0;
 
-        foreach (Building building in currentNation.buildingsInProgress)
+        foreach (Building building in currentNation.constructionRequest.buildingReservations.ConvertAll(x => x.targetProvince.buildings[x.buildingType]))
         {
             while (count < BuildQueueParent.childCount && BuildQueueParent.GetChild(count).GetComponent<BuildQueueItem>().Building != building)
             {
