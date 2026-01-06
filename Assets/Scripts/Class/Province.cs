@@ -29,6 +29,7 @@ public class Province
     public Nation nation { get; set; } = null;
     public ProvinceMarket market { get; set; }
     public Dictionary<BuildingType, Building> buildings { get; set; } = null;
+    public int road { get; set; } = 0;
     public List<ProvinceEthnicPop> provinceEthnicPops { get; set; } = null;
 
     // 프로빈스 현재 상태 정의 (고용된 인구)

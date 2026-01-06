@@ -15,33 +15,124 @@ public class SelectProvince3D : MonoBehaviour
     public Camera cam; // 화면을 비추는 카메라
     private List<GameObject> children; // 현재 오브젝트의 Children
     private List<GameObject> outlined;
+    private Dictionary<GameObject, Color32> originalColors; // 각 child의 원래 색상 저장
+    private bool childrenColoredByBuildUI = false; // subUIs[2]에 의해 색칠된 상태인지
+    private bool isBuildSubActive = false;
 
     void Start()
     {
         children = new();
         outlined = new();
+        originalColors = new();
         for(int i = 0, count = this.transform.childCount; i < count; i++)
         {
             GameObject child = this.transform.GetChild(i).gameObject;
             children.Add(child);
+
+            // 저장해둘 원래 색상
+            var renderer = child.GetComponent<Renderer>();
+            if (renderer != null && renderer.material != null)
+            {
+                originalColors[child] = renderer.material.color;
+            }
+            else
+            {
+                originalColors[child] = new Color32(255,255,255,255);
+            }
         }
     }
 
     void Update()
     {
+        HandleBuildUIColoring();
+        HandleHoverAndSelection();
+    }
+
+    private void HandleBuildUIColoring()
+    {
+        bool buildSubActive = false;
+        if (BuildUI.Instance != null && BuildUI.Instance.subUIs != null && BuildUI.Instance.subUIs.Count > 2)
+        {
+            buildSubActive = BuildUI.Instance.subUIs[2].activeSelf;
+        }
+
+        if (buildSubActive)
+        {
+            if (!childrenColoredByBuildUI)
+            {
+                foreach (var c in children)
+                {
+                    // child의 이름인 provinced의 road가 1이면 초록색, 0이면 빨간색
+                    
+                    if (GlobalVariables.PROVINCES.TryGetValue(c.name, out Province province))
+                    {
+                        if (province.road == 1)
+                            RecolorProvince(c, new Color32(100, 255, 100, 255));
+                        else
+                            RecolorProvince(c, new Color32(255, 100, 100, 255));
+                    }
+                }
+                childrenColoredByBuildUI = true;
+            }
+        }
+        else
+        {
+            if (childrenColoredByBuildUI)
+            {
+                foreach (var c in children)
+                {
+                    if (originalColors.TryGetValue(c, out Color32 col))
+                        RecolorProvince(c, col);
+                }
+                childrenColoredByBuildUI = false;
+            }
+        }
+
+        isBuildSubActive = buildSubActive;
+    }
+
+    private void HandleHoverAndSelection()
+    {
         GameObject child = HitChild();
+
+        // Normal behavior when build sub is not active
         if (!child)
         {
             RemoveOutline();
             return;
         }
 
+
+        // child 있고, 마우스 왼버튼 클릭 시
         if (child && Input.GetMouseButtonDown(0))
         {
-            OpenNationUI(child);
+            // 길 건설 모드가 활성화되어 있을때, child의 이름을 가진 Province의 road가 0이면 1로
+            if (isBuildSubActive)
+            {
+                if (GlobalVariables.PROVINCES.TryGetValue(child.name, out Province province))
+                {
+                    if (province.road == 0)
+                    {
+                        province.road = 1;
+                        // 좀 연한 초록색으로 변경
+                        RecolorProvince(child, new Color32(100, 255, 100, 255));
+                    }
+                    else
+                    {
+                        province.road = 0;
+                        // 좀 연한 빨강색으로 변경
+                        RecolorProvince(child, new Color32(255, 100, 100, 255));
+                    }
+                }
+            }
+            else
+            {
+                OpenNationUI(child);
+            }
         }
 
-        OutlineProvince(child); // 프로빈스 색칠 함수 호출
+        OutlineProvince(child);
+
     }
 
     private bool IsPointerOverUIObject()
@@ -111,6 +202,16 @@ public class SelectProvince3D : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Province GameObject의 material을 주어진 색상으로 변경합니다.
+    /// </summary>
+    void RecolorProvince(GameObject child, Color32 color)
+    {
+        Material mat = child.GetComponent<Renderer>().material;
+        mat.color = color;
+    }
+
+    
     void RemoveOutline()
     {
         for(int i=outlined.Count-1; i>=0; i--)
@@ -128,66 +229,5 @@ public class SelectProvince3D : MonoBehaviour
         outline.enabled = true;
         outlined.Add(province);
     }
-    //void RemoveColors()
-    //{
-    //    List<Vector2> list;
-    //    // 이전에 칠했던 색상을 원래대로 되돌림
-    //    while (paintedColors.Count != 0)
-    //    {
-    //        Color32 painted = paintedColors.Pop();
-    //        if (colorToVec2.TryGetValue(painted, out list))
-    //        {
-    //            foreach (Vector2 v in list)
-    //            {
-    //                tex_0.SetPixel((int)v.x, (int)v.y, painted);
-    //            }
-    //        }
-    //    }
-    //}
-
-    ///// <summary>
-    ///// 선택한 프로빈스와 인접한 프로빈스들을 색칠하는 함수
-    ///// </summary>
-    ///// <param name = "c" > 선택한 색상</param>
-    ///// <param name = "tex_0" > 변경할 텍스처</param>
-    //void ColorNewProvinces(Color32 c)
-    //{
-    //    List<Vector2> list;
-    //    paintedColors.Push(c); // 현재 색상을 스택에 저장
-
-    //    // 현재 색상에 해당하는 모든 픽셀을 파란색으로 변경
-    //    if (colorToVec2.TryGetValue(c, out list))
-    //    {
-    //        foreach (Vector2 v in list)
-    //        {
-    //            tex_0.SetPixel((int)v.x, (int)v.y, Color.blue);
-    //        }
-    //    }
-
-    //    // 현재 프로빈스를 가져옴
-    //    Province cur;
-    //    if (GlobalVariables.COLORTOPROVINCE.TryGetValue(c, out cur))
-    //    {
-    //        List<Province> provinces;
-    //        // 현재 프로빈스와 인접한 프로빈스 목록을 가져옴
-    //        if (GlobalVariables.ADJACENT_PROVINCES.TryGetValue(cur.name, out provinces))
-    //        {
-    //            foreach (Province province in provinces)
-    //            {
-    //                Color32 provColor = province.color;
-    //                List<Vector2> provPixelVec;
-
-    //                // 인접한 프로빈스의 픽셀을 하늘색으로 변경
-    //                if (colorToVec2.TryGetValue(provColor, out provPixelVec))
-    //                {
-    //                    foreach (Vector2 v in provPixelVec)
-    //                    {
-    //                        tex_0.SetPixel((int)v.x, (int)v.y, Color.cyan);
-    //                    }
-    //                    paintedColors.Push(provColor); // 변경한 색상을 스택에 저장
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
+    
 }
