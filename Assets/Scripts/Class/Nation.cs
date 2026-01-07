@@ -19,6 +19,7 @@ public class Nation : IBuildingInvestor
     public List<ResearchNode> doneResearches;
     public Dictionary<BuffKind, double> buffs;
     public ConstructionRequest constructionRequest;
+    public Li
         // ★ 인터페이스 구현
     
 
