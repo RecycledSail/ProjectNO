@@ -54,7 +54,28 @@ public interface IBuildingInvestor
     // 일부러 비워둠: "건물에 투자할 수 있는 존재"라는 표시만 하는 용도
 }
 
+public class BuildingInProgress
+{
+    public float confirmindex { get; set; }
+    public Province ConstructionConfirmLocation { get; set; }
+    public BuildingReservation Buildingrequest  { get; set; }  // ← 여기!
 
+    public BuildingInProgress(float confirmindex,
+                               Province ConstructionConfirmLocation,
+                               BuildingReservation buildingrequest = null)
+    {
+        this.confirmindex   = confirmindex;
+        this.ConstructionConfirmLocation = ConstructionConfirmLocation;
+        this.Buildingrequest       = buildingrequest;
+    }
+
+    public void MatchingwithadjacentconstrucntionCompany()
+    {
+        // 일부러 비워둠: 추후 구현 예정
+    }
+
+
+}
 
 
 

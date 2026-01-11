@@ -21,7 +21,6 @@ public class Nation : IBuildingInvestor
     public Dictionary<BuffKind, double> buffs;
     public ConstructionRequest constructionRequest;
     public NationMarket market;
-    // ★ 인터페이스 구현
 
 
     // Getter
