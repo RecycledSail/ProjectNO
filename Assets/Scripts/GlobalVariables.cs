@@ -58,6 +58,12 @@ public static class GlobalVariables
     public static Dictionary<string, List<string>> INITIAL_PROVINCES = new();
 
     /// <summary>
+    /// 각 국가의 초기 수도 목록
+    /// Key: 국가 이름, Value: 수도 주 이름
+    /// </summary>
+    public static Dictionary<string, string> INITIAL_CAPITALS = new();
+
+    /// <summary>
     /// 상품의 카테고리 (의, 식, 주, 1차 사치품, 2차 사치품...) Dictionary
     /// Key: 카테고리명, Value: Product의 이름 (string) 리스트
     /// </summary>
@@ -381,6 +387,7 @@ public static class GlobalVariables
                 rnodes.Add(provinceStr);
             }
             INITIAL_PROVINCES[data.nation] = rnodes;
+            INITIAL_CAPITALS[data.nation] = data.capital;
         }
     }
 
@@ -620,7 +627,7 @@ public static class GlobalVariables
         public sealed class ProvinceData { public int id; public string name; public List<SpeciesPopData> pops; public string topography; public List<BuildingData> buildings; }
 
         [System.Serializable]
-        public sealed class InitialProvinceData { public string nation; public List<string> provinces; }
+        public sealed class InitialProvinceData { public string nation; public List<string> provinces; public string capital; }
 
         [System.Serializable]
         public sealed class AdjacentProvinceData { public string province; public List<string> adjacents; }

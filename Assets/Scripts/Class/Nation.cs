@@ -11,6 +11,7 @@ public class Nation : IBuildingInvestor
     public int id;
     public string name { get; }
     public List<Province> provinces { get; set; }
+    public Province capital { get; set; } = null;
     public long balance { get; set; }
     public List<Regiment> regiments { get; set; }
     public Dictionary<(SpeciesSpec, Culture), EthnicGroup> ethnicGroups { get; set; }
@@ -19,8 +20,9 @@ public class Nation : IBuildingInvestor
     public List<ResearchNode> doneResearches;
     public Dictionary<BuffKind, double> buffs;
     public ConstructionRequest constructionRequest;
-        // ★ 인터페이스 구현
-    
+    public NationMarket market;
+    // ★ 인터페이스 구현
+
 
     // Getter
     public long Population => provinces.Sum(x => x.population);
@@ -55,6 +57,7 @@ public class Nation : IBuildingInvestor
         allies = new();
         enemies = new();
         constructionRequest = new ConstructionRequest(this);
+        market = new NationMarket(this.name);
     }
 
     /// <summary>

@@ -70,16 +70,43 @@ public class ProvinceMarket
 
             // 지수 평활화 적용
             product.Price = Mathf.RoundToInt(0.7f * product.Price + 0.3f * newPrice);
+        }
+    }
+}
 
+// ===== 국가 단위 마켓 =====
+[Serializable]
+public class NationMarket
+{
+    public string NationName;
+    public Dictionary<string, ProductState> Products = new();
 
+    public NationMarket(string nationName)
+    {
+        NationName = nationName;
+    }
+
+    public void AddProduct(string productName, int basePrice)
+    {
+        if (!Products.ContainsKey(productName))
+        {
+            Products[productName] = new ProductState(productName, basePrice);
         }
     }
 
+    public void UpdatePrices()
+    {
+        foreach (var product in Products.Values)
+        {
+            int demand = product.LastDemand;
+            int supply = product.LastSupply;
 
+            float PrePrice = product.Price;
+            float newPrice = PrePrice * Mathf.Pow((demand + 1) / (supply + 1), product.Elasticity);
 
-
-
-
+            product.Price = Mathf.RoundToInt(0.7f * product.Price + 0.3f * newPrice);
+        }
+    }
 }
 
 // ===== 제품별 상태(한 주 내) =====

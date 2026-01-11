@@ -186,6 +186,7 @@ public class NationUI : MonoBehaviour
     public void InitNationStats()
     {
         string text = "";
+        text += "Capital: " + (currentNation.capital != null ? currentNation.capital.name : "None") + "\n";
         text += "Population: " + currentNation.Population + "\n";
         text += "Currency: " + currentNation.balance + "\n";
 

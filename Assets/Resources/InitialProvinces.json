@@ -2,11 +2,13 @@
   "initialProvinces": [
     {
       "nation": "Nation1",
-      "provinces": [ "Bebino", "Eiglepsk", "Sando" ]
+      "provinces": [ "Bebino", "Eiglepsk", "Sando" ],
+      "capital": "Bebino"
     },
     {
       "nation": "Nation2",
-      "provinces": [ "Stein" ]
+      "provinces": [ "Stein" ],
+      "capital": "Stein"
     }
   ]
 }

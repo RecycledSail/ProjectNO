@@ -191,7 +191,12 @@ public class GameManager : MonoBehaviour
                 Province province = GlobalVariables.PROVINCES[provinceStr];
                 nation.AddProvinces(province);
             }
+            // 해당 국가의 수도 설정
+            string capitalProvinceStr = GlobalVariables.INITIAL_CAPITALS[nationStr];
+            Province capitalProvince = GlobalVariables.PROVINCES[capitalProvinceStr];
+            nation.capital = capitalProvince;
 
+            // nations 딕셔너리에 국가 추가
             nations[nationStr] = nation;
 
             // 국가마다 User 객체 생성 및 목록에 추가
