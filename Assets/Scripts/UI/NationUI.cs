@@ -73,7 +73,7 @@ public class NationUI : MonoBehaviour
         }
         uiPanel.SetActive(false); // 처음에는 UI를 숨김
         currentNation = null;
-        GameManager.Instance.dayEvent.AddListener(UpdateNationUI);
+        GameManager.Instance.dayUIEvent.AddListener(UpdateNationUI);
     }
 
     private void Update()
@@ -83,7 +83,7 @@ public class NationUI : MonoBehaviour
     private void OnDestroy()
     {
         if (GameManager.Instance != null)
-            GameManager.Instance.dayEvent.RemoveListener(UpdateNationUI);
+            GameManager.Instance.dayUIEvent.RemoveListener(UpdateNationUI);
     }
 
     private void UpdateNationUI()

@@ -77,7 +77,7 @@ public class BuildProvinceUI : MonoBehaviour
         currentBuildingType = null;
         currentNation = null;
         uiPanel.SetActive(false); // 처음에는 UI를 숨김
-        GameManager.Instance.dayEvent.AddListener(UpdateBuildProvinceUI);
+        GameManager.Instance.dayUIEvent.AddListener(UpdateBuildProvinceUI);
     }
 
     private void Update()
@@ -88,7 +88,7 @@ public class BuildProvinceUI : MonoBehaviour
     {
         if(GameManager.Instance != null)
         {
-            GameManager.Instance.dayEvent.RemoveListener(UpdateBuildProvinceUI);
+            GameManager.Instance.dayUIEvent.RemoveListener(UpdateBuildProvinceUI);
         }
     }
 

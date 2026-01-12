@@ -19,7 +19,7 @@ public class RegimentButtonUI : MonoBehaviour
         nameText.text = this.regiment.name;
         popText.text = this.regiment.GetUnitCount().ToString();
         hometownText.text = this.regiment.location.name;
-        GameManager.Instance.dayEvent.AddListener(UpdatePopCount);
+        GameManager.Instance.dayUIEvent.AddListener(UpdatePopCount);
     }
 
     private void Update()
@@ -30,7 +30,7 @@ public class RegimentButtonUI : MonoBehaviour
     private void OnDestroy()
     {
         if (GameManager.Instance != null)
-            GameManager.Instance.dayEvent.RemoveListener(UpdatePopCount);
+            GameManager.Instance.dayUIEvent.RemoveListener(UpdatePopCount);
     }
 
     private void UpdatePopCount()

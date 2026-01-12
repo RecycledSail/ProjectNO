@@ -19,15 +19,15 @@ public class BattleManager : MonoBehaviour
     }
     private void Awake()
     {
-        // ½Ì±ÛÅæ Áßº¹ ¹æÁö ·ÎÁ÷
+        // ì‹±ê¸€í†¤ ì¤‘ë³µ ë°©ì§€ ë¡œì§
         if (_instance == null)
         {
             _instance = this;
-            //DontDestroyOnLoad(gameObject);  // ¾À º¯°æ ½Ã À¯Áö
+            //DontDestroyOnLoad(gameObject);  // ì”¬ ë³€ê²½ ì‹œ ìœ ì§€
         }
         else if (_instance != this)
         {
-            Destroy(gameObject);  // Áßº¹ ½Ã Á¦°Å
+            Destroy(gameObject);  // ì¤‘ë³µ ì‹œ ì œê±°
         }
         regiments = new();
         battleInProvinces = new();
@@ -35,7 +35,7 @@ public class BattleManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        GameManager.Instance.dayEvent.AddListener(UpdateBattleEvent);
+        GameManager.Instance.dayUIEvent.AddListener(UpdateBattleEvent);
     }
 
     // Update is called once per frame
@@ -52,18 +52,18 @@ public class BattleManager : MonoBehaviour
     }
 
     /// <summary>
-    /// BattleManager°¡ °ü¸®ÇÏ´Â Regiment ¸®½ºÆ®¿¡ »ğÀÔ
+    /// BattleManagerê°€ ê´€ë¦¬í•˜ëŠ” Regiment ë¦¬ìŠ¤íŠ¸ì— ì‚½ì…
     /// </summary>
-    /// <param name="regiment">»ğÀÔÇÒ Regiment</param>
+    /// <param name="regiment">ì‚½ì…í•  Regiment</param>
     public void AddRegiment(Regiment regiment)
     {
         regiments.Add(regiment);
     }
 
     /// <summary>
-    /// BattleManager°¡ °ü¸®ÇÏ´Â Regiment ¸®½ºÆ®¿¡¼­ »èÁ¦
+    /// BattleManagerê°€ ê´€ë¦¬í•˜ëŠ” Regiment ë¦¬ìŠ¤íŠ¸ì—ì„œ ì‚­ì œ
     /// </summary>
-    /// <param name="regiment">»èÁ¦ÇÒ Regiment</param>
+    /// <param name="regiment">ì‚­ì œí•  Regiment</param>
     /// <returns></returns>
     public bool RemoveRegiment(Regiment regiment)
     {
@@ -71,8 +71,8 @@ public class BattleManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ¹èÆ² ¾÷µ¥ÀÌÆ®
-    /// TODO: GameManager°¡ ÇÏ·ç Áö³¯¶§¸¶´Ù ÀÌ°É ½ÇÇàÇÏ°Ô ÇÔ
+    /// ë°°í‹€ ì—…ë°ì´íŠ¸
+    /// TODO: GameManagerê°€ í•˜ë£¨ ì§€ë‚ ë•Œë§ˆë‹¤ ì´ê±¸ ì‹¤í–‰í•˜ê²Œ í•¨
     /// </summary>
     private void UpdateBattles()
     {
@@ -86,10 +86,10 @@ public class BattleManager : MonoBehaviour
 
 
     /// <summary>
-    /// ¸ÅÀÏÀÇ BattleÀ» °è»ê
+    /// ë§¤ì¼ì˜ Battleì„ ê³„ì‚°
     /// </summary>
-    /// <param name="province">ÀüÅõ°¡ ÀÏ¾î³ª´Â ÇÁ·Îºó½º</param>
-    /// <param name="battle">ÀüÅõ ±× ÀÚÃ¼</param>
+    /// <param name="province">ì „íˆ¬ê°€ ì¼ì–´ë‚˜ëŠ” í”„ë¡œë¹ˆìŠ¤</param>
+    /// <param name="battle">ì „íˆ¬ ê·¸ ìì²´</param>
     private void CalculateBattlePerDay(Province province, Battle battle)
     {
         double attackCapability = 0;
@@ -177,10 +177,10 @@ public class BattleManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÀüÅõ °³½Ã ¸Ş¼­µå
-    /// IDLE »óÅÂÀÎ regiment A¿¡ ´ëÇØ...
-    /// 1. ÇöÀç regiment A À§Ä¡¿¡¼­ ÀüÅõ°¡ ÀÏ¾î³ª°í ÀÖÀ¸¸é ÂüÀü
-    /// 2. ´Ù¸¥ regiment°¡ °°Àº À§Ä¡¿¡ ÀÖ°í, µÎ regimentÀÇ nationÀÌ ÀûÀÏ ¶§ ÀüÅõ »õ·Î »ı¼º
+    /// ì „íˆ¬ ê°œì‹œ ë©”ì„œë“œ
+    /// IDLE ìƒíƒœì¸ regiment Aì— ëŒ€í•´...
+    /// 1. í˜„ì¬ regiment A ìœ„ì¹˜ì—ì„œ ì „íˆ¬ê°€ ì¼ì–´ë‚˜ê³  ìˆìœ¼ë©´ ì°¸ì „
+    /// 2. ë‹¤ë¥¸ regimentê°€ ê°™ì€ ìœ„ì¹˜ì— ìˆê³ , ë‘ regimentì˜ nationì´ ì ì¼ ë•Œ ì „íˆ¬ ìƒˆë¡œ ìƒì„±
     /// </summary>
     private void InitiateBattle()
     {
@@ -190,7 +190,7 @@ public class BattleManager : MonoBehaviour
             {
                 if (battleInProvinces.ContainsKey(regimentA.location))
                 {
-                    //TODO: ¾Æ±º/Àû±º Ã¼Å©
+                    //TODO: ì•„êµ°/ì êµ° ì²´í¬
                     Battle battle = battleInProvinces[regimentA.location];
                     battle.AddAttackRegiment(regimentA);
                     Debug.Log(regimentA.name + " has joined the battle on " + battle.battleArea.name);

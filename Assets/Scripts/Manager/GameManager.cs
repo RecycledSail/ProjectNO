@@ -23,7 +23,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public UnityEvent dayEvent;
+    public UnityEvent dayUIEvent;
     // 모든 유저 목록 및 플레이어 본인 정보
     public List<User> users { get; set; }
 
@@ -73,7 +73,7 @@ public class GameManager : MonoBehaviour
         if (_instance == null)
         {
             _instance = this;
-            dayEvent = new UnityEvent();
+            dayUIEvent = new UnityEvent();
             //DontDestroyOnLoad(gameObject);  // 씬 변경 시 유지
         }
         else if (_instance != this)
@@ -292,7 +292,7 @@ public class GameManager : MonoBehaviour
                     dayoftheWeek = 0;
                     ProcessWeeklyEvents();
                 }
-                dayEvent.Invoke(); // 매일 실행되는 event invoke
+                dayUIEvent.Invoke(); // 매일 실행되는 event invoke
             }
         }
     }

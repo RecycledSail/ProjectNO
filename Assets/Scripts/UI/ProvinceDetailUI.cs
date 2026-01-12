@@ -76,13 +76,13 @@ public class ProvinceDetailUI : MonoBehaviour
             }
         }
         uiPanel.SetActive(false); // 처음에는 UI를 숨김
-        GameManager.Instance.dayEvent.AddListener(UpdateProvinceUI);
+        GameManager.Instance.dayUIEvent.AddListener(UpdateProvinceUI);
     }
 
     private void OnDestroy()
     {
         if (GameManager.Instance != null)
-            GameManager.Instance.dayEvent.RemoveListener(UpdateProvinceUI);
+            GameManager.Instance.dayUIEvent.RemoveListener(UpdateProvinceUI);
     }
 
     private void Update()

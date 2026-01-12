@@ -26,7 +26,7 @@ public class RegimentUI : MonoBehaviour
         }
         else
         {
-            GameManager.Instance.dayEvent.AddListener(CheckUpdateRegimentUI);
+            GameManager.Instance.dayUIEvent.AddListener(CheckUpdateRegimentUI);
         }
     }
 

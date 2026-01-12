@@ -21,7 +21,7 @@ public class BuildProvinceButtonUI : MonoBehaviour
         nameText.text = province.name;
         this.buildingType = buildingType;
         UpdateCount();
-        GameManager.Instance.dayEvent.AddListener(UpdateCount);
+        GameManager.Instance.dayUIEvent.AddListener(UpdateCount);
         //populationText.text = $"Pop: {UIManager.ShortenValue(province.population)}"; // Format population
     }
 

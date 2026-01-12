@@ -15,13 +15,13 @@ public class SquadUI : MonoBehaviour
         this.squadData = squad;
         nameText.text = squadData.unitType.name;
         popText.text = squadData.population.ToString();
-        GameManager.Instance.dayEvent.AddListener(UpdatePopCount);
+        GameManager.Instance.dayUIEvent.AddListener(UpdatePopCount);
     }
 
     private void OnDestroy()
     {
         if (GameManager.Instance != null)
-            GameManager.Instance.dayEvent.RemoveListener(UpdatePopCount);
+            GameManager.Instance.dayUIEvent.RemoveListener(UpdatePopCount);
     }
 
     private void Update()

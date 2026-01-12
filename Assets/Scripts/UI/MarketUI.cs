@@ -64,7 +64,7 @@ public class MarketUI : MonoBehaviour
         }
         uiPanel.SetActive(false); // 처음에는 UI를 숨김
         currentNation = null;
-        GameManager.Instance.dayEvent.AddListener(UpdateMarketUI);
+        GameManager.Instance.dayUIEvent.AddListener(UpdateMarketUI);
     }
 
     private void Update()
@@ -79,7 +79,7 @@ public class MarketUI : MonoBehaviour
     private void OnDestroy()
     {
         if (GameManager.Instance != null)
-            GameManager.Instance.dayEvent.RemoveListener(UpdateMarketUI);
+            GameManager.Instance.dayUIEvent.RemoveListener(UpdateMarketUI);
     }
 
     private void UpdateMarketUI()

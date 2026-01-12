@@ -17,7 +17,7 @@ public class ProductButtonUI : MonoBehaviour
         this.productData = productState;
         nameText.text = productData.ProductName;
         UpdateProductButtonUI();
-        GameManager.Instance.dayEvent.AddListener(UpdateProductButtonUI);
+        GameManager.Instance.dayUIEvent.AddListener(UpdateProductButtonUI);
     }
 
     private void Update()
@@ -43,6 +43,6 @@ public class ProductButtonUI : MonoBehaviour
     /// </summary>
     private void OnDestroy()
     {
-        GameManager.Instance.dayEvent.RemoveListener(UpdateProductButtonUI);
+        GameManager.Instance.dayUIEvent.RemoveListener(UpdateProductButtonUI);
     }
 }

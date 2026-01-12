@@ -75,7 +75,7 @@ public class BuildUI : MonoBehaviour
         }
         currentNation = null;
         uiPanel.SetActive(false); // 처음에는 UI를 숨김
-        GameManager.Instance.dayEvent.AddListener(UpdateBuildUI);
+        GameManager.Instance.dayUIEvent.AddListener(UpdateBuildUI);
     }
 
     private void Update()
@@ -85,7 +85,7 @@ public class BuildUI : MonoBehaviour
     private void OnDestroy()
     {
         if (GameManager.Instance != null)
-            GameManager.Instance.dayEvent.RemoveListener(UpdateBuildUI);
+            GameManager.Instance.dayUIEvent.RemoveListener(UpdateBuildUI);
     }
 
 

@@ -127,6 +127,7 @@ public class Nation : IBuildingInvestor
         ProgressBuild();
     }
 
+
     /// <summary>
     /// 건축 노동력 (인시) 재계산
     /// 매 주 수행

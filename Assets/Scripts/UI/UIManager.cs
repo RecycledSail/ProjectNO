@@ -59,13 +59,13 @@ public class UIManager : MonoBehaviour
     private void Start()
     {
         popUpVisited = new Stack<GameObject>();
-        GameManager.Instance.dayEvent.AddListener(UpdateTopUI);
+        GameManager.Instance.dayUIEvent.AddListener(UpdateTopUI);
     }
 
     private void OnDestroy()
     {
         if (GameManager.Instance != null)
-            GameManager.Instance.dayEvent.RemoveListener(UpdateTopUI);
+            GameManager.Instance.dayUIEvent.RemoveListener(UpdateTopUI);
     }
 
     /// <summary>
