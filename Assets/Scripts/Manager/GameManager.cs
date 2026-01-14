@@ -65,6 +65,17 @@ public class GameManager : MonoBehaviour
     private float dayInterval = 1.0f;
 
     /// <summary>
+    /// 국가별 도로 연결 정보 캐시 (Nation → ConnectedProvinces Set)
+    /// </summary>
+    private Dictionary<Nation, HashSet<string>> roadConnectedProvinceCache = new();
+
+    /// <summary>
+    /// 캐시가 유효한지 여부 (도로가 변경되면 false로 설정)
+    /// </summary>
+    private Dictionary<Nation, bool> roadCacheValid = new();
+
+
+    /// <summary>
     /// 게임 시작 전 초기화 메서드 (싱글톤 중복방지 처리)
     /// </summary>
     private void Awake()
@@ -315,13 +326,169 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void ProcessWeeklyEvents()
     {
+        // 0. 캐시가 유효하지 않은 국가의 연결 상태 재계산
+        foreach (Nation nation in nations.Values)
+        {
+            if (nation != null && (!roadCacheValid.ContainsKey(nation) || !roadCacheValid[nation]))
+            {
+                BuildRoadConnectedProvinceCacheForNation(nation);
+                roadCacheValid[nation] = true;
+            }
+        }
+
+        // 1. Nation 주간 처리
         foreach (Nation nation in nations.Values)
         {
             nation.SimulateWeeklyTurn();
         }
+
+        // 2. Province 생산 단계 (생산만 수행)
         foreach (Province province in provinces.Values)
         {
-            province.SimulateWeeklyTurn(); // 이것만 호출
+            province.ProduceGoodsWeekly();
+        }
+
+        // 3. 도로로 연결된 Province의 생산품을 Nation market으로 이동
+        foreach (Nation nation in nations.Values)
+        {
+            TransferProvinceProductionToNationMarket(nation);
+        }
+
+        // 4. Province 소비 단계 (nation market 우선, 실패 시 local market)
+        foreach (Province province in provinces.Values)
+        {
+            province.ConsumeFoodsWeekly();
+        }
+
+        // 5. Province 인구 업데이트
+        foreach (Province province in provinces.Values)
+        {
+            province.UpdatePopulation();
+        }
+
+        // 5. 내 nation market(player의 nation의 market)의 재고 debug로 출력
+        Debug.Log($"--- Nation Market Stock for {player.nation.name} ---");
+        foreach (var kv in player.nation.market.Products)
+        {
+            string productName = kv.Key;
+            ProductState pstate = kv.Value;
+            Debug.Log($"{productName}: Stock={pstate.Stock}, LastSupply={pstate.LastSupply}, LastDemand={pstate.LastDemand}");
+
+        }
+    }
+
+    /// <summary>
+    /// 도로 변경 시 호출 - 특정 국가의 캐시를 무효화
+    /// </summary>
+    /// <param name="nation">도로가 변경된 국가</param>
+    public void InvalidateRoadCache(Nation nation)
+    {
+        if (nation != null)
+        {
+            roadCacheValid[nation] = false;
+        }
+    }
+
+    /// <summary>
+    /// 특정 국가에 대해 수도와 도로 연결된 모든 프로빈스를 계산하여 캐시
+    /// 각 프로빈스의 isConnectedToCapital 필드도 업데이트
+    /// </summary>
+    private void BuildRoadConnectedProvinceCacheForNation(Nation nation)
+    {
+        if (nation == null || nation.capital == null)
+        {
+            roadConnectedProvinceCache[nation] = new HashSet<string>();
+            // 모든 프로빈스를 미연결로 설정
+            foreach (Province p in nation.provinces)
+            {
+                p.isConnectedToCapital = false;
+            }
+            return;
+        }
+
+        var connectedProvinces = new HashSet<string>();
+        var visited = new HashSet<string>();
+        var queue = new Queue<Province>();
+
+        queue.Enqueue(nation.capital);
+        visited.Add(nation.capital.name);
+        connectedProvinces.Add(nation.capital.name);
+        nation.capital.isConnectedToCapital = true;
+
+        while (queue.Count > 0)
+        {
+            Province current = queue.Dequeue();
+
+            if (GlobalVariables.ADJACENT_PROVINCES.TryGetValue(current.name, out var neighbors))
+            {
+                foreach (Province neighbor in neighbors)
+                {
+                    if (neighbor == null) continue;
+                    if (visited.Contains(neighbor.name)) continue;
+                    if (neighbor.nation != nation) continue;
+                    if (neighbor.road != 1) continue;
+
+                    visited.Add(neighbor.name);
+                    connectedProvinces.Add(neighbor.name);
+                    neighbor.isConnectedToCapital = true;
+                    queue.Enqueue(neighbor);
+                }
+            }
+        }
+
+        // 연결되지 않은 프로빈스 업데이트
+        foreach (Province p in nation.provinces)
+        {
+            if (!connectedProvinces.Contains(p.name))
+            {
+                p.isConnectedToCapital = false;
+            }
+        }
+
+        roadConnectedProvinceCache[nation] = connectedProvinces;
+    }
+
+    /// <summary>
+    /// Starting from nation's capital, traverse provinces connected by road (road == 1) and belonging to the nation,
+    /// and transfer all produced stock from each province's market into the nation's market.
+    /// Uses cached connection information (isConnectedToCapital field).
+    /// </summary>
+    /// <param name="nation">Nation to collect production for</param>
+    private void TransferProvinceProductionToNationMarket(Nation nation)
+    {
+        if (nation == null || nation.capital == null) return;
+
+        // 캐시된 연결 정보를 사용하여 프로빈스 순회
+        foreach (Province province in nation.provinces)
+        {
+            // 수도이거나 수도와 연결된 프로빈스만 생산품 이동
+            if (province.isConnectedToCapital && province.market != null)
+            {
+                foreach (var kv in new List<KeyValuePair<string, ProductState>>(province.market.Products))
+                {
+                    string productName = kv.Key;
+                    ProductState pstate = kv.Value;
+                    int amount = pstate.Stock;
+                    if (amount <= 0) continue;
+
+                    // ensure nation market has the product
+                    if (!nation.market.Products.ContainsKey(productName))
+                    {
+                        // use global initial price if available
+                        int basePrice = 1;
+                        if (GlobalVariables.PRODUCTS.TryGetValue(productName, out var prod))
+                            basePrice = prod.InitialPrice;
+                        nation.market.AddProduct(productName, basePrice);
+                    }
+
+                    // move stock
+                    nation.market.Products[productName].Stock += amount;
+                    nation.market.Products[productName].LastSupply += amount;
+
+                    // remove from province
+                    pstate.Stock = 0;
+                }
+            }
         }
     }
 

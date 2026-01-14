@@ -113,13 +113,13 @@ public class SelectProvince3D : MonoBehaviour
                 {
                     if (province.road == 0)
                     {
-                        province.road = 1;
+                        province.BuildRoad();
                         // 좀 연한 초록색으로 변경
                         RecolorProvince(child, new Color32(100, 255, 100, 255));
                     }
                     else
                     {
-                        province.road = 0;
+                        province.RemoveRoad();
                         // 좀 연한 빨강색으로 변경
                         RecolorProvince(child, new Color32(255, 100, 100, 255));
                     }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.UIElements;
 
 /// <summary>
 /// Topography Enum 
@@ -31,6 +32,9 @@ public class Province
     public Dictionary<BuildingType, Building> buildings { get; set; } = null;
     public int road { get; set; } = 0;
     public List<ProvinceEthnicPop> provinceEthnicPops { get; set; } = null;
+
+    // 도로 연결 상태 캐시
+    public bool isConnectedToCapital { get; set; } = false;
 
     // 프로빈스 현재 상태 정의 (고용된 인구)
     public long hiredPopulation { get; set; }
@@ -89,14 +93,31 @@ public class Province
     }
 
     /// <summary>
-    /// 매 주 실행되는 작업
+    /// 매 주 Product 생산 수행
     /// </summary>
-    public void SimulateWeeklyTurn()
+    public void ProduceGoodsWeekly()
     {
-        //if (population == 0) return;
-        CalculateTotalFoodsNeeds();
         BaseProduction();
-        UpdatePopulation();
+    }
+
+    /// <summary>
+    /// 매 주 실행되는 소비 단계
+    /// nation market에서 가능하면 소비, 불가능하면 province market에서 소비
+    /// 단, 수도와 도로로 연결되어 있어야 nation market에서 소비 가능
+    /// </summary>
+    public void ConsumeFoodsWeekly()
+    {
+        // 캐시된 연결 상태 사용
+        if (isConnectedToCapital)
+        {
+            // Nation market에서 소비 시도
+            CalculateTotalFoodsNeedsFromNationMarket();
+        }
+        else
+        {
+            // 자신의 province market에서만 소비
+            CalculateTotalFoodsNeeds();
+        }
     }
 
     /// <summary>
@@ -113,7 +134,6 @@ public class Province
         }
         population = newPopulation;
     }
-
 
     /// <summary>
     /// 프로빈스에 자체적으로 달려 있는 기본 생산
@@ -142,7 +162,108 @@ public class Province
     }
 
     /// <summary>
-    /// 한 Province내에서 필요한 총 음식 수 계산
+    /// 국가 market에서 음식을 소비하는 로직
+    /// nation market에서 구매 시도, 실패 시 자신의 market에서 구매
+    /// </summary>
+    private void CalculateTotalFoodsNeedsFromNationMarket()
+    {
+        // 1. 필요 음식 수 계산
+        int totalFoodNeeds = 0;
+        long totalMoney = 0;
+        List<ProvinceEthnicPop> availableEthnicPops = new();
+        foreach (ProvinceEthnicPop pep in provinceEthnicPops)
+        {
+            if (pep.property > 0)
+            {
+                totalFoodNeeds += pep.GetNeededFood();
+                totalMoney += pep.property;
+                availableEthnicPops.Add(pep);
+            }
+            else if (pep.property < 0)
+            {
+                pep.BuyFood(0);
+            }
+        }
+
+        if (totalFoodNeeds == 0) return;
+
+        // 2. 필요 음식 수 대비 가지고 있는 음식의 비율 계산 (nation market)
+        int currentFoods = 0;
+        foreach (string prodName in GlobalVariables.CATEGORIES["basic_food"])
+        {
+            if (nation.market.Products.TryGetValue(prodName, out var ps))
+            {
+                currentFoods += ps.Stock;
+            }
+        }
+
+        double percentage = Math.Min((double)currentFoods / (double)totalFoodNeeds, 1.0);
+        totalFoodNeeds = (int)(totalFoodNeeds * percentage);
+
+        long totalCost = 0;
+        // 저번턴 수요량이 많은 순으로 리스트 정렬
+        List<string> sortedFoodNames = GlobalVariables.CATEGORIES["basic_food"]
+            .Select(name =>
+            {
+                nation.market.Products.TryGetValue(name, out var ps);
+                return new { Name = name, PS = ps };
+            })
+            .OrderByDescending(x => x.PS != null ? x.PS.LastDemand : 0)
+            .ThenByDescending(x => x.PS != null ? x.PS.Stock : 0)
+            .Select(x => x.Name)
+            .ToList();
+
+        Dictionary<string, int> foodBuyAmount = new();
+        int totalBoughtFoods = 0;
+        while (totalFoodNeeds > totalBoughtFoods && totalCost < totalMoney)
+        {
+            foreach (string foodName in sortedFoodNames)
+            {
+                if (nation.market.Products.TryGetValue(foodName, out var ps))
+                {
+                    int pricefluctuation = ps.LastPrice / ps.Price;
+                    int consumeAmount = Math.Min(ps.LastDemand * pricefluctuation + 1, ps.Stock);
+
+                    if (consumeAmount > totalFoodNeeds - totalBoughtFoods)
+                    {
+                        consumeAmount = totalFoodNeeds - totalBoughtFoods;
+                    }
+                    if (totalCost + consumeAmount * ps.Price > totalMoney)
+                    {
+                        consumeAmount = (int)(totalMoney - totalCost) / ps.Price;
+                        foodBuyAmount[foodName] = consumeAmount;
+                        totalBoughtFoods += consumeAmount;
+                        totalCost = totalMoney;
+                    }
+                    else
+                    {
+                        foodBuyAmount[foodName] = consumeAmount;
+                        totalCost += consumeAmount * ps.Price;
+                        totalBoughtFoods += consumeAmount;
+                    }
+                }
+            }
+        }
+
+        // 3. nation market에서 음식 재고 차감
+        foreach (string foodName in foodBuyAmount.Keys)
+        {
+            nation.market.Products[foodName].Stock -= foodBuyAmount[foodName];
+        }
+
+        // 4. pep에서 돈 차감
+        foreach (ProvinceEthnicPop pep in availableEthnicPops)
+        {
+            int neededFood = pep.GetNeededFood();
+            double neededFoodRatio = neededFood / (double)totalFoodNeeds;
+            int remainingFood = (int)(neededFoodRatio * totalBoughtFoods);
+            pep.BuyFood(remainingFood);
+            pep.property -= (long)(neededFoodRatio * totalCost);
+        }
+    }
+
+    /// <summary>
+    /// 한 Province내에서 필요한 총 음식 수 계산 (로컬 market만 사용)
     /// 매 주 실행
     /// </summary>
     public void CalculateTotalFoodsNeeds()
@@ -191,10 +312,6 @@ public class Province
         double percentage = Math.Min((double)currentFoods / (double)totalFoodNeeds, 1.0);
         totalFoodNeeds = (int)(totalFoodNeeds * percentage); // 실제 구매 시도할 음식 수
 
-
-
-
-
         long totalCost = 0;
         // 저번턴 수요량이 많은 순으로 리스트 정렬
         List<string> sortedFoodNames = GlobalVariables.CATEGORIES["basic_food"]
@@ -225,7 +342,7 @@ public class Province
                     // 속도공식을 이용
                     int pricefluctuation = ps.LastPrice / ps.Price;
                     int consumeAmount = Math.Min(ps.LastDemand * pricefluctuation + 1, ps.Stock);
-                    // +1은 전턴 수요가 0일때를 방지하기위해 넣어둠 앞으로 개선필요w
+                    // +1은 전턴 수요가 0일때를 방지하기위해 넣어둔 앞으로 개선필요w
                     if (consumeAmount > totalFoodNeeds - totalBoughtFoods)
                     {
                         consumeAmount = totalFoodNeeds - totalBoughtFoods;
@@ -271,20 +388,49 @@ public class Province
         }
     }
 
+    /// <summary>
+    /// 길이 없다면 건설
+    /// </summary>
+    /// <returns>도로를 건설했으면 true, 아니면 false</returns>
+    public bool BuildRoad()
+    {
+        if (road == 1) return false; // 이미 도로가 있으면 실패
+        road = 1;
+
+        // 도로 건설 시 nation의 캐시 무효화
+        if (nation != null && GameManager.Instance != null)
+        {
+            GameManager.Instance.InvalidateRoadCache(nation);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 길이 있다면 제거
+    /// </summary>
+    /// <returns>도로를 제거했으면 true, 아니면 false</returns>
+    public bool RemoveRoad()
+    {
+        if (road == 0) return false; // 도로가 없으면 실패
+        road = 0;
+
+        // 도로 제거 시 nation의 캐시 무효화
+        if (nation != null && GameManager.Instance != null)
+        {
+            GameManager.Instance.InvalidateRoadCache(nation);
+        }
+
+        return true;
+    }
+
     public void ConstructBuilding(BuildingType buildingType)
     {
-        
+
         // Timetobuild 이 0이 아니면 건설중인 상태를 반영할것 
         // 아직 미구현
 
         // Initialbalance를 건물이 다지어지는순간 balance에 반영해야됨
     }
-
-
-    
-
-
-
-
 }
 
