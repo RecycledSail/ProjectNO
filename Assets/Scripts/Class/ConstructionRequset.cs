@@ -56,15 +56,15 @@ public interface IBuildingInvestor
 
 public class BuildingInProgress
 {
-    public float confirmindex { get; set; }
+    // public float confirmindex { get; set; }
     public Province ConstructionConfirmLocation { get; set; }
     public BuildingReservation Buildingrequest  { get; set; }  // ← 여기!
 
-    public BuildingInProgress(float confirmindex,
+    public BuildingInProgress(
                                Province ConstructionConfirmLocation,
                                BuildingReservation buildingrequest = null)
     {
-        this.confirmindex   = confirmindex;
+        // this.confirmindex   = confirmindex;
         this.ConstructionConfirmLocation = ConstructionConfirmLocation;
         this.Buildingrequest       = buildingrequest;
     }

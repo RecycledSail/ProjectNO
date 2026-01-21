@@ -62,6 +62,28 @@ public class BuildProvinceButtonUI : MonoBehaviour
         }
         // provinceData.nation.AddToBuildQueue(provinceData.buildings[buildingType]);
         provinceData.nation.constructionRequest.AddBuildingReservation(buildingType, provinceData, provinceData.nation);
+
+
+        List<Province> adjacentProvinces = GlobalVariables.ADJACENT_PROVINCES.TryGetValue(provinceData.name, out var adjProvs) ? adjProvs : new List<Province>();
+        
+        for (int i = 0; i < adjacentProvinces.Count; i++)
+        {
+            Province adjProvince = adjacentProvinces[i];
+            foreach (var bld in adjProvince.buildings.Values)
+            {
+                if (bld is ConstructionCompanyBuilding constructionCompany)
+                {
+                    BuildingReservation reservation = new BuildingReservation(buildingType, provinceData, provinceData.nation);
+                    if (constructionCompany.TryAssign(reservation, out BuildingInProgress bip))
+                    {
+                        Debug.Log($"Assigned building project for {buildingType.name} in {provinceData.name} to construction company in {adjProvince.name}");
+                        break; // 할당 성공 시 루프 종료
+                    }
+                }
+            }
+        }
+
+
         BuildUI.Instance.UpdateQueue();
     }
 }
