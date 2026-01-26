@@ -11,20 +11,17 @@ public class ConstructionCompanyBuilding : Building
 
     public IReadOnlyList<BuildingInProgress> ActiveProjects => _active.Values.ToList();
 
-    // 이 건설회사의 "본거지"는 곧 이 빌딩이 있는 프로빈스
-    public Province BaseProvince => province;
 
     // 회사 이름(원하면 별도로)
-    public string companyName;
+
 
     public ConstructionCompanyBuilding(
-        string companyName,
+
         BuildingType buildingType,
         Province province,
         int companyLevel
     ) : base(buildingType, province)
     {
-        this.companyName = companyName;
         this.level = companyLevel;
     }
 
@@ -46,8 +43,6 @@ public class ConstructionCompanyBuilding : Building
         if (slot < 0) return false;
 
         bip = new BuildingInProgress(
-            slotIndex: slot,
-            ConstructionConfirmLocation: this.BaseProvince,
             buildingrequest: reservation
         );
 
