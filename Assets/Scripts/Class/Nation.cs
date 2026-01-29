@@ -21,6 +21,8 @@ public class Nation : IBuildingInvestor
     public Dictionary<BuffKind, double> buffs;
     public ConstructionRequest constructionRequest;
     public NationMarket market;
+    public GovernmentBudget governmentBudget;
+
 
 
     // Getter
@@ -57,6 +59,7 @@ public class Nation : IBuildingInvestor
         enemies = new();
         constructionRequest = new ConstructionRequest(this);
         market = new NationMarket(this.name);
+        governmentBudget = new GovernmentBudget();
     }
 
     /// <summary>
