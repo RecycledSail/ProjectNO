@@ -27,6 +27,7 @@ public class NationUI : MonoBehaviour
     private GameObject currentOpenSubUI;
 
     private Nation currentNation;
+    public Nation CurrentNation { get { return currentNation; } }
 
     // 싱글톤 인스턴스 (다른 스크립트에서 쉽게 접근 가능)
     private static NationUI _instance;

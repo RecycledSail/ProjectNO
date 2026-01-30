@@ -18,6 +18,7 @@ public class SelectProvince3D : MonoBehaviour
     private Dictionary<GameObject, Color32> originalColors; // 각 child의 원래 색상 저장
     private bool childrenColoredByBuildUI = false; // subUIs[2]에 의해 색칠된 상태인지
     private bool isBuildSubActive = false;
+    private int provinceColorMode = 0; // 0: 기본, 1: 길 건설 모드
 
     void Start()
     {
@@ -44,39 +45,84 @@ public class SelectProvince3D : MonoBehaviour
 
     void Update()
     {
-        HandleBuildUIColoring();
+        HandleProvinceColoring();
         HandleHoverAndSelection();
     }
 
-    private void HandleBuildUIColoring()
+    private void ColorOnBuildSubEnabled()
     {
-        bool buildSubActive = false;
-        if (BuildUI.Instance != null && BuildUI.Instance.subUIs != null && BuildUI.Instance.subUIs.Count > 2)
+        Nation currentNation = GameManager.Instance.player.nation;
+        foreach (var c in children)
         {
-            buildSubActive = BuildUI.Instance.subUIs[2].activeSelf;
-        }
-
-        if (buildSubActive)
-        {
-            if (!childrenColoredByBuildUI)
+            if (GlobalVariables.PROVINCES.TryGetValue(c.name, out Province province))
             {
-                foreach (var c in children)
+                if (province.nation != currentNation)
                 {
-                    // child의 이름인 provinced의 road가 1이면 초록색, 0이면 빨간색
-                    
-                    if (GlobalVariables.PROVINCES.TryGetValue(c.name, out Province province))
+                    // 다른 국가의 프로빈스는 원래 색상으로 복원
+                    if (originalColors.TryGetValue(c, out Color32 col))
+                        RecolorProvince(c, col);
+                    continue;
+                }
+                // 수도인 경우 도로가 없으면 보라색, 있으면 파랑색
+                if (province == currentNation.capital)
+                {
+                    if (province.road == 1)
+                        RecolorProvince(c, new Color32(100, 100, 255, 255));
+                    else
+                        RecolorProvince(c, new Color32(200, 100, 200, 255));
+                    continue;
+                }
+                // 도로 색에 따라 색칠
+                if (province.road == 1)
+                    RecolorProvince(c, new Color32(100, 255, 100, 255));
+                else
+                    RecolorProvince(c, new Color32(255, 100, 100, 255));
+            }
+        }
+    }
+
+    private void ColorOnNationUIEnabled(bool nationSubActive)
+    {
+        // 현재 NationUI의 선택된 국가에 따라 색칠
+        if (nationSubActive && NationUI.Instance.CurrentNation != null)
+        {
+            Nation currentNation = NationUI.Instance.CurrentNation;
+            foreach (var c in children)
+            {
+                if (GlobalVariables.PROVINCES.TryGetValue(c.name, out Province province))
+                {
+                    if (province.nation == currentNation)
                     {
-                        if (province.road == 1)
-                            RecolorProvince(c, new Color32(100, 255, 100, 255));
+                        // 수도인 경우 도로가 없으면 보라색, 있으면 파랑색
+                        if (province == currentNation.capital)
+                        {
+                            if (province.road == 1)
+                                RecolorProvince(c, new Color32(100, 100, 255, 255));
+                            else
+                                RecolorProvince(c, new Color32(200, 100, 200, 255));
+                        }
                         else
-                            RecolorProvince(c, new Color32(255, 100, 100, 255));
+                        {
+                            // 도로 색에 따라 색칠
+                            if (province.road == 1)
+                                RecolorProvince(c, new Color32(100, 255, 100, 255));
+                            else
+                                RecolorProvince(c, new Color32(255, 100, 100, 255));
+                        }
+                    }
+                    else
+                    {
+                        // 다른 국가의 프로빈스는 원래 색상으로 복원
+                        if (originalColors.TryGetValue(c, out Color32 col))
+                            RecolorProvince(c, col);
                     }
                 }
-                childrenColoredByBuildUI = true;
             }
+            childrenColoredByBuildUI = true;
         }
         else
         {
+            // 국가 모드 비활성화 시 원래 색상으로 복원
             if (childrenColoredByBuildUI)
             {
                 foreach (var c in children)
@@ -86,6 +132,50 @@ public class SelectProvince3D : MonoBehaviour
                 }
                 childrenColoredByBuildUI = false;
             }
+        }
+    }
+
+    private void ColorOnNormalMode()
+    {
+        if (childrenColoredByBuildUI)
+        {
+            foreach (var c in children)
+            {
+                if (originalColors.TryGetValue(c, out Color32 col))
+                    RecolorProvince(c, col);
+            }
+            childrenColoredByBuildUI = false;
+        }
+    }
+
+    private void HandleProvinceColoring()
+    {
+        bool buildSubActive = false;
+        if (BuildUI.Instance != null && BuildUI.Instance.subUIs != null && BuildUI.Instance.subUIs.Count > 2)
+        {
+            buildSubActive = BuildUI.Instance.subUIs[2].activeInHierarchy;
+        }
+
+        bool nationSubActive = false;
+        if (NationUI.Instance != null && NationUI.Instance.subUIs != null && NationUI.Instance.subUIs.Count > 0)
+        {
+            nationSubActive = NationUI.Instance.subUIs[0].activeInHierarchy;
+        }
+
+        if (buildSubActive && provinceColorMode != 1)
+        // 길 건설 모드 활성화
+        {
+            ColorOnBuildSubEnabled();
+        }
+        else if (!buildSubActive && provinceColorMode != 2)
+        // 국가 모드
+        {
+            ColorOnNationUIEnabled(nationSubActive);
+        }
+        else if (!buildSubActive && provinceColorMode != 0)
+        // 길 건설 모드 비활성화
+        {
+            ColorOnNormalMode();
         }
 
         isBuildSubActive = buildSubActive;
@@ -111,6 +201,13 @@ public class SelectProvince3D : MonoBehaviour
             {
                 if (GlobalVariables.PROVINCES.TryGetValue(child.name, out Province province))
                 {
+                    // 내 국가의 영토인지 확인
+                    Nation currentNation = GameManager.Instance.player.nation;
+                    if (province.nation != currentNation)
+                    {
+                        // 다른 국가의 영토이면 아무 동작도 하지 않음
+                        return;
+                    }
                     if (province.road == 0)
                     {
                         province.BuildRoad();

@@ -59,7 +59,7 @@ public class Nation : IBuildingInvestor
         enemies = new();
         constructionRequest = new ConstructionRequest(this);
         market = new NationMarket(this.name);
-        governmentBudget = new GovernmentBudget();
+        governmentBudget = new GovernmentBudget(market);
     }
 
     /// <summary>
