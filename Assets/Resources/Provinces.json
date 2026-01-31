@@ -6,7 +6,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 3500,
+          "population": [5000, 3000, 2000, 1000],
           "culture": "Paimon"
         }
       ],
@@ -30,7 +30,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 8200,
+          "population": [1250, 750, 500, 250],
           "culture": "Paimon"
         }
       ],
@@ -43,7 +43,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 1244,
+          "population": [1244, 0, 0, 0],
           "culture": "Paimon"
         }
       ],
@@ -62,12 +62,12 @@
       "pops": [
         {
           "name": "Human",
-          "population": 12550,
+          "population": [12550, 0, 0, 0],
           "culture": "Paimon"
         },
         {
           "name": "Elf",
-          "population": 5333,
+          "population": [5333, 0, 0, 0],
           "culture": "Lisa"
         }
       ],
@@ -86,7 +86,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 12550,
+          "population": [12550, 0, 0, 0],
           "culture": "Paimon"
         }
       ],
@@ -105,7 +105,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 12550,
+          "population": [12550, 0, 0, 0],
           "culture": "Paimon"
         }
       ],
@@ -124,7 +124,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 12550,
+          "population": [12550, 0, 0, 0],
           "culture": "Paimon"
         }
       ],
@@ -143,7 +143,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 12550,
+          "population": [12550, 0, 0, 0],
           "culture": "Paimon"
         }
       ],
@@ -162,7 +162,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 12550,
+          "population": [12550, 0, 0, 0],
           "culture": "Paimon"
         }
       ],
@@ -181,7 +181,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 12550,
+          "population": [12550, 0, 0, 0],
           "culture": "Paimon"
         }
       ],
@@ -200,7 +200,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 12550,
+          "population": [12550, 0, 0, 0],
           "culture": "Paimon"
         }
       ],
@@ -219,7 +219,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 12550,
+          "population": [12550, 0, 0, 0],
           "culture": "Paimon"
         }
       ],
@@ -238,7 +238,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 12550,
+          "population": [12550, 0, 0, 0],
           "culture": "Paimon"
         }
       ],
@@ -257,7 +257,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 12550,
+          "population": [12550, 0, 0, 0],
           "culture": "Paimon"
         }
       ],
@@ -276,7 +276,7 @@
       "pops": [
         {
           "name": "Human",
-          "population": 12550,
+          "population": [12550, 0, 0, 0],
           "culture": "Paimon"
         }
       ],

@@ -37,18 +37,18 @@ public class ProvinceEthnicPop : IBuildingInvestor
     public long property; // 재산
     public double livingStandard; // 생활 수준 (1.0 = 평균)
     public List<AgeGroup> ageGroups = new List<AgeGroup>();
-    public ProvinceEthnicPop(Province province, EthnicGroup ethnicGroup, long populationCount)
+    public ProvinceEthnicPop(Province province, EthnicGroup ethnicGroup, List<int> populationCount)
     {
         this.province = province;
         this.ethnicGroup = ethnicGroup;
-        this.population = populationCount;
+        this.population = populationCount.Sum();
         this.property = 100000;
         this.livingStandard = 1.0;
         // 기본 연령대 분포 설정
-        ageGroups.Add(new AgeGroup("Childhood", 0.2));
-        ageGroups.Add(new AgeGroup("Young Adulthood", 0.3));
-        ageGroups.Add(new AgeGroup("Middle Age", 0.3));
-        ageGroups.Add(new AgeGroup("Older Adulthood", 0.2));
+        ageGroups.Add(new AgeGroup("Childhood", populationCount[0])); //유년기
+        ageGroups.Add(new AgeGroup("Young Adulthood", populationCount[1])); //청년기
+        ageGroups.Add(new AgeGroup("Middle Age", populationCount[2])); //중년기
+        ageGroups.Add(new AgeGroup("Older Adulthood", populationCount[3]));     //노년기   
 
     }
 
@@ -57,12 +57,12 @@ public class ProvinceEthnicPop : IBuildingInvestor
     public class AgeGroup
     {
         public string name; // 연령대 이름 유년기 /청년기 /중년기 /노년기
-        public double percentage; // 해당 연령대의 인구 비율
+        public long agepopulation; // 해당 연령대의 인구 
 
-        public AgeGroup(string name, double percentage)
+        public AgeGroup(string name, long agepopulation)
         {
             this.name = name;
-            this.percentage = percentage;
+            this.agepopulation = agepopulation;
         }
     }
 

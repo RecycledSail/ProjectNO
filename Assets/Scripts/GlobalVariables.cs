@@ -633,7 +633,7 @@ public static class GlobalVariables
         public sealed class AdjacentProvinceData { public string province; public List<string> adjacents; }
 
         [System.Serializable]
-        public sealed class SpeciesPopData { public string name; public int population; public string culture; }
+        public sealed class SpeciesPopData { public string name; public List<int> population; public string culture; }
 
         [System.Serializable]
         public sealed class BuildingTypeData { public string name; public List<ItemData> requireItems; public List<ItemData> produceItems; public int workerNeeded; }
