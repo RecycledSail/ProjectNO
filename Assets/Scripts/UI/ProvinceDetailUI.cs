@@ -16,6 +16,7 @@ public class ProvinceDetailUI : MonoBehaviour
     public TMP_Text provinceCropsText;
     public PieChart racesPieChart;
     private Province province;
+    public Province CurrentProvince { get { return province; } }
 
     //Market panel
     [Header("Market Panel")]
