@@ -31,7 +31,8 @@ public class ProvinceBuildingButtonUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameManager.Instance.dayUIEvent.RemoveListener(UpdateBuilding);
+        if (GameManager.Instance != null)
+            GameManager.Instance.dayUIEvent.RemoveListener(UpdateBuilding);
     }
 
     private void UpdateBuilding()

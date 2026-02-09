@@ -146,7 +146,7 @@ public class ProvinceDetailUI : MonoBehaviour
     {
         UpdatePopulationText();
         UpdateCropsText();
-        UpdatePieChart();
+        //UpdatePieChart();
     }
 
     /// <summary>
@@ -163,7 +163,7 @@ public class ProvinceDetailUI : MonoBehaviour
             Culture culture = ethnicGroup.culture;
             if (!isTop)
                 provincePopulationText.text += "\n";
-            provincePopulationText.text += "Species: " + species.name + " Culture: " + culture.name + " Pop: " + UIManager.ShortenValue(pep.population);
+            provincePopulationText.text += species.name + "/" + culture.name + " (" + UIManager.ShortenValue(pep.population) + ")";
             isTop = false;
         }
     }
