@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
 {
     // 싱글톤 인스턴스 (다른 스크립트에서 쉽게 접근 가능)
     private static GameManager _instance;
+    [SerializeField] private EconomicEngine economicEngine;
     public static GameManager Instance
     {
         get
@@ -357,7 +358,7 @@ public class GameManager : MonoBehaviour
         // 4. Province 소비 단계 (nation market 우선, 실패 시 local market)
         foreach (Province province in provinces.Values)
         {
-            province.ConsumeFoodsWeekly();
+            economicEngine.ConsumeFoodsWeekly(province, province.isConnectedToCapital);
         }
 
         // 5. Province 인구 업데이트

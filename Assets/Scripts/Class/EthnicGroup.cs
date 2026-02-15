@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 /// <summary>
 /// 민족 집단을 정의하는 클래스
@@ -43,7 +44,7 @@ public class ProvinceEthnicPop : IBuildingInvestor
         this.ethnicGroup = ethnicGroup;
         this.population = populationCount.Sum();
         this.property = 100000;
-        this.livingStandard = 1.0;
+        this.livingStandard = 1.0; 
         // 기본 연령대 분포 설정
         ageGroups.Add(new AgeGroup("Childhood", populationCount[0])); //유년기
         ageGroups.Add(new AgeGroup("Young Adulthood", populationCount[1])); //청년기
