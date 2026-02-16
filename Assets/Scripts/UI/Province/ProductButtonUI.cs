@@ -43,6 +43,7 @@ public class ProductButtonUI : MonoBehaviour
     /// </summary>
     private void OnDestroy()
     {
-        GameManager.Instance.dayUIEvent.RemoveListener(UpdateProductButtonUI);
+        if (GameManager.Instance != null)
+            GameManager.Instance.dayUIEvent.RemoveListener(UpdateProductButtonUI);
     }
 }

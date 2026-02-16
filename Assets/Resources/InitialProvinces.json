@@ -7,8 +7,13 @@
     },
     {
       "nation": "Nation2",
-      "provinces": [ "Stein" ],
+      "provinces": [ "Stein", "Jojisha", "Matz", "Zilia" ],
       "capital": "Stein"
+    },
+    {
+      "nation": "Nation3",
+      "provinces": [ "Svovoda", "Buske", "Uzyda", "Talem" ],
+      "capital": "Svovoda"
     }
   ]
 }

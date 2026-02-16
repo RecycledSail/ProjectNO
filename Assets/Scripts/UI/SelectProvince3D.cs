@@ -43,6 +43,9 @@ public class SelectProvince3D : MonoBehaviour
                 originalColors[child] = new Color32(255,255,255,255);
             }
         }
+        
+        // 초기화 시 각 Province를 Nation의 색상으로 칠함
+        ColorOnNormalMode();
     }
 
     void Update()
@@ -171,11 +174,22 @@ public class SelectProvince3D : MonoBehaviour
 
     private void ColorOnNormalMode()
     {
-        // 모든 프로빈스를 원래 색상으로 복원
+        // 모든 프로빈스를 해당 국가의 색상으로 색칠
         foreach (var c in children)
         {
-            if (originalColors.TryGetValue(c, out Color32 col))
-                RecolorProvince(c, col);
+            if (GlobalVariables.PROVINCES.TryGetValue(c.name, out Province province))
+            {
+                if (province.nation != null)
+                {
+                    RecolorProvince(c, province.nation.color);
+                }
+                else
+                {
+                    // 국가가 없는 경우 원래 색상으로 복원
+                    if (originalColors.TryGetValue(c, out Color32 col))
+                        RecolorProvince(c, col);
+                }
+            }
         }
         provinceColorMode = 0;
     }

@@ -297,6 +297,10 @@ public static class GlobalVariables
                     rnodes.Add(rnode);
             }
             Nation nation = new(n.id, n.name, rnodes);
+            if (n.color != null)
+            {
+                nation.color = new Color32((byte)n.color.r, (byte)n.color.g, (byte)n.color.b, (byte)n.color.a);
+            }
             foreach (var regimentData in n.regiments)
             {
 
@@ -600,6 +604,9 @@ public static class GlobalVariables
         public sealed class ItemData { public string name; public int amount; }
 
         [System.Serializable]
+        public sealed class ColorData { public int r; public int g; public int b; public int a; }
+
+        [System.Serializable]
         public sealed class BuffData { public int id; public string name; public string kind; public double value; }
 
         [System.Serializable]
@@ -621,7 +628,7 @@ public static class GlobalVariables
         public sealed class SquadData { public string unitType; public int capacity; public int population; }
 
         [System.Serializable]
-        public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; public List<RegimentData> regiments; }
+        public sealed class NationData { public int id; public string name; public ColorData color; public List<string> researchNodeNames; public List<RegimentData> regiments; }
 
         [System.Serializable]
         public sealed class ProvinceData { public int id; public string name; public List<SpeciesPopData> pops; public string topography; public List<BuildingData> buildings; }

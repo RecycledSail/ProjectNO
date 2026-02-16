@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 /// <summary>
 /// 국가 클래스
@@ -10,6 +11,7 @@ public class Nation : IBuildingInvestor
 {
     public int id;
     public string name { get; }
+    public Color32 color { get; set; }
     public List<Province> provinces { get; set; }
     public Province capital { get; set; } = null;
     public long balance { get; set; }
