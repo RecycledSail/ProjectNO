@@ -30,6 +30,7 @@ public class Province
     public Nation nation { get; set; } = null;
     public ProvinceMarket market { get; set; }
     public Dictionary<BuildingType, Building> buildings { get; set; } = null;
+    public Dictionary<SpecialBuildingType, SpecialBuilding> specialBuildings { get; set; } = null;
     public int road { get; set; } = 0;
     public List<ProvinceEthnicPop> provinceEthnicPops { get; set; } = null;
 
@@ -55,6 +56,7 @@ public class Province
         this.provinceEthnicPops = new List<ProvinceEthnicPop>();
         // this.market 할당은 GlobalVariables의 Market.Init()에서 수행
         buildings = new();
+        specialBuildings = new();
     }
 
     /// <summary>

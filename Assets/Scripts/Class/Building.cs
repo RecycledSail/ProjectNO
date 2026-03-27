@@ -119,3 +119,37 @@ public class BuildingRecipe
     }
 }
 
+/// <summary>
+/// 특수 건물의 종류 클래스 (아이템 생산 없이 버프/효과 제공)
+/// </summary>
+public class SpecialBuildingType
+{
+    public string name;
+    public long workerNeeded;
+    public List<string> buffs;
+
+    public SpecialBuildingType(string name)
+    {
+        this.name = name;
+        buffs = new();
+    }
+}
+
+/// <summary>
+/// 실제 프로빈스 위에 얹혀지는 특수 빌딩 클래스
+/// </summary>
+public class SpecialBuilding
+{
+    public SpecialBuildingType buildingType;
+    public Province province;
+    public long currentWorkers;
+    public int level = 0;
+    public double manhoursLeft = 0.0;
+
+    public SpecialBuilding(SpecialBuildingType buildingType, Province province)
+    {
+        this.buildingType = buildingType;
+        this.province = province;
+    }
+}
+

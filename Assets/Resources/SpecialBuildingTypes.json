@@ -1,0 +1,19 @@
+{
+  "specialBuildingTypes": [
+    {
+      "name": "School",
+      "workerNeeded": 20,
+      "buffs": ["Education"]
+    },
+    {
+      "name": "Hospital",
+      "workerNeeded": 30,
+      "buffs": ["HealthCare"]
+    },
+    {
+      "name": "Barracks",
+      "workerNeeded": 50,
+      "buffs": ["MilitaryTraining"]
+    }
+  ]
+}

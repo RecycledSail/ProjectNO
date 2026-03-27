@@ -162,11 +162,26 @@ public class Nation : IBuildingInvestor
                 building.manhoursLeft -= spentManhour;
                 if (building.manhoursLeft <= 0.0)
                 {
+                    building.province.buildings[building.buildingType] = building;
                     buildingsInProgress.Dequeue();
                 }
                 remainingManhour -= spentManhour;
             }
         }
+        // if (specialBuildingsInProgress.Count > 0 && remainingManhour > 0.0)
+        // {
+        //     if (specialBuildingsInProgress.TryPeek(out SpecialBuilding specialBuilding))
+        //     {
+        //         double spentManhour = Math.Min(remainingManhour, specialBuilding.manhoursLeft + 1);
+        //         specialBuilding.manhoursLeft -= spentManhour;
+        //         if (specialBuilding.manhoursLeft <= 0.0)
+        //         {
+        //             specialBuilding.province.specialBuildings[specialBuilding.buildingType] = specialBuilding;
+        //             specialBuildingsInProgress.Dequeue();
+        //         }
+        //         remainingManhour -= spentManhour;
+        //     }
+        // }
     }
 
     /// <summary>
@@ -178,5 +193,16 @@ public class Nation : IBuildingInvestor
     {
         building.manhoursLeft = GlobalVariables.BUILDING_RECIPE[building.buildingType.name].TimeToBuild;
         buildingsInProgress.Enqueue(building);
+    }
+
+    /// <summary>
+    /// specialBuildingsInProgress에 specialBuilding을 enqueue
+    /// dequeue는 ProgressBuild에서 수행
+    /// </summary>
+    /// <param name="building">Queue에 집어넣을 특수 건물</param>
+    public void AddSpecialBuildingToQueue(SpecialBuilding building)
+    {
+        building.manhoursLeft = GlobalVariables.BUILDING_RECIPE[building.buildingType.name].TimeToBuild;
+        // specialBuildingsInProgress.Enqueue(building);
     }
 }

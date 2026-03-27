@@ -100,6 +100,12 @@ public static class GlobalVariables
     /// </summary>
     public static Dictionary<string, BuildingType> BUILDING_TYPE = new();
 
+    /// <summary>
+    /// 특수 빌딩 타입을 저장하는 Dictionary
+    /// Key: string (빌딩 종류), Value: 특수 빌딩타입 클래스
+    /// </summary>
+    public static Dictionary<string, SpecialBuildingType> SPECIAL_BUILDING_TYPE = new();
+
 
     /// <summary>
     /// 생산품과 빌딩 타입의 관계를 저장하는 Dictionary
@@ -143,6 +149,7 @@ public static class GlobalVariables
             LoadCulture();
             LoadJobTypes();
             LoadBuildingTypes();
+            LoadSpecialBuildingTypes();
             LoadCategories();
             LoadBuildingRecipes();
             LoadProducts();
@@ -281,6 +288,20 @@ public static class GlobalVariables
             };
 
             BUILDING_TYPE[data.name] = buildingType;
+        }
+    }
+
+    public static void LoadSpecialBuildingTypes()
+    {
+        var gameData = LoadJsonFile<GameDataFormat.SpecialBuildingTypesWrapper>("SpecialBuildingTypes");
+        foreach (var data in gameData.specialBuildingTypes)
+        {
+            SpecialBuildingType specialBuildingType = new SpecialBuildingType(data.name)
+            {
+                workerNeeded = data.workerNeeded,
+                buffs = data.buffs ?? new()
+            };
+            SPECIAL_BUILDING_TYPE[data.name] = specialBuildingType;
         }
     }
 
@@ -552,6 +573,12 @@ public static class GlobalVariables
         }
 
         [System.Serializable]
+        public class SpecialBuildingTypesWrapper
+        {
+            public List<GameDataFormat.SpecialBuildingTypeData> specialBuildingTypes;
+        }
+
+        [System.Serializable]
         public class ProvincesWrapper
         {
             public List<GameDataFormat.ProvinceData> provinces;
@@ -644,6 +671,9 @@ public static class GlobalVariables
 
         [System.Serializable]
         public sealed class BuildingTypeData { public string name; public List<ItemData> requireItems; public List<ItemData> produceItems; public int workerNeeded; }
+
+        [System.Serializable]
+        public sealed class SpecialBuildingTypeData { public string name; public int workerNeeded; public List<string> buffs; }
 
         [System.Serializable]
         public sealed class JobTypeData { public string name; public bool literacyNeeded; public int salary; }
