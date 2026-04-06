@@ -374,6 +374,33 @@ public static class GlobalVariables
 
             province.buildings = buildings;
 
+            // City, Town 주거 특수 건물 초기화: 인구를 capacity 비율로 배분
+            if (SPECIAL_BUILDING_TYPE.TryGetValue("City", out var cityType) &&
+                SPECIAL_BUILDING_TYPE.TryGetValue("Town", out var townType))
+            {
+                long totalPop = 0;
+                foreach (var pop in province.provinceEthnicPops)
+                    totalPop += pop.population;
+
+                long totalCapacity = cityType.workerNeeded + townType.workerNeeded;
+                long cityPop = totalPop * cityType.workerNeeded / totalCapacity;
+                long townPop = totalPop - cityPop;
+
+                int cityLevel = (int)Math.Max(1, Math.Ceiling((double)cityPop / cityType.workerNeeded));
+                int townLevel = (int)Math.Max(1, Math.Ceiling((double)townPop / townType.workerNeeded));
+
+                province.specialBuildings[cityType] = new SpecialBuilding(cityType, province)
+                {
+                    currentWorkers = cityPop,
+                    level = cityLevel
+                };
+                province.specialBuildings[townType] = new SpecialBuilding(townType, province)
+                {
+                    currentWorkers = townPop,
+                    level = townLevel
+                };
+            }
+
             //provinceMarket 할당\
             province.market = new ProvinceMarket(province.name);
             foreach (var productName in PRODUCTS.Keys)

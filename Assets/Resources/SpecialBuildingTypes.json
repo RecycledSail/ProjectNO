@@ -14,6 +14,16 @@
       "name": "Barracks",
       "workerNeeded": 50,
       "buffs": ["MilitaryTraining"]
+    },
+    {
+      "name": "City",
+      "workerNeeded": 10000,
+      "buffs": ["UrbanDevelopment"]
+    },
+    {
+      "name": "Town",
+      "workerNeeded": 1000,
+      "buffs": ["CommunityGrowth"]
     }
   ]
 }
