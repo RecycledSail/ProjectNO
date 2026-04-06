@@ -60,6 +60,33 @@ public class Province
     }
 
     /// <summary>
+    /// 초기 인구 계산 및 할당 (게임 시작 시에만 호출)
+    /// </summary>
+    public void InitializePopulation()
+    {
+        // 전체 인구 계산
+        long totalPop = 0;
+        foreach (var pep in provinceEthnicPops)
+        {
+            totalPop += pep.population;
+        }
+
+        // 내부 population 값 설정 (private set 우회)
+        SetPopulation(totalPop);
+
+        // 인구 할당
+        AllocateSpecialBuildingPopulation();
+    }
+
+    /// <summary>
+    /// 인구를 직접 설정 (초기화용)
+    /// </summary>
+    private void SetPopulation(long newPopulation)
+    {
+        typeof(Province).GetProperty("population")?.GetSetMethod(true)?.Invoke(this, new object[] { newPopulation });
+    }
+
+    /// <summary>
     /// Province에 국가를 추가하는 함수
     /// Province 클래스에서 직접 실행되지 않음에 주의
     /// </summary>
@@ -122,6 +149,9 @@ public class Province
             newPopulation += pep.PopulationGrowth();
         }
         population = newPopulation;
+
+        // 인구 할당
+        AllocateSpecialBuildingPopulation();
     }
 
     /// <summary>
@@ -150,6 +180,67 @@ public class Province
         }
     }
 
+
+    /// <summary>
+    /// 우선순위에 따라 특수 건물에 인구를 할당한다.
+    /// 각 SpecialBuilding이 수용할 수 있는 인구는 workerNeeded * level
+    /// Town의 레벨이 부족하면 자동으로 증가 (Town은 가장 나중에 인구 할당)
+    /// </summary>
+    public void AllocateSpecialBuildingPopulation()
+    {
+        if (population == 0 || specialBuildings == null || specialBuildings.Count == 0)
+            return;
+
+        // 우선순위 순으로 SpecialBuilding 정렬
+        var sortedSpecialBuildings = specialBuildings.Values
+            .OrderBy(sb => sb.buildingType.priority)
+            .ToList();
+
+        // Town 찾기
+        SpecialBuilding townBuilding = sortedSpecialBuildings.FirstOrDefault(sb => sb.buildingType.name == "Town");
+
+        // Town이 없으면 반환
+        if (townBuilding == null)
+            return;
+
+        long availablePopulation = population - hiredPopulation;
+        long totalNonTownCapacity = 0;
+
+        // 1단계: Town을 제외한 모든 건물의 필요 용량 계산
+        foreach (SpecialBuilding specialBuilding in sortedSpecialBuildings)
+        {
+            if (specialBuilding.buildingType.name != "Town")
+            {
+                totalNonTownCapacity += specialBuilding.buildingType.workerNeeded * specialBuilding.level;
+            }
+        }
+
+        // 2단계: Town 레벨 자동 조정 (필요시 증가)
+        long townCapacity = townBuilding.buildingType.workerNeeded * townBuilding.level;
+        while (townCapacity < totalNonTownCapacity && availablePopulation > 0)
+        {
+            townBuilding.level++;
+            townCapacity = townBuilding.buildingType.workerNeeded * townBuilding.level;
+        }
+
+        // 3단계: Town을 제외한 건물들부터 인구 할당
+        foreach (SpecialBuilding specialBuilding in sortedSpecialBuildings)
+        {
+            if (specialBuilding.buildingType.name != "Town")
+            {
+                long capacity = specialBuilding.buildingType.workerNeeded * specialBuilding.level;
+                specialBuilding.currentWorkers = System.Math.Min(capacity, availablePopulation);
+                availablePopulation -= specialBuilding.currentWorkers;
+            }
+
+            if (availablePopulation <= 0)
+                break;
+        }
+
+        // 4단계: 남은 인구를 Town에 할당
+        townCapacity = townBuilding.buildingType.workerNeeded * townBuilding.level;
+        townBuilding.currentWorkers = System.Math.Min(townCapacity, availablePopulation);
+    }
 
     /// <summary>
     /// 길이 없다면 건설

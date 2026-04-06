@@ -299,6 +299,7 @@ public static class GlobalVariables
             SpecialBuildingType specialBuildingType = new SpecialBuildingType(data.name)
             {
                 workerNeeded = data.workerNeeded,
+                priority = data.priority,
                 buffs = data.buffs ?? new()
             };
             SPECIAL_BUILDING_TYPE[data.name] = specialBuildingType;
@@ -374,32 +375,37 @@ public static class GlobalVariables
 
             province.buildings = buildings;
 
-            // City, Town 주거 특수 건물 초기화: 인구를 capacity 비율로 배분
+             // City, Town 주거 특수 건물 초기화: 인구를 capacity 비율로 배분
             if (SPECIAL_BUILDING_TYPE.TryGetValue("City", out var cityType) &&
                 SPECIAL_BUILDING_TYPE.TryGetValue("Town", out var townType))
             {
-                long totalPop = 0;
-                foreach (var pop in province.provinceEthnicPops)
-                    totalPop += pop.population;
-
-                long totalCapacity = cityType.workerNeeded + townType.workerNeeded;
-                long cityPop = totalPop * cityType.workerNeeded / totalCapacity;
-                long townPop = totalPop - cityPop;
-
-                int cityLevel = (int)Math.Max(1, Math.Ceiling((double)cityPop / cityType.workerNeeded));
-                int townLevel = (int)Math.Max(1, Math.Ceiling((double)townPop / townType.workerNeeded));
+                int cityLevel = 1;
+                int townLevel = 1;
 
                 province.specialBuildings[cityType] = new SpecialBuilding(cityType, province)
                 {
-                    currentWorkers = cityPop,
                     level = cityLevel
                 };
                 province.specialBuildings[townType] = new SpecialBuilding(townType, province)
                 {
-                    currentWorkers = townPop,
                     level = townLevel
                 };
             }
+
+            // JSON에서 정의된 specialBuildings 로드
+            foreach (var specialBuilding in p.specialBuildings)
+            {
+                if (SPECIAL_BUILDING_TYPE.TryGetValue(specialBuilding.specialBuildingTypeName, out var specialBuildingType))
+                {
+                    province.specialBuildings[specialBuildingType] = new SpecialBuilding(specialBuildingType, province)
+                    {
+                        level = specialBuilding.level
+                    };
+                }
+            }
+
+            // 초기 인구 할당 (Province의 로직 호출)
+            province.InitializePopulation();
 
             //provinceMarket 할당\
             province.market = new ProvinceMarket(province.name);
@@ -685,7 +691,7 @@ public static class GlobalVariables
         public sealed class NationData { public int id; public string name; public ColorData color; public List<string> researchNodeNames; public List<RegimentData> regiments; }
 
         [System.Serializable]
-        public sealed class ProvinceData { public int id; public string name; public List<SpeciesPopData> pops; public string topography; public List<BuildingData> buildings; }
+        public sealed class ProvinceData { public int id; public string name; public List<SpeciesPopData> pops; public string topography; public List<BuildingData> buildings; public List<SpecialBuildingData> specialBuildings = new(); }
 
         [System.Serializable]
         public sealed class InitialProvinceData { public string nation; public List<string> provinces; public string capital; }
@@ -700,13 +706,16 @@ public static class GlobalVariables
         public sealed class BuildingTypeData { public string name; public List<ItemData> requireItems; public List<ItemData> produceItems; public int workerNeeded; }
 
         [System.Serializable]
-        public sealed class SpecialBuildingTypeData { public string name; public int workerNeeded; public List<string> buffs; }
+        public sealed class SpecialBuildingTypeData { public string name; public int workerNeeded; public int priority; public List<string> buffs; }
 
         [System.Serializable]
         public sealed class JobTypeData { public string name; public bool literacyNeeded; public int salary; }
 
         [System.Serializable]
         public sealed class BuildingData { public string buildingTypeName; public double workerScale; public int level; }
+
+        [System.Serializable]
+        public sealed class SpecialBuildingData { public string specialBuildingTypeName; public int level; }
 
         [System.Serializable]
         public sealed class CategoriesData { public string name; }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 
 public class ProvinceDetailUI : MonoBehaviour
@@ -173,9 +174,19 @@ public class ProvinceDetailUI : MonoBehaviour
     /// </summary>
     private void UpdateCropsText()
     {
-        //provinceCropsText.text = "Crops: " + string.Join(", ",
-        //    province.market.crops.Select(crop => $"{crop.name}: {UIManager.ShortenValue(crop.amount)}")
-        //);
+        provinceCropsText.text = "";
+        bool isTop = true;
+        foreach (var specialBuilding in province.specialBuildings.Values)
+        {
+            if (!isTop)
+                provinceCropsText.text += "\n";
+            provinceCropsText.text += specialBuilding.buildingType.name + " - Lv." + specialBuilding.level + " (" + UIManager.ShortenValue(specialBuilding.currentWorkers) + ")";
+            isTop = false;
+        }
+
+        // 레이아웃을 강제로 즉시 재구성하여 지연 제거
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(provinceCropsText.transform.parent as RectTransform);
     }
 
     /// <summary>

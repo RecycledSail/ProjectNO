@@ -154,6 +154,20 @@
           "workerScale": 2.0,
           "level": 3
         }
+      ],
+      "specialBuildings": [
+        {
+          "specialBuildingTypeName": "City",
+          "level": 1
+        },
+        {
+          "specialBuildingTypeName": "Hospital",
+          "level": 1
+        },
+        {
+          "specialBuildingTypeName": "School",
+          "level": 1
+        }
       ]
     },
     {
@@ -286,6 +300,12 @@
           "buildingTypeName": "WheatField",
           "workerScale": 2.0,
           "level": 3
+        }
+      ],
+      "specialBuildings": [
+        {
+          "specialBuildingTypeName": "City",
+          "level": 1
         }
       ]
     }

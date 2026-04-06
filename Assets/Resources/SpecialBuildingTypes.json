@@ -3,26 +3,31 @@
     {
       "name": "School",
       "workerNeeded": 20,
+      "priority": 100,
       "buffs": ["Education"]
     },
     {
       "name": "Hospital",
       "workerNeeded": 30,
+      "priority": 200,
       "buffs": ["HealthCare"]
     },
     {
       "name": "Barracks",
       "workerNeeded": 50,
+      "priority": 300,
       "buffs": ["MilitaryTraining"]
     },
     {
       "name": "City",
       "workerNeeded": 10000,
+      "priority": 400,
       "buffs": ["UrbanDevelopment"]
     },
     {
       "name": "Town",
       "workerNeeded": 1000,
+      "priority": 500,
       "buffs": ["CommunityGrowth"]
     }
   ]

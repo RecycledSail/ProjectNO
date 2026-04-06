@@ -126,6 +126,7 @@ public class SpecialBuildingType
 {
     public string name;
     public long workerNeeded;
+    public int priority;
     public List<string> buffs;
 
     public SpecialBuildingType(string name)
