@@ -112,10 +112,11 @@ public partial class EconomicEngine : MonoBehaviour
             }
         }
 
-        // 3. nation market에서 음식 재고 차감
+        // 3. nation market에서 음식 재고 차감 및 LastDemand 업데이트
         foreach (string foodName in foodBuyAmount.Keys)
         {
             province.nation.market.Products[foodName].Stock -= foodBuyAmount[foodName];
+            province.nation.market.Products[foodName].LastDemand += foodBuyAmount[foodName];
         }
 
         // 4. pep에서 돈 차감
@@ -126,6 +127,11 @@ public partial class EconomicEngine : MonoBehaviour
             int remainingFood = (int)(neededFoodRatio * totalBoughtFoods);
             pep.BuyFood(remainingFood);
             pep.property -= (long)(neededFoodRatio * totalCost);
+        }
+
+        if (province.nation.market.Products.TryGetValue("Wheat", out var prs))
+        {
+                Debug.Log($"Wheat - Stock: {prs.Stock}, Price: {prs.Price}, LastDemand: {prs.LastDemand}, LastPrice: {prs.LastPrice}");
         }
     }
 
@@ -235,11 +241,12 @@ public partial class EconomicEngine : MonoBehaviour
 
         if (totalFoodNeeds > 0)
         {
-            // 3. 시장에서 음식 재고 차감
+            // 3. 시장에서 음식 재고 차감 및 LastDemand 업데이트
             // Dictionary에 들어있는 Key에 저장된 Value만큼 감소
             foreach (string foodName in foodBuyAmount.Keys)
             {
                 province.market.Products[foodName].Stock -= foodBuyAmount[foodName];
+                province.market.Products[foodName].LastDemand += foodBuyAmount[foodName];
             }
 
             // 4. pep에서 돈 차감

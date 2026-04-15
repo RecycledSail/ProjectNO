@@ -137,9 +137,12 @@ public partial class EconomicEngine
             }
         }
 
-        // 5. Nation 마켓 재고 차감
+        // 5. Nation 마켓 재고 차감 및 LastDemand 업데이트
         foreach (var kv in buyAmount)
+        {
             province.nation.market.Products[kv.Key].Stock -= kv.Value;
+            province.nation.market.Products[kv.Key].LastDemand += kv.Value;
+        }
 
         // 6. pep별 인구 비율에 따라 돈 차감
         foreach (ProvinceEthnicPop pep in availablePops)
@@ -230,9 +233,12 @@ public partial class EconomicEngine
             }
         }
 
-        // 5. Province 마켓 재고 차감
+        // 5. Province 마켓 재고 차감 및 LastDemand 업데이트
         foreach (var kv in buyAmount)
+        {
             province.market.Products[kv.Key].Stock -= kv.Value;
+            province.market.Products[kv.Key].LastDemand += kv.Value;
+        }
 
         // 6. pep별 인구 비율에 따라 돈 차감
         foreach (ProvinceEthnicPop pep in availablePops)

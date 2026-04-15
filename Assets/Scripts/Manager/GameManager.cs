@@ -329,7 +329,25 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void ProcessWeeklyEvents()
     {
-        // 0. 캐시가 유효하지 않은 국가의 연결 상태 재계산
+        // 0. 모든 마켓의 LastSupply와 LastDemand 초기화 (새 주 시작)
+        foreach (Nation nation in nations.Values)
+        {
+            foreach (ProductState ps in nation.market.Products.Values)
+            {
+                ps.LastSupply = 0;
+                ps.LastDemand = 0;
+            }
+        }
+        foreach (Province province in provinces.Values)
+        {
+            foreach (ProductState ps in province.market.Products.Values)
+            {
+                ps.LastSupply = 0;
+                ps.LastDemand = 0;
+            }
+        }
+
+        // 1. 캐시가 유효하지 않은 국가의 연결 상태 재계산
         foreach (Nation nation in nations.Values)
         {
             if (nation != null && (!roadCacheValid.ContainsKey(nation) || !roadCacheValid[nation]))
@@ -339,37 +357,37 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // 1. Nation 주간 처리
+        // 2. Nation 주간 처리
         foreach (Nation nation in nations.Values)
         {
             nation.SimulateWeeklyTurn();
         }
 
-        // 2. Province 생산 단계 (생산만 수행)
+        // 3. Province 생산 단계 (생산만 수행)
         foreach (Province province in provinces.Values)
         {
             province.ProduceGoodsWeekly();
         }
 
-        // 3. 도로로 연결된 Province의 생산품을 Nation market으로 이동
+        // 4. 도로로 연결된 Province의 생산품을 Nation market으로 이동
         foreach (Nation nation in nations.Values)
         {
             TransferProvinceProductionToNationMarket(nation);
         }
 
-        // 4. Province 소비 단계 (nation market 우선, 실패 시 local market)
+        // 5. Province 소비 단계 (nation market 우선, 실패 시 local market)
         foreach (Province province in provinces.Values)
         {
             economicEngine.ConsumeFoodsWeekly(province, province.isConnectedToCapital);
         }
 
-        // 5. Province 인구 업데이트
+        // 6. Province 인구 업데이트
         foreach (Province province in provinces.Values)
         {
             province.UpdatePopulation();
         }
 
-        // 5. 내 nation market(player의 nation의 market)의 재고 debug로 출력
+        // 7. 내 nation market(player의 nation의 market)의 재고 debug로 출력
         Debug.Log($"--- Nation Market Stock for {player.nation.name} ---");
         foreach (var kv in player.nation.market.Products)
         {
@@ -378,6 +396,9 @@ public class GameManager : MonoBehaviour
             Debug.Log($"{productName}: Stock={pstate.Stock}, LastSupply={pstate.LastSupply}, LastDemand={pstate.LastDemand}");
 
         }
+
+        // 8. GDP 계산 및 업데이트
+        economicEngine.UpdateGDPWeekly(nations.Values);
     }
 
     /// <summary>
