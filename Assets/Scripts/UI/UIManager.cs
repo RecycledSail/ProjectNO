@@ -34,6 +34,11 @@ public class UIManager : MonoBehaviour
     public TMP_Text PopulationText;
 
     /// <summary>
+    /// 유저가 속한 국가의 GDP를 표기하는 텍스트 UI
+    /// </summary>
+    public TMP_Text GDPText;
+
+    /// <summary>
     /// 게임 내 날짜 및 시간 속도를 표기하는 텍스트 UI
     /// </summary>
     public TMP_Text dateText;
@@ -83,6 +88,7 @@ public class UIManager : MonoBehaviour
     {
         UpdateCurrencyText();  // 재산(화폐) UI 업데이트
         UpdatePopulation();    // 인구 UI 업데이트
+        UpdateGDP();
         UpdateUIDate();        // 날짜 및 시간 속도 UI 업데이트
     }
 
@@ -128,6 +134,16 @@ public class UIManager : MonoBehaviour
         long population = GameManager.Instance.player.nation.Population;
         string popText = ShortenValue(population);
         PopulationText.text = "POP: " + popText;
+    }
+
+    /// <summary>
+    /// 유저가 속한 국가의 GDP 정보를 UI에 업데이트하는 메서드
+    /// </summary>
+    void UpdateGDP()
+    {
+        long gdp = GameManager.Instance.player.nation.GDP;
+        string gdpText = ShortenValue(gdp);
+        GDPText.text = "GDP: " + gdpText;
     }
 
     /// <summary>
