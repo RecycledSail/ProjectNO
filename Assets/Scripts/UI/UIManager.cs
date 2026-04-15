@@ -3,6 +3,7 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Unity.Mathematics;
 
 public class UIManager : MonoBehaviour
 {
@@ -84,6 +85,10 @@ public class UIManager : MonoBehaviour
         //UpdateUIDate();        // 날짜 및 시간 속도 UI 업데이트
     }
 
+    /// <summary>
+    /// 매 프레임마다 호출되는 상단 UI 업데이트 메서드
+    /// 게임의 상단 UI를 최신 상태로 유지함
+    /// </summary>
     private void UpdateTopUI()
     {
         UpdateCurrencyText();  // 재산(화폐) UI 업데이트
@@ -151,9 +156,17 @@ public class UIManager : MonoBehaviour
     /// </summary>
     private void UpdateUIDate()
     {
+        
         if (dateText != null)
         {
-            dateText.text = GameManager.Instance.GetTimeSpeed() + " " + GameManager.Instance.GetCurrentDate();
+            // 멈추면 'II', 1배면 '>', 2배면 '>>', 4배면 '>>>', 8배면 '>>>>'로 표시
+            string speedText = "II";
+            if (!GameManager.Instance.paused)
+            {
+                int speed = (int)math.log2(GameManager.Instance.GetTimeSpeed());
+                speedText = new string('>', speed+1);
+            }
+            dateText.text = speedText + " " + GameManager.Instance.GetCurrentDate();
         }
     }
 

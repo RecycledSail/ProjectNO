@@ -112,6 +112,7 @@ public class GameManager : MonoBehaviour
         }
         paused = false;
 
+        dayUIEvent.Invoke(); // 초기 UI 업데이트
         // 날짜 진행 Coroutine 시작
         StartDayCycle();
     }
@@ -159,6 +160,7 @@ public class GameManager : MonoBehaviour
     public void TogglePause()
     {
         paused = !paused;
+        dayUIEvent.Invoke(); // 일시정지 상태 변경 시 UI 업데이트
         Debug.Log(paused ? "Game Paused" : "Game Resumed");
     }
 
