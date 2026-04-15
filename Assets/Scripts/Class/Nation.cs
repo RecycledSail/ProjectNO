@@ -25,6 +25,15 @@ public class Nation : IBuildingInvestor
     public NationMarket market;
     public GovernmentBudget governmentBudget;
 
+    /// <summary>이번 주 GDP (생산 기준: Σ LastSupply × Price)</summary>
+    public long GDP { get; set; }
+
+    /// <summary>세금 계산 등 안정적 기준값으로 쓸 4주 이동평균 GDP</summary>
+    public long GDPAverage { get; set; }
+
+    /// <summary>최근 4주 GDP 기록 (이동평균 산출용)</summary>
+    public readonly Queue<long> GDPHistory = new();
+
 
 
     // Getter
