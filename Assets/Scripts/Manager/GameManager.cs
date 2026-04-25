@@ -399,6 +399,14 @@ public class GameManager : MonoBehaviour
 
         // 8. GDP 계산 및 업데이트
         economicEngine.UpdateGDPWeekly(nations.Values);
+
+        // 9. 예산 처리: 세금 징수 → 화폐 발행 → 인플레이션 갱신
+        foreach (Nation nation in nations.Values)
+        {
+            nation.governmentBudget.CollectTaxes();
+            nation.governmentBudget.PrintMoney();
+            nation.governmentBudget.UpdateInflation();
+        }
     }
 
     /// <summary>

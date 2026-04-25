@@ -34,6 +34,9 @@ public class Nation : IBuildingInvestor
     /// <summary>최근 4주 GDP 기록 (이동평균 산출용)</summary>
     public readonly Queue<long> GDPHistory = new();
 
+    /// <summary>연구 투자 정책으로 적립된 연구 포인트 (연구 엔진에서 소진)</summary>
+    public long researchFund { get; set; } = 0;
+
 
 
     // Getter
@@ -70,7 +73,7 @@ public class Nation : IBuildingInvestor
         enemies = new();
         constructionRequest = new ConstructionRequest(this);
         market = new NationMarket(this.name);
-        governmentBudget = new GovernmentBudget(market);
+        governmentBudget = new GovernmentBudget(market, this);
     }
 
     /// <summary>
