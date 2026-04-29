@@ -36,6 +36,10 @@ public class PolicyAllocation
         ResearchFund + MilitarySalary +
         (IndustrySubsidy.Count > 0 ? IndustrySubsidy.Values.Sum() : 0L) +
         RealEstateFund;
+
+    /// <summary>산업 보조금 합계</summary>
+    public long IndustryTotal() =>
+        IndustrySubsidy.Count > 0 ? IndustrySubsidy.Values.Sum() : 0L;
 }
 
 // ───────────────────────────────────────────────────────────────────────────────
@@ -132,16 +136,16 @@ public class GovernmentBudget
         }
     }
 
-    /// <summary>현재 인플레이션 상태를 한국어 텍스트로 반환합니다.</summary>
+    /// <summary>현재 인플레이션 상태를 텍스트로 반환합니다.</summary>
     public string GetInflationStatus()
     {
-        if (InflationRate > 10f) return "초인플레이션";
-        if (InflationRate >  5f) return "고인플레이션";
-        if (InflationRate >  2f) return "인플레이션";
-        if (InflationRate >  0f) return "완만한 상승";
-        if (InflationRate < -5f) return "디플레이션";
-        if (InflationRate < -2f) return "완만한 하락";
-        return "안정";
+        if (InflationRate > 10f) return "Hyperinflation";
+        if (InflationRate >  5f) return "High Inflation";
+        if (InflationRate >  2f) return "Inflation";
+        if (InflationRate >  0f) return "Mild Rise";
+        if (InflationRate < -5f) return "Deflation";
+        if (InflationRate < -2f) return "Mild Fall";
+        return "Stable";
     }
 
     /// <summary>

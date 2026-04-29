@@ -322,7 +322,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 26472792}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 212948894}
+        m_TargetAssemblyTypeName: FinanceUI, Assembly-CSharp
+        m_MethodName: OpenFinanceUI
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &26472792
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3507,13 +3519,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiPanel: {fileID: 212948892}
-  totalGoldText: {fileID: 0}
-  inflationText: {fileID: 0}
-  currentStepFinanceText: {fileID: 0}
+  totalGoldText: {fileID: 1076222617}
+  inflationText: {fileID: 1543790221}
+  weeklyRevenueText: {fileID: 0}
   militarySlider: {fileID: 0}
   industrySlider: {fileID: 0}
   realEstateSlide: {fileID: 0}
   researchSlider: {fileID: 0}
+  militaryPctText: {fileID: 0}
+  industryPctText: {fileID: 0}
+  realEstatePctText: {fileID: 0}
+  researchPctText: {fileID: 0}
+  totalAllocPctText: {fileID: 0}
   subUIs: []
 --- !u!114 &212948895
 MonoBehaviour:
@@ -3586,7 +3603,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -236.67313, y: 263.84167}
+  m_AnchoredPosition: {x: -236.67313, y: 263.84198}
   m_SizeDelta: {x: 473.35, y: 527.68}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &216555515
@@ -4599,7 +4616,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -293, y: 325.4723}
+  m_AnchoredPosition: {x: -293, y: 325.47217}
   m_SizeDelta: {x: 586, y: 632.21}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &272516254
@@ -4801,7 +4818,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 787317455}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9999984
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -6934,8 +6951,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 482016252}
   m_HandleRect: {fileID: 482016251}
   m_Direction: 2
-  m_Value: 1.1607143
-  m_Size: 0.99999404
+  m_Value: 1.2727273
+  m_Size: 0.99787426
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -13256,7 +13273,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -293.00012, y: 286.63275}
+  m_AnchoredPosition: {x: -293.00012, y: 286.6324}
   m_SizeDelta: {x: 586, y: 573.27}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &975213884
@@ -16476,7 +16493,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -293.00012, y: 286.63275}
+  m_AnchoredPosition: {x: -293.00012, y: 286.6324}
   m_SizeDelta: {x: 586, y: 573.27}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1162284267
@@ -17260,7 +17277,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 569872495}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9978803
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -21324,8 +21341,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 147295202}
   m_HandleRect: {fileID: 147295201}
   m_Direction: 2
-  m_Value: 1.1607143
-  m_Size: 0.99999404
+  m_Value: 1.2727273
+  m_Size: 0.99787426
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -27988,8 +28005,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1949221750}
   m_HandleRect: {fileID: 1949221749}
   m_Direction: 2
-  m_Value: 1.1785715
-  m_Size: 0.99999404
+  m_Value: 1.290909
+  m_Size: 0.9977971
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -28399,7 +28416,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -293.00012, y: 286.63272}
+  m_AnchoredPosition: {x: -293.00012, y: 286.63235}
   m_SizeDelta: {x: 586, y: 573.27}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2051390410
