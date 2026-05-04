@@ -3522,10 +3522,10 @@ MonoBehaviour:
   totalGoldText: {fileID: 1076222617}
   inflationText: {fileID: 1543790221}
   weeklyRevenueText: {fileID: 0}
-  militarySlider: {fileID: 0}
-  industrySlider: {fileID: 0}
-  realEstateSlide: {fileID: 0}
-  researchSlider: {fileID: 0}
+  militarySlider: {fileID: 2970677474203247355}
+  industrySlider: {fileID: 1793416762}
+  realEstateSlide: {fileID: 1248687376}
+  researchSlider: {fileID: 589145149}
   militaryPctText: {fileID: 0}
   industryPctText: {fileID: 0}
   realEstatePctText: {fileID: 0}
@@ -4818,7 +4818,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 787317455}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99999815
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -6952,7 +6952,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 482016251}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.9999917
+  m_Size: 0.9999939
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -17277,7 +17277,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 569872495}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99999744
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -21342,7 +21342,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 147295201}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.9999917
+  m_Size: 0.9999939
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -28006,7 +28006,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1949221749}
   m_Direction: 2
   m_Value: 1.0175439
-  m_Size: 0.9999918
+  m_Size: 0.9999939
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
