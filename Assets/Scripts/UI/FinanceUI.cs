@@ -9,6 +9,8 @@ public class FinanceUI : MonoBehaviour
 
     public TMP_Text totalGoldText;
     public TMP_Text inflationText;
+    
+    // Remove this section
     public TMP_Text weeklyRevenueText;  // 주간 세수 (배분 기준)
 
     public Slider militarySlider;
@@ -17,6 +19,7 @@ public class FinanceUI : MonoBehaviour
     public Slider researchSlider;
 
     // 각 슬라이더의 퍼센트 표시 텍스트
+    // Remove this section
     public TMP_Text militaryPctText;
     public TMP_Text industryPctText;
     public TMP_Text realEstatePctText;
