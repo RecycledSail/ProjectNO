@@ -229,7 +229,12 @@ public class GovernmentBudget
     }
 
     /// <summary>
-    /// [산업 지원] BuildingType별 보조금을 국가 내 동일 타입 건물에 레벨 비례로 분배합니다.
+    /// [산업 지원] BuildingType별 보조금을 국가 내 동일 타입 건물에 분배합니다.
+    /// 노동 포화도가 낮은 건물일수록 보조금 효과가 증폭되며(한계효용 체감),
+    /// 분배 후 즉시 고용을 시도해 이번 턴 생산에 반영됩니다.
+    ///
+    /// 포화도 구간별 효율 계수:
+    ///   &lt; 60% (인력 부족) → ×1.5  /  60~90% (정상) → ×1.0  /  ≥ 90% (포화) → ×0.5
     /// </summary>
     private void ApplyIndustrySubsidy()
     {
@@ -247,12 +252,30 @@ public class GovernmentBudget
 
             if (targets.Count == 0) continue;
 
-            long totalLevels = targets.Sum(b => (long)Math.Max(1, b.level));
-            foreach (Building building in targets)
+            // 1단계: 포화도 기반 효율 가중치 계산
+            var weights = new double[targets.Count];
+            double totalWeight = 0;
+            for (int i = 0; i < targets.Count; i++)
             {
-                long share = (long)((double)Math.Max(1, building.level) / totalLevels * subsidy);
-                // int 오버플로우 방지
+                Building b = targets[i];
+                long cap = Math.Max(1L, b.level * b.buildingType.workerNeeded);
+                double saturation = (double)b.currentWorkers / cap;
+
+                double efficiency = saturation >= 0.9 ? 0.5   // 포화 — 효과 감소
+                                  : saturation >= 0.6 ? 1.0   // 정상 가동 — 표준
+                                  : 1.5;                       // 인력 부족 — 효과 증폭
+
+                weights[i] = Math.Max(1, b.level) * efficiency;
+                totalWeight += weights[i];
+            }
+
+            // 2단계: 가중치 비례 분배 + 즉시 고용 시도
+            for (int i = 0; i < targets.Count; i++)
+            {
+                Building building = targets[i];
+                long share = (long)(weights[i] / totalWeight * subsidy);
                 building.balance += (int)Math.Min(share, int.MaxValue - (long)building.balance);
+                building.HireWorkers();
             }
         }
     }
