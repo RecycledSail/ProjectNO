@@ -27,6 +27,9 @@
 # Visual Studio cache directory
 .vs/
 
+# Obsidian workspace and local vault settings
+obsedian documentry/.obsidian/
+
 # Gradle cache directory
 .gradle/
 
