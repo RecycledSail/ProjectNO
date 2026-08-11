@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 
 public class Battle
 {
@@ -51,6 +52,53 @@ public class Battle
     public bool RemoveDefenseRegiment(Regiment regiment)
     {
         return defenseRegiments.Remove(regiment);
+    }
+
+    public int GetAttackNumber()
+    {
+        int unitCount = 0;
+        foreach (Regiment regiment in attackRegiments)
+        {
+            if (regiment != null)
+            {
+                unitCount += regiment.GetUnitCount();
+            }
+        }
+        return unitCount;
+    }
+
+    public int GetDefenseNumber()
+    {
+        int unitCount = 0;
+        foreach (Regiment regiment in defenseRegiments)
+        {
+            if (regiment != null)
+            {
+                unitCount += regiment.GetUnitCount();
+            }
+        }
+        return unitCount;
+    }
+
+    public int GetBattleAreaDesolation()
+    {
+        return battleArea == null ? 0 : battleArea.desolation;
+    }
+
+    public void SetBattleAreaDesolation(int percent)
+    {
+        if (battleArea == null)
+        {
+            return;
+        }
+
+        battleArea.SetDesolation(percent);
+    }
+
+    public double ChangeWinProbability(double add)
+    {
+        winProbability = Math.Clamp(winProbability + add, 0.0, 100.0);
+        return winProbability;
     }
 
     public void Attack()
