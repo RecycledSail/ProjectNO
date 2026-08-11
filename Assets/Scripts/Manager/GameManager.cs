@@ -112,6 +112,8 @@ public class GameManager : MonoBehaviour
         }
         paused = false;
 
+        BattleManager.Instance.RefreshRegimentMarkers();
+
         dayUIEvent.Invoke(); // 초기 UI 업데이트
         // 날짜 진행 Coroutine 시작
         StartDayCycle();
@@ -212,6 +214,7 @@ public class GameManager : MonoBehaviour
 
             // nations 딕셔너리에 국가 추가
             nations[nationStr] = nation;
+            BattleManager.Instance.AddRegiments(nation.regiments);
 
             // 국가마다 User 객체 생성 및 목록에 추가
             User user = new User(id++, nation);

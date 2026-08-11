@@ -3603,7 +3603,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -236.67313, y: 263.84113}
+  m_AnchoredPosition: {x: -236.67313, y: 263.88913}
   m_SizeDelta: {x: 473.35, y: 527.68}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &216555515
@@ -4616,7 +4616,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -293, y: 325.47217}
+  m_AnchoredPosition: {x: -293, y: 325.41986}
   m_SizeDelta: {x: 586, y: 632.21}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &272516254
@@ -4817,8 +4817,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 787317456}
   m_HandleRect: {fileID: 787317455}
   m_Direction: 2
-  m_Value: 0
-  m_Size: 1
+  m_Value: 1
+  m_Size: 0.9999192
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -6951,8 +6951,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 482016252}
   m_HandleRect: {fileID: 482016251}
   m_Direction: 2
-  m_Value: 1.2727273
-  m_Size: 0.99787426
+  m_Value: 15.964286
+  m_Size: 0.99990416
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -11074,6 +11074,7 @@ GameObject:
   - component: {fileID: 767263692}
   - component: {fileID: 767263691}
   - component: {fileID: 767263693}
+  - component: {fileID: 767263694}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -11125,6 +11126,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a08693c840f3431429a88c3ac87b0867, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &767263694
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 767263690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c4d7f06a7a64f15ad6dd4e5814df7e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  provinceRoot: {fileID: 1559559334}
+  regimentPrefab: {fileID: 100100000, guid: b2754426820e16f41bb6c1a35df436e1, type: 3}
+  hoverHeight: 0.35
+  sameProvinceSpacing: 0.45
 --- !u!1 &767505224
 GameObject:
   m_ObjectHideFlags: 0
@@ -13273,7 +13290,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -293.00012, y: 286.6324}
+  m_AnchoredPosition: {x: -293.00012, y: 286.58215}
   m_SizeDelta: {x: 586, y: 573.27}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &975213884
@@ -16493,7 +16510,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -293.00012, y: 286.6324}
+  m_AnchoredPosition: {x: -293.00012, y: 286.58215}
   m_SizeDelta: {x: 586, y: 573.27}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1162284267
@@ -17277,7 +17294,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 569872495}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.99990815
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -21341,8 +21358,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 147295202}
   m_HandleRect: {fileID: 147295201}
   m_Direction: 2
-  m_Value: 1.2727273
-  m_Size: 0.99787426
+  m_Value: 15.964286
+  m_Size: 0.99990416
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -28005,8 +28022,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1949221750}
   m_HandleRect: {fileID: 1949221749}
   m_Direction: 2
-  m_Value: 1.290909
-  m_Size: 0.9977971
+  m_Value: 16.375
+  m_Size: 0.99990183
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -28416,7 +28433,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -293.00012, y: 286.63235}
+  m_AnchoredPosition: {x: -293.00012, y: 286.58084}
   m_SizeDelta: {x: 586, y: 573.27}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2051390410
@@ -32601,6 +32618,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cam: {fileID: 330585545}
+  hoverBorderColor: {r: 1, g: 0.32, b: 0, a: 1}
+  hoverBorderWidth: 5
+  hoverBorderHeightOffset: 5
+  hoverBorderSimplifyTolerance: 0.08
+  hoverBorderSmoothIterations: 1
+  prewarmHoverBorderCache: 1
 --- !u!33 &6919887498790963651
 MeshFilter:
   m_ObjectHideFlags: 0

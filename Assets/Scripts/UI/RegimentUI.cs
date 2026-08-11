@@ -17,6 +17,13 @@ public class RegimentUI : MonoBehaviour
     public int testDefensePerUnit;
 
     private UnitType testUnitType;
+
+    public void SetRegiment(Regiment regiment)
+    {
+        this.regiment = regiment;
+        UpdateRegimentUI();
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
     {
@@ -81,6 +88,11 @@ public class RegimentUI : MonoBehaviour
 
     private void UpdateRegimentUI()
     {
+        if (regiment == null || unitPop == null)
+        {
+            return;
+        }
+
         int pop = 0;
         foreach(var unitType in regiment.units.Keys)
         {

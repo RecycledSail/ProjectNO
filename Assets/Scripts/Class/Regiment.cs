@@ -40,28 +40,24 @@ public class Regiment
     }
     public double GetAttackPower()
     {
-        double totalAttack = 0, unitCount = 0;
+        double totalAttack = 0;
         foreach (UnitType type in units.Keys)
         {
             double curCount = units[type].population;
             totalAttack += curCount * type.attackPerUnit;
-            unitCount += curCount;
         }
-        double result = totalAttack / unitCount;
-        return result < 0.1 ? 0.1 : result;
+        return totalAttack;
     }
 
     public double GetDefensePower()
     {
-        double totalDefense = 0, unitCount = 0;
+        double totalDefense = 0;
         foreach (UnitType type in units.Keys)
         {
             double curCount = units[type].population;
             totalDefense += curCount * type.defensePerUnit;
-            unitCount += curCount;
         }
-        double result = totalDefense / unitCount;
-        return result < 0.1 ? 0.1 : result;
+        return totalDefense;
     }
 
     public double GetMoveSpeed()
