@@ -1,28 +1,21 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.UIElements;
-using static NUnit.Framework.Internal.OSPlatform;
 
 public class BuildUI : MonoBehaviour
 {
-    public GameObject uiPanel;  // Nation UI 패널
+    public GameObject uiPanel;
 
-    //Build List 관련
-    public Transform BuildListParent; // Build 목록이 들어갈 부모 객체
-    public GameObject BuildItemPrefab; // Build 버튼 프리팹
+    public Transform BuildListParent;
+    public GameObject BuildItemPrefab;
 
-
-    //Build Queue 관련
     public Transform BuildQueueParent;
     public GameObject BuildQueueItemPrefab;
 
-    // Panels to change
     public List<GameObject> subUIs;
 
     private GameObject currentOpenSubUI;
-
     private Nation currentNation;
 
     public TMP_Text detailedText;
@@ -30,7 +23,8 @@ public class BuildUI : MonoBehaviour
     [HideInInspector]
     public ProduceUI selectedProduceUI = null;
 
-    // 싱글톤 인스턴스 (다른 스크립트에서 쉽게 접근 가능)
+    private readonly Dictionary<string, ProduceUI> productRows = new();
+
     private static BuildUI _instance;
     public static BuildUI Instance
     {
@@ -43,19 +37,15 @@ public class BuildUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 게임 시작 전 초기화 메서드 (싱글톤 중복방지 처리)
-    /// </summary>
     private void Awake()
     {
-        // 싱글톤 중복 방지 로직
         if (_instance == null)
         {
             _instance = this;
         }
         else if (_instance != this)
         {
-            Destroy(gameObject);  // 중복 시 제거
+            Destroy(gameObject);
         }
     }
 
@@ -73,13 +63,10 @@ public class BuildUI : MonoBehaviour
                 currentOpenSubUI = subUIs[i];
             }
         }
-        currentNation = null;
-        uiPanel.SetActive(false); // 처음에는 UI를 숨김
-        GameManager.Instance.dayUIEvent.AddListener(UpdateBuildUI);
-    }
 
-    private void Update()
-    {
+        currentNation = null;
+        uiPanel.SetActive(false);
+        GameManager.Instance.dayUIEvent.AddListener(UpdateBuildUI);
     }
 
     private void OnDestroy()
@@ -88,11 +75,6 @@ public class BuildUI : MonoBehaviour
             GameManager.Instance.dayUIEvent.RemoveListener(UpdateBuildUI);
     }
 
-
-    /// <summary>
-    /// 특정 Nation의 UI를 열고 그에 속한 Province 목록을 표시합니다.
-    /// </summary>
-    /// <param name="nation">선택한 국가</param>
     public void OpenBuildUI()
     {
         currentNation = GameManager.Instance.player.nation;
@@ -101,45 +83,47 @@ public class BuildUI : MonoBehaviour
 
         UIManager.Instance.ReplacePopUp(gameObject);
     }
-    
+
     public void UpdateBuildUI()
     {
-        if (currentNation != null)
-        {
-            InitBuildList();
-            UpdateDetailUI();
-            UpdateQueue();
-        }
+        if (currentNation == null)
+            return;
+
+        InitBuildList();
+        UpdateDetailUI();
+        UpdateQueue();
     }
 
-    /// <summary>
-    /// Province의 목록을 해당 nation의 province들로 초기화한다.
-    /// </summary>
     public void InitBuildList()
     {
         string oldProductType = selectedProduceUI == null ? "" : selectedProduceUI.productName;
-        // 기존 리스트 정리
-        foreach (Transform child in BuildListParent)
+
+        HashSet<string> currentProducts = new(GlobalVariables.PRODUCTS.Keys);
+        foreach (var pair in productRows.ToList())
         {
-            Destroy(child.gameObject);
+            if (currentProducts.Contains(pair.Key))
+                continue;
+
+            if (pair.Value != null)
+                Destroy(pair.Value.gameObject);
+            productRows.Remove(pair.Key);
         }
 
-        // 교체
         foreach (string productType in GlobalVariables.PRODUCTS.Keys)
         {
-            GameObject child = Instantiate(BuildItemPrefab, BuildListParent);
-            ProduceUI produceUI = child.GetComponent<ProduceUI>();
+            if (!productRows.TryGetValue(productType, out ProduceUI produceUI) || produceUI == null)
+            {
+                GameObject child = Instantiate(BuildItemPrefab, BuildListParent);
+                produceUI = child.GetComponent<ProduceUI>();
+                productRows[productType] = produceUI;
+            }
+
             produceUI.SetProduceData(currentNation, productType);
-            if(productType == oldProductType)
+            if (productType == oldProductType)
                 selectedProduceUI = produceUI;
         }
-
     }
 
-    /// <summary>
-    /// 현재 활성화된 SubUI를 변경한다.
-    /// </summary>
-    /// <param name="index">변경할 SubUI의 index</param>
     public void ChangeSubUI(int index)
     {
         currentOpenSubUI.SetActive(false);
@@ -147,75 +131,60 @@ public class BuildUI : MonoBehaviour
         currentOpenSubUI = subUIs[index];
     }
 
-    /// <summary>
-    /// Build UI를 닫습니다.
-    /// </summary>
     public void CloseBuildUI()
     {
         uiPanel.SetActive(false);
         selectedProduceUI = null;
     }
 
-
     public void OnManualButtonClick()
     {
-        if(selectedProduceUI != null)
+        if (selectedProduceUI == null)
+            return;
+
+        if (GlobalVariables.PRODUCT_TO_BUILDING.TryGetValue(selectedProduceUI.productName, out string buildingTypeName) &&
+            GlobalVariables.BUILDING_TYPE.TryGetValue(buildingTypeName, out BuildingType buildingType))
         {
-            if (GlobalVariables.PRODUCT_TO_BUILDING.TryGetValue(selectedProduceUI.productName, out string buildingTypeName)){
-                if (GlobalVariables.BUILDING_TYPE.TryGetValue(buildingTypeName, out BuildingType buildingType)){
-                    BuildProvinceUI.Instance.OpenBuildProvinceUI(buildingType);
-                }
-            }
+            BuildProvinceUI.Instance.OpenBuildProvinceUI(buildingType);
         }
     }
 
-    /// <summary>
-    /// Detail UI를 변경합니다.
-    /// </summary>
     public void UpdateDetailUI()
     {
-        if(selectedProduceUI == null)
+        if (selectedProduceUI == null)
         {
-            string text = "Select product\nto see details";
-            detailedText.text = text;
+            detailedText.text = "Select product\nto see details";
+            return;
         }
-        else
-        {
-            string text = selectedProduceUI.productName + "\n";
-            text += "Supply: " + selectedProduceUI.productSupplyCount + " Demand: " + selectedProduceUI.productDemandCount + "\n";
-            detailedText.text = text;
-        }
+
+        string text = selectedProduceUI.productName + "\n";
+        text += "Supply: " + selectedProduceUI.productSupplyCount + " Demand: " + selectedProduceUI.productDemandCount + "\n";
+        detailedText.text = text;
     }
 
-    /// <summary>
-    /// buildingsInProgress를 출력한다.
-    /// </summary>
     public void UpdateQueue()
     {
-        int count = 0;
+        if (currentNation == null)
+            return;
 
-        foreach (Building building in currentNation.constructionRequest.buildingReservations.ConvertAll(x => x.targetProvince.buildings[x.buildingType]))
+        List<Building> queuedBuildings = currentNation.buildingsInProgress.ToList();
+        for (int i = 0; i < queuedBuildings.Count; i++)
         {
-            while (count < BuildQueueParent.childCount && BuildQueueParent.GetChild(count).GetComponent<BuildQueueItem>().Building != building)
+            if (i < BuildQueueParent.childCount)
             {
-                Destroy(BuildQueueParent.GetChild(count).gameObject);
-            }
-            if(count < BuildQueueParent.childCount && BuildQueueParent.GetChild(count).GetComponent<BuildQueueItem>().Building == building)
-            {
-                count++;
+                BuildQueueParent.GetChild(i).GetComponent<BuildQueueItem>().SetBuildingData(queuedBuildings[i]);
             }
             else
             {
                 GameObject child = Instantiate(BuildQueueItemPrefab, BuildQueueParent);
                 BuildQueueItem bqi = child.GetComponent<BuildQueueItem>();
-                bqi.SetBuildingData(building);
-                count++;
+                bqi.SetBuildingData(queuedBuildings[i]);
             }
         }
-        int remains = BuildQueueParent.childCount;
-        for (int i=count; i < remains; i++)
+
+        for (int i = BuildQueueParent.childCount - 1; i >= queuedBuildings.Count; i--)
         {
-            Destroy(BuildQueueParent.GetChild(count).gameObject);
+            Destroy(BuildQueueParent.GetChild(i).gameObject);
         }
     }
 }

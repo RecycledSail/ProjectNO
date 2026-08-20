@@ -28,6 +28,17 @@ public class ConstructionRequest
         this.buildingReservations.Add(reservation);
 
     }
+
+    public void RemoveFirstBuildingReservation(BuildingType buildingType,
+                                               Province targetProvince)
+    {
+        int index = buildingReservations.FindIndex(reservation =>
+            reservation.buildingType == buildingType &&
+            reservation.targetProvince == targetProvince);
+
+        if (index >= 0)
+            buildingReservations.RemoveAt(index);
+    }
 }
 
 

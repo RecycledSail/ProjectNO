@@ -463,7 +463,7 @@
       "requireItems": [],
       "produceItems": [
         {
-          "name": "Log",
+          "name": "Wood",
           "amount": 100
         }
       ],
@@ -520,7 +520,7 @@
       ],
       "produceItems": [
         {
-          "name": "Sworrd",
+          "name": "Sword",
           "amount": 10
         }
       ],
@@ -535,7 +535,7 @@
       "name":"FurnitureShop",
       "requireItems": [
         {
-          "name": "Log",
+          "name": "Wood",
           "amount": 15
         }
       ],
@@ -556,7 +556,7 @@
       "name":"Stable",
       "requireItems": [
         {
-          "name": "Log",
+          "name": "Wood",
           "amount": 20
         },
         {
@@ -638,7 +638,7 @@
       "name":"PaperShop",
       "requireItems": [
         {
-          "name": "Log",
+          "name": "Wood",
           "amount": 20
         },
         {
@@ -880,7 +880,7 @@
       "InitialPrice": 35
     },
     {
-      "name": "Sworrd",
+      "name": "Sword",
       "InitialPrice": 70
     },
     {
@@ -888,7 +888,7 @@
       "InitialPrice": 50
     },
     {
-      "name": "Log",
+      "name": "Wood",
       "InitialPrice": 60
     },
     {

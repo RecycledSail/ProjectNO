@@ -515,12 +515,13 @@ public static class GlobalVariables
 
     public static void LoadBuildingRecipes()
     {
-        var gameData = LoadJsonFile<GameDataFormat.BuildingrecipesWrapper>("Buildingrecipes");
+        var gameData = LoadJsonFile<GameDataFormat.BuildingrecipesWrapper>("BuildingRecipes");
         foreach (var data in gameData.buildingrecipes)
         {
             var required = new Dictionary<string,int>();
-            foreach (var it in data.requireItems)
-                required[it.name] = it.amount;
+            List<GameDataFormat.ItemData> requireItems = data.requireItems ?? data.buildRequirements ?? new List<GameDataFormat.ItemData>();
+            foreach (var it in requireItems)
+                required[it.Name] = it.amount;
 
             var recipe = new BuildingRecipe(data.name) { requireItems = required, TimeToBuild = data.TimeToBuild };
             BUILDING_RECIPE[data.name] = recipe;
@@ -661,7 +662,14 @@ public static class GlobalVariables
 
 
         [System.Serializable]
-        public sealed class ItemData { public string name; public int amount; }
+        public sealed class ItemData
+        {
+            public string name;
+            public string item;
+            public int amount;
+
+            public string Name => string.IsNullOrEmpty(name) ? item : name;
+        }
 
         [System.Serializable]
         public sealed class ColorData { public int r; public int g; public int b; public int a; }
@@ -727,6 +735,6 @@ public static class GlobalVariables
         public sealed class InitialDiplomacyData { public List<string> lnations; public List<string> rnations; public string type; }
 
         [System.Serializable]
-        public sealed class BuildingrecipeData { public string name; public List<ItemData> requireItems; public int TimeToBuild;}
+        public sealed class BuildingrecipeData { public string name; public List<ItemData> requireItems; public List<ItemData> buildRequirements; public int TimeToBuild;}
     }
 }

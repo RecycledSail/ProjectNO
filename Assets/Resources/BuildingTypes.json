@@ -13,7 +13,7 @@
       "name": "LogField",
       "requireItems": [],
       "produceItems": [
-        { "name": "Log", "amount": 100 }
+        { "name": "Wood", "amount": 100 }
       ],
       "workerNeeded": 100,
       "Initalbalance": 500
@@ -43,7 +43,7 @@
         { "name": "Wood", "amount": 5 }
       ],
       "produceItems": [
-        { "name": "Sworrd", "amount": 10 }
+        { "name": "Sword", "amount": 10 }
       ],
       "workerNeeded": 30,
       "Initalbalance": 500
@@ -51,7 +51,7 @@
     {
       "name": "FurnitureShop",
       "requireItems": [
-        { "name": "Log", "amount": 15 }
+        { "name": "Wood", "amount": 15 }
       ],
       "produceItems": [
         { "name": "Furniture", "amount": 10 }
@@ -62,7 +62,7 @@
     {
       "name": "Stable",
       "requireItems": [
-        { "name": "Log", "amount": 20 },
+        { "name": "Wood", "amount": 20 },
         { "name": "Wheat", "amount": 30 }
       ],
       "produceItems": [
@@ -104,7 +104,7 @@
     {
       "name": "PaperShop",
       "requireItems": [
-        { "name": "Log", "amount": 20 },
+        { "name": "Wood", "amount": 20 },
         { "name": "Water", "amount": 30 }
       ],
       "produceItems": [

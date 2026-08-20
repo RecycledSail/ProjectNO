@@ -2,56 +2,156 @@
   "buildingrecipes": [
     {
       "name": "WheatField",
-      "buildRequirements": [        
-        { "item": "Wood",  "amount": 2000 }
-      
+      "buildRequirements": [
+        { "item": "Wood", "amount": 800 }
       ],
-      "TimeToBuild": 20
-      
+      "TimeToBuild": 40
     },
     {
       "name": "LogField",
-      "buildRequirements": [        
-        { "item": "Wood",  "amount": 2000 }
-
+      "buildRequirements": [
+        { "item": "Wood", "amount": 500 }
       ],
-      "TimeToBuild": 20
+      "TimeToBuild": 40
     },
     {
       "name": "SlimeFarm",
-      "buildRequirements": [        
-        { "item": "Wood",  "amount": 2000 }
-
+      "buildRequirements": [
+        { "item": "Wood", "amount": 900 },
+        { "item": "Glass", "amount": 120 }
       ],
-      "TimeToBuild": 20
+      "TimeToBuild": 60
     },
     {
       "name": "IronMine",
-      "buildRequirements": [        
-        { "item": "Wood",  "amount": 2000 }
-
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1200 }
       ],
-      "TimeToBuild": 20
-      
-    }
-    ,
+      "TimeToBuild": 70
+    },
     {
       "name": "SwordSmith",
-      "buildRequirements": [        
-        { "item": "Wood",  "amount": 3000 },
-        { "item": "Iron",  "amount": 1000 }
-
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1600 },
+        { "item": "Iron", "amount": 900 },
+        { "item": "Coal", "amount": 300 }
       ],
-      "TimeToBuild": 40
-      
+      "TimeToBuild": 120
     },
     {
       "name": "FurnitureShop",
-      "buildRequirements": [        
-        { "item": "Wood",  "amount": 3000 }
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1800 },
+        { "item": "Iron", "amount": 200 }
       ],
-      "TimeToBuild": 40
-      
+      "TimeToBuild": 90
+    },
+    {
+      "name": "Stable",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1400 },
+        { "item": "Wheat", "amount": 500 }
+      ],
+      "TimeToBuild": 80
+    },
+    {
+      "name": "GoldMine",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1500 },
+        { "item": "Iron", "amount": 500 }
+      ],
+      "TimeToBuild": 120
+    },
+    {
+      "name": "CoalMine",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1100 }
+      ],
+      "TimeToBuild": 70
+    },
+    {
+      "name": "GlassShop",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1300 },
+        { "item": "Coal", "amount": 500 }
+      ],
+      "TimeToBuild": 100
+    },
+    {
+      "name": "PaperShop",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1400 },
+        { "item": "Glass", "amount": 150 }
+      ],
+      "TimeToBuild": 90
+    },
+    {
+      "name": "BookShop",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1200 },
+        { "item": "Paper", "amount": 600 }
+      ],
+      "TimeToBuild": 80
+    },
+    {
+      "name": "PotionShop",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1200 },
+        { "item": "Glass", "amount": 700 },
+        { "item": "Catalyst", "amount": 200 }
+      ],
+      "TimeToBuild": 120
+    },
+    {
+      "name": "WoolField",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 900 },
+        { "item": "Wheat", "amount": 300 }
+      ],
+      "TimeToBuild": 50
+    },
+    {
+      "name": "ClothShop",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1200 },
+        { "item": "Wool", "amount": 700 }
+      ],
+      "TimeToBuild": 90
+    },
+    {
+      "name": "LeatherShop",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1200 },
+        { "item": "Coal", "amount": 300 },
+        { "item": "Cloth", "amount": 300 }
+      ],
+      "TimeToBuild": 100
+    },
+    {
+      "name": "SilkField",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1000 },
+        { "item": "Cloth", "amount": 300 }
+      ],
+      "TimeToBuild": 70
+    },
+    {
+      "name": "CatalystShop",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 1400 },
+        { "item": "Glass", "amount": 500 },
+        { "item": "Coal", "amount": 500 }
+      ],
+      "TimeToBuild": 120
+    },
+    {
+      "name": "construcntionCompany",
+      "buildRequirements": [
+        { "item": "Wood", "amount": 2500 },
+        { "item": "Iron", "amount": 1500 },
+        { "item": "Furniture", "amount": 600 }
+      ],
+      "TimeToBuild": 180
     }
   ]
 }

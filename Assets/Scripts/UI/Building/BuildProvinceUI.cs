@@ -138,8 +138,11 @@ public class BuildProvinceUI : MonoBehaviour
         // 2. 현재 Province 반환
         foreach(Province province in currentNation.provinces)
         {
-            if(prevChilds.ContainsKey(province))
+            if(prevChilds.TryGetValue(province, out Transform existingChild))
+            {
+                existingChild.gameObject.GetComponent<BuildProvinceButtonUI>().SetBuildingData(province, currentBuildingType);
                 prevChilds.Remove(province);
+            }
             else
             {
                 GameObject child = Instantiate(BuildItemPrefab, BuildListParent);
@@ -151,7 +154,7 @@ public class BuildProvinceUI : MonoBehaviour
         // 3. 남은 prevChilds 제거
         foreach(Province province in prevChilds.Keys)
         {
-            Destroy(prevChilds[province]);
+            Destroy(prevChilds[province].gameObject);
         }
     }
 

@@ -166,16 +166,18 @@ public class Nation : IBuildingInvestor
     private void ProgressBuild()
     {
         double remainingManhour = nationManhour;
-        if (buildingsInProgress.Count > 0 && remainingManhour > 0.0)
+        while (buildingsInProgress.Count > 0 && remainingManhour > 0.0)
         {
             if (buildingsInProgress.TryPeek(out Building building))
             {
-                double spentManhour = Math.Min(remainingManhour, building.manhoursLeft + 1);
+                double spentManhour = Math.Min(remainingManhour, building.manhoursLeft);
                 building.manhoursLeft -= spentManhour;
                 if (building.manhoursLeft <= 0.0)
                 {
+                    building.level++;
                     building.province.buildings[building.buildingType] = building;
                     buildingsInProgress.Dequeue();
+                    constructionRequest.RemoveFirstBuildingReservation(building.buildingType, building.province);
                 }
                 remainingManhour -= spentManhour;
             }
@@ -203,8 +205,25 @@ public class Nation : IBuildingInvestor
     /// <param name="building">Queue에 집어넣을 buildings</param>
     public void AddToBuildQueue(Building building)
     {
-        building.manhoursLeft = GlobalVariables.BUILDING_RECIPE[building.buildingType.name].TimeToBuild;
+        building.manhoursLeft = GetBuildTime(building.buildingType);
         buildingsInProgress.Enqueue(building);
+    }
+
+    public bool IsInBuildQueue(BuildingType buildingType, Province province)
+    {
+        return buildingsInProgress.Any(building =>
+            building.buildingType == buildingType &&
+            building.province == province);
+    }
+
+    private int GetBuildTime(BuildingType buildingType)
+    {
+        if (buildingType != null &&
+            GlobalVariables.BUILDING_RECIPE.TryGetValue(buildingType.name, out BuildingRecipe recipe))
+            return Math.Max(1, recipe.TimeToBuild);
+
+        Debug.LogWarning($"[BuildQueue] Missing building recipe for {buildingType?.name ?? "NULL"}. Using default build time.");
+        return 20;
     }
 
     /// <summary>

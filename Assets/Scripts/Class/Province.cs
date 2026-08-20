@@ -133,6 +133,82 @@ public class Province
     public void ProduceGoodsWeekly()
     {
         BaseProduction();
+        BuildingProduction();
+    }
+
+    private void BuildingProduction()
+    {
+        if (market == null || buildings == null) return;
+
+        foreach (Building building in buildings.Values)
+        {
+            if (building == null || building.level <= 0 || building.currentWorkers <= 0)
+                continue;
+
+            double scale = building.ProduceItem();
+            if (scale <= 0.0)
+                continue;
+
+            scale = GetAvailableProductionScale(building, scale);
+            if (scale <= 0.0)
+                continue;
+
+            ConsumeBuildingInputs(building, scale);
+            AddBuildingOutputs(building, scale);
+        }
+    }
+
+    private double GetAvailableProductionScale(Building building, double requestedScale)
+    {
+        double availableScale = requestedScale;
+        foreach (var requiredItem in building.buildingType.requireItems)
+        {
+            if (requiredItem.Value <= 0)
+                continue;
+
+            if (!market.Products.TryGetValue(requiredItem.Key, out ProductState product))
+                return 0.0;
+
+            availableScale = Math.Min(availableScale, (double)product.Stock / requiredItem.Value);
+        }
+
+        return availableScale;
+    }
+
+    private void ConsumeBuildingInputs(Building building, double scale)
+    {
+        foreach (var requiredItem in building.buildingType.requireItems)
+        {
+            int amount = (int)Math.Floor(requiredItem.Value * scale);
+            if (amount <= 0)
+                continue;
+
+            ProductState product = market.Products[requiredItem.Key];
+            product.Stock -= amount;
+            product.LastDemand += amount;
+        }
+    }
+
+    private void AddBuildingOutputs(Building building, double scale)
+    {
+        foreach (var produceItem in building.buildingType.produceItems)
+        {
+            int amount = (int)Math.Floor(produceItem.Value * scale);
+            if (amount <= 0)
+                continue;
+
+            if (!market.Products.TryGetValue(produceItem.Key, out ProductState product))
+            {
+                int basePrice = GlobalVariables.PRODUCTS.TryGetValue(produceItem.Key, out Products productData)
+                    ? productData.InitialPrice
+                    : 1;
+                market.AddProduct(produceItem.Key, basePrice);
+                product = market.Products[produceItem.Key];
+            }
+
+            product.Stock += amount;
+            product.LastSupply += amount;
+        }
     }
 
     /// <summary>

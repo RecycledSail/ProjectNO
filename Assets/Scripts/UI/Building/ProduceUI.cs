@@ -24,6 +24,11 @@ public class ProduceUI : MonoBehaviour
         //populationText.text = $"Pop: {UIManager.ShortenValue(province.population)}"; // Format population
     }
 
+    public void Refresh()
+    {
+        UpdateCount();
+    }
+
     private void Update()
     {
         //UpdateCount();
