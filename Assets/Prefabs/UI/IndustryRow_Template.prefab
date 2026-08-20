@@ -843,7 +843,7 @@ MonoBehaviour:
   saturationFill: {fileID: 3984605421706628135}
   saturationText: {fileID: 4322627618264570095}
   gainText: {fileID: 1545679089958351699}
-  amountInput: {fileID: 0}
+  amountInput: {fileID: 4980209159452349530}
 --- !u!1 &8510626642845049159
 GameObject:
   m_ObjectHideFlags: 0

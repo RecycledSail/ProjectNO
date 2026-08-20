@@ -94,14 +94,18 @@ public class IndustrySubsidyPanel : MonoBehaviour
             if (row != null) Destroy(row.gameObject);
         _rows.Clear();
 
+        Debug.Log($"[IndustrySubsidy] nation={_nation?.name ?? "NULL"}, prefab={rowPrefab?.name ?? "NULL"}, container={rowContainer?.name ?? "NULL"}");
         if (_nation == null || rowPrefab == null || rowContainer == null) return;
 
         // BuildingType별 포화도·수익 집계
         var stats = new Dictionary<string, (float totalSat, int count, long totalGain)>();
+        int totalBuildings = 0;
         foreach (Province province in _nation.provinces)
         {
+            Debug.Log($"[IndustrySubsidy] Province '{province.name}': buildings={province.buildings.Count}");
             foreach (var kv in province.buildings)
             {
+                totalBuildings++;
                 string key  = kv.Key.name;
                 Building b  = kv.Value;
                 long cap    = System.Math.Max(1L, b.level * b.buildingType.workerNeeded);
@@ -113,6 +117,8 @@ public class IndustrySubsidyPanel : MonoBehaviour
                     stats[key] = (sat, 1, b.previousGain);
             }
         }
+
+        Debug.Log($"[IndustrySubsidy] 총 건물 수: {totalBuildings}, 산업 타입 수: {stats.Count}");
 
         // 기존 Policy 값 보존 (이전에 입력한 값 유지)
         var existing = Budget?.Policy.IndustrySubsidy ?? new Dictionary<string, long>();

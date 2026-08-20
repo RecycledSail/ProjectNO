@@ -27,6 +27,7 @@
 - [[GovernmentBudget]]: 재정 UI의 세금, 통화량, 정책 예산 데이터
 - [[Building]]: 건설 UI와 지역 건물 목록에서 표시되는 건물 데이터
 - [[ConstructionRequest]]: 건설 예약과 건설 대기열 UI의 기반 데이터
+- [[건설 시스템 현황]]: 건설 UI 이후 예약, 진행, 완공 연결 상태와 미완성 지점
 - [[Diplomacy]]: 외교 목록과 전체 화면 외교 UI의 기반 데이터
 - [[Regiment]]: 군대 목록과 연대 상세 UI의 기반 데이터
 - [[SaveManager]]: 저장 UI의 저장 실행 흐름
