@@ -14,8 +14,8 @@ public class BattleManager : MonoBehaviour
     private readonly Dictionary<Regiment, GameObject> regimentMarkers = new();
     private Transform provinceRoot;
     private GameObject regimentPrefab;
-    private float markerHoverHeight = 60f;
-    private float sameProvinceMarkerSpacing = 20f;
+    private float markerGroundClearance = 10f;
+    private float sameProvinceMarkerPadding = 10f;
 
     private static BattleManager _instance;
     public static BattleManager Instance
@@ -142,8 +142,8 @@ public class BattleManager : MonoBehaviour
 
         marker.name = regiment.name + " Marker";
         marker.SetActive(true);
-        marker.transform.position = GetRegimentMarkerPosition(provinceTransform, provinceIndex);
         marker.transform.rotation = Quaternion.identity;
+        marker.transform.position = GetRegimentMarkerPosition(provinceTransform, marker, provinceIndex);
 
         RegimentUI regimentUI = marker.GetComponent<RegimentUI>();
         if (regimentUI != null)
@@ -184,33 +184,36 @@ public class BattleManager : MonoBehaviour
         return marker;
     }
 
-    private Vector3 GetRegimentMarkerPosition(Transform provinceTransform, int provinceIndex)
+    private Vector3 GetRegimentMarkerPosition(Transform provinceTransform, GameObject marker, int provinceIndex)
     {
-        Bounds bounds = GetProvinceBounds(provinceTransform);
-        Vector3 position = bounds.center + Vector3.up * (bounds.extents.y + markerHoverHeight);
+        Bounds provinceBounds = GetWorldBounds(provinceTransform);
+        Bounds markerBounds = GetWorldBounds(marker.transform);
+        Vector3 position = provinceBounds.center;
+        position.y = provinceBounds.max.y + markerBounds.extents.y + markerGroundClearance;
 
         int side = provinceIndex % 2 == 0 ? 1 : -1;
         int ring = (provinceIndex + 1) / 2;
-        position += Vector3.right * side * ring * sameProvinceMarkerSpacing;
+        float markerSpacing = markerBounds.size.x + sameProvinceMarkerPadding;
+        position += Vector3.right * side * ring * markerSpacing;
 
         return position;
     }
 
-    private Bounds GetProvinceBounds(Transform provinceTransform)
+    private Bounds GetWorldBounds(Transform target)
     {
-        Renderer renderer = provinceTransform.GetComponent<Renderer>();
-        if (renderer != null)
+        Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
+        if (renderers.Length > 0)
         {
-            return renderer.bounds;
+            Bounds bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+            {
+                bounds.Encapsulate(renderers[i].bounds);
+            }
+
+            return bounds;
         }
 
-        Renderer childRenderer = provinceTransform.GetComponentInChildren<Renderer>();
-        if (childRenderer != null)
-        {
-            return childRenderer.bounds;
-        }
-
-        return new Bounds(provinceTransform.position, Vector3.zero);
+        return new Bounds(target.position, Vector3.zero);
     }
 
     private Transform FindProvinceTransform(string provinceName)
