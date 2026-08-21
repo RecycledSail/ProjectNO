@@ -9,6 +9,10 @@ public enum ConstructionMandateStatus
     Cancelled
 }
 
+public interface IBuildingInvestor
+{
+}
+
 public sealed class ConstructionMandate
 {
     public IBuildingInvestor Investor { get; }
