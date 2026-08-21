@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using System.IO;
 using UnityEngine.Events;
@@ -399,6 +400,15 @@ public class GameManager : MonoBehaviour
         foreach (Nation nation in nations.Values)
         {
             nation.SimulateWeeklyTurn();
+        }
+
+        // 2-1. 건설회사는 투자자 수와 관계없이 회사마다 주 1회만 공사를 진행한다.
+        foreach (ConstructionCompanyBuilding constructionCompany in provinces.Values
+            .SelectMany(province => province.buildings.Values)
+            .OfType<ConstructionCompanyBuilding>())
+        {
+            constructionCompany.ProgressWeekly(
+                GlobalVariables.minimumConstructionCompanyManHour);
         }
 
         // 3. Province 생산 단계 (생산만 수행)

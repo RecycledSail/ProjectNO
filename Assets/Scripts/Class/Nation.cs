@@ -21,9 +21,11 @@ public class Nation : IBuildingInvestor
     public Dictionary<Nation, Diplomacy> enemies;
     public List<ResearchNode> doneResearches;
     public Dictionary<BuffKind, double> buffs;
-    public ConstructionRequest constructionRequest;
     public NationMarket market;
     public GovernmentBudget governmentBudget;
+
+    private readonly List<ConstructionMandate> _constructionMandates = new();
+    public IReadOnlyList<ConstructionMandate> ConstructionMandates => _constructionMandates;
 
     /// <summary>이번 주 GDP (생산 기준: Σ LastSupply × Price)</summary>
     public long GDP { get; set; }
@@ -41,10 +43,6 @@ public class Nation : IBuildingInvestor
 
     // Getter
     public long Population => provinces.Sum(x => x.population);
-
-    // 건축 관련 멤버    
-    public double nationManhour = 0.0; // 국가가 현재 가지는 건축 노동력 (인시)
-    public Queue<Building> buildingsInProgress = new Queue<Building>(); // 현재 국가에서 건축 중인 빌딩들 
 
     /// <summary>
     /// 국가 생성자
@@ -71,7 +69,6 @@ public class Nation : IBuildingInvestor
         ethnicGroups = new();
         allies = new();
         enemies = new();
-        constructionRequest = new ConstructionRequest(this);
         market = new NationMarket(this.name);
         governmentBudget = new GovernmentBudget(market, this);
     }
@@ -140,97 +137,85 @@ public class Nation : IBuildingInvestor
     /// </summary>
     public void SimulateWeeklyTurn()
     {
-        CalculateManhour();
-        ProgressBuild();
+        RetryPendingConstructionMandates();
     }
 
-
-    /// <summary>
-    /// 건축 노동력 (인시) 재계산
-    /// 매 주 수행
-    /// </summary>
-    private void CalculateManhour()
+    public ConstructionMandate PlaceConstructionMandate(
+        BuildingType buildingType,
+        Province targetProvince)
     {
-        double currentManhour = 0.0;
-        currentManhour = GlobalVariables.minimumNationManHour;
+        if (buildingType == null ||
+            targetProvince == null ||
+            targetProvince.nation != this ||
+            IsConstructionQueued(buildingType, targetProvince) ||
+            !GlobalVariables.BUILDING_RECIPE.TryGetValue(
+                buildingType.name,
+                out BuildingRecipe recipe))
+            return null;
 
-        //TODO: 건축업체의 노동력 반영
+        ConstructionMandate mandate = new(
+            this,
+            buildingType,
+            targetProvince,
+            Math.Max(1, recipe.TimeToBuild));
 
-        nationManhour = currentManhour;
+        _constructionMandates.Add(mandate);
+        TryAssignConstructionCompany(mandate);
+        return mandate;
     }
 
-    /// <summary>
-    /// 건축 중인 건물에서 건축 시도
-    /// 매 주 수행
-    /// </summary>
-    private void ProgressBuild()
+    public bool IsConstructionQueued(BuildingType buildingType, Province targetProvince)
     {
-        double remainingManhour = nationManhour;
-        while (buildingsInProgress.Count > 0 && remainingManhour > 0.0)
+        return _constructionMandates.Any(mandate =>
+            mandate.IsActive &&
+            mandate.BuildingType == buildingType &&
+            mandate.TargetProvince == targetProvince);
+    }
+
+    public void RetryPendingConstructionMandates()
+    {
+        foreach (ConstructionMandate mandate in _constructionMandates
+            .Where(item => item.Status == ConstructionMandateStatus.Requested))
         {
-            if (buildingsInProgress.TryPeek(out Building building))
+            TryAssignConstructionCompany(mandate);
+        }
+    }
+
+    private bool TryAssignConstructionCompany(ConstructionMandate mandate)
+    {
+        IEnumerable<Province> adjacentProvinces =
+            GlobalVariables.ADJACENT_PROVINCES.TryGetValue(
+                mandate.TargetProvince.name,
+                out List<Province> adjacent)
+                ? adjacent
+                : Enumerable.Empty<Province>();
+
+        IEnumerable<Province> candidateProvinces =
+            new[] { mandate.TargetProvince }
+                .Concat(adjacentProvinces)
+                .Where(province => province != null)
+                .Distinct();
+
+        foreach (Province candidateProvince in candidateProvinces)
+        {
+            if (candidateProvince.nation != this)
+                continue;
+
+            foreach (ConstructionCompanyBuilding constructionCompany in
+                candidateProvince.buildings.Values.OfType<ConstructionCompanyBuilding>())
             {
-                double spentManhour = Math.Min(remainingManhour, building.manhoursLeft);
-                building.manhoursLeft -= spentManhour;
-                if (building.manhoursLeft <= 0.0)
-                {
-                    building.level++;
-                    building.province.buildings[building.buildingType] = building;
-                    buildingsInProgress.Dequeue();
-                    constructionRequest.RemoveFirstBuildingReservation(building.buildingType, building.province);
-                }
-                remainingManhour -= spentManhour;
+                if (constructionCompany.TryAssign(mandate))
+                    return true;
             }
         }
-        // if (specialBuildingsInProgress.Count > 0 && remainingManhour > 0.0)
-        // {
-        //     if (specialBuildingsInProgress.TryPeek(out SpecialBuilding specialBuilding))
-        //     {
-        //         double spentManhour = Math.Min(remainingManhour, specialBuilding.manhoursLeft + 1);
-        //         specialBuilding.manhoursLeft -= spentManhour;
-        //         if (specialBuilding.manhoursLeft <= 0.0)
-        //         {
-        //             specialBuilding.province.specialBuildings[specialBuilding.buildingType] = specialBuilding;
-        //             specialBuildingsInProgress.Dequeue();
-        //         }
-        //         remainingManhour -= spentManhour;
-        //     }
-        // }
+
+        return false;
     }
 
     /// <summary>
-    /// buildingsInProgress에 building을 enqueue
-    /// dequeue는 ProgressBuild에서 수행
+    /// 특수 건물의 건설 시간을 초기화한다.
     /// </summary>
-    /// <param name="building">Queue에 집어넣을 buildings</param>
-    public void AddToBuildQueue(Building building)
-    {
-        building.manhoursLeft = GetBuildTime(building.buildingType);
-        buildingsInProgress.Enqueue(building);
-    }
-
-    public bool IsInBuildQueue(BuildingType buildingType, Province province)
-    {
-        return buildingsInProgress.Any(building =>
-            building.buildingType == buildingType &&
-            building.province == province);
-    }
-
-    private int GetBuildTime(BuildingType buildingType)
-    {
-        if (buildingType != null &&
-            GlobalVariables.BUILDING_RECIPE.TryGetValue(buildingType.name, out BuildingRecipe recipe))
-            return Math.Max(1, recipe.TimeToBuild);
-
-        Debug.LogWarning($"[BuildQueue] Missing building recipe for {buildingType?.name ?? "NULL"}. Using default build time.");
-        return 20;
-    }
-
-    /// <summary>
-    /// specialBuildingsInProgress에 specialBuilding을 enqueue
-    /// dequeue는 ProgressBuild에서 수행
-    /// </summary>
-    /// <param name="building">Queue에 집어넣을 특수 건물</param>
+    /// <param name="building">초기화할 특수 건물</param>
     public void AddSpecialBuildingToQueue(SpecialBuilding building)
     {
         building.manhoursLeft = GlobalVariables.BUILDING_RECIPE[building.buildingType.name].TimeToBuild;

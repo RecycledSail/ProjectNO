@@ -6,17 +6,17 @@ public class BuildQueueItem : MonoBehaviour
     public TMP_Text nameText; // 빌딩 이름 텍스트
     public TMP_Text provinceText; // 프로빈스 이름 텍스트
     public TMP_Text countText; // 남은 인시
-    private Building _building;
-    public Building Building { get { return _building; } }
+    private ConstructionMandate _mandate;
+    public ConstructionMandate Mandate => _mandate;
    
     /// <summary>
     /// Province 데이터를 설정하고 UI를 업데이트합니다.
     /// </summary>
-    public void SetBuildingData(Building building)
+    public void SetMandate(ConstructionMandate mandate)
     {
-        _building = building;
-        nameText.text = building.buildingType.name;
-        provinceText.text = building.province.name;
+        _mandate = mandate;
+        nameText.text = mandate.BuildingType.name;
+        provinceText.text = mandate.TargetProvince.name;
         UpdateManhour();
     }
 
@@ -27,7 +27,10 @@ public class BuildQueueItem : MonoBehaviour
 
     private void UpdateManhour()
     {
-        countText.text = _building.manhoursLeft.ToString();
+        if (_mandate == null || countText == null)
+            return;
+
+        countText.text = $"{_mandate.RemainingManhours:0.##} ({_mandate.Status})";
     }
 
     /// <summary>
