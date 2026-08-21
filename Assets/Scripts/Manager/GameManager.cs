@@ -231,6 +231,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void AdvanceDay()
     {
+        bool enteredNewYear = false;
         day++; // 하루 증가
         dayoftheWeek++; // 요일 증가
         int daysInMonth = GetDaysInMonth(month, year);
@@ -246,7 +247,24 @@ public class GameManager : MonoBehaviour
             {
                 month = 1;  // 월 초기화
                 year++;     // 연도 증가
+                enteredNewYear = true;
             }
+        }
+
+        if (enteredNewYear)
+        {
+            ProcessYearlyEvents();
+        }
+    }
+
+    /// <summary>
+    /// 새해가 시작될 때 모든 Province의 연령계층을 진행시킨다.
+    /// </summary>
+    private void ProcessYearlyEvents()
+    {
+        foreach (Province province in provinces.Values)
+        {
+            province.AdvanceAgeGroupsOneYear();
         }
     }
 

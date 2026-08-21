@@ -237,6 +237,20 @@ public class Province
     }
 
     /// <summary>
+    /// 지역 내 모든 민족 집단의 연령계층을 1년 진행시킨다.
+    /// </summary>
+    public void AdvanceAgeGroupsOneYear()
+    {
+        foreach (ProvinceEthnicPop pep in provinceEthnicPops)
+        {
+            pep.AdvanceAgeGroupsOneYear();
+        }
+
+        population = provinceEthnicPops.Sum(pep => pep.population);
+        AllocateSpecialBuildingPopulation();
+    }
+
+    /// <summary>
     /// 프로빈스에 자체적으로 달려 있는 기본 생산
     /// 아무리 빈약한 프로빈스여도 이 생산량만큼은 기본으로 가지게 됨
     /// 매 주 실행

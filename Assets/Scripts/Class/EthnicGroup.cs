@@ -78,6 +78,14 @@ public class ProvinceEthnicPop : IBuildingInvestor
             AgeGroupType.OlderAdulthood => 0.0,
             _ => 0.0
         };
+        public double AnnualTransitionRate => type switch
+        {
+            AgeGroupType.Childhood => 0.05,
+            AgeGroupType.YoungAdulthood => 0.04,
+            AgeGroupType.MiddleAge => 0.03,
+            AgeGroupType.OlderAdulthood => 0.0,
+            _ => 0.0
+        };
         public long EmployablePopulation => (long)(agepopulation * LaborParticipationRate);
 
         public AgeGroup(AgeGroupType type, long agepopulation)
@@ -95,6 +103,27 @@ public class ProvinceEthnicPop : IBuildingInvestor
         }
     }
 
+    /// <summary>
+    /// 이동 전 인구를 기준으로 연령계층 인구를 다음 계층으로 이동시킨다.
+    /// </summary>
+    public void AdvanceAgeGroupsOneYear()
+    {
+        AgeGroup childhood = ageGroups.First(group => group.type == AgeGroupType.Childhood);
+        AgeGroup youngAdulthood = ageGroups.First(group => group.type == AgeGroupType.YoungAdulthood);
+        AgeGroup middleAge = ageGroups.First(group => group.type == AgeGroupType.MiddleAge);
+        AgeGroup olderAdulthood = ageGroups.First(group => group.type == AgeGroupType.OlderAdulthood);
+
+        long childhoodToYoung = (long)(childhood.agepopulation * childhood.AnnualTransitionRate);
+        long youngToMiddle = (long)(youngAdulthood.agepopulation * youngAdulthood.AnnualTransitionRate);
+        long middleToOlder = (long)(middleAge.agepopulation * middleAge.AnnualTransitionRate);
+
+        childhood.agepopulation -= childhoodToYoung;
+        youngAdulthood.agepopulation += childhoodToYoung - youngToMiddle;
+        middleAge.agepopulation += youngToMiddle - middleToOlder;
+        olderAdulthood.agepopulation += middleToOlder;
+        population = ageGroups.Sum(group => group.agepopulation);
+    }
+
 
     /// <summary>
     /// 인구수 증가 및 감소 처리
@@ -105,7 +134,11 @@ public class ProvinceEthnicPop : IBuildingInvestor
         // 단순한 인구 증가 -앞으로 문화에 따른 변화도 고려해야 함
         double growthRate = ethnicGroup.species.baseBirthRate; // 종족당 설정되어 있는 값을 사용
         //AS-IS: 지금 1초당 2배씩 늘어남!!!!
-        population = (long)(population * (1 + growthRate));
+        foreach (AgeGroup ageGroup in ageGroups)
+        {
+            ageGroup.agepopulation = (long)(ageGroup.agepopulation * (1 + growthRate));
+        }
+        population = ageGroups.Sum(ageGroup => ageGroup.agepopulation);
         return population;
     }
 
