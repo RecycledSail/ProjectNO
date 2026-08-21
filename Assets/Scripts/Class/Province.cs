@@ -219,20 +219,17 @@ public class Province
 
 
     /// <summary>
-    /// 인구수 재조사
-    /// 매 주 실행
+    /// 지역 내 모든 민족 집단의 월간 출생과 사망을 처리한다.
     /// </summary>
-    public void UpdatePopulation()
+    public void ProcessMonthlyDemographics()
     {
-        // 각 pep에 대해서 인구 증감
         long newPopulation = 0;
         foreach (ProvinceEthnicPop pep in provinceEthnicPops)
         {
-            newPopulation += pep.PopulationGrowth();
+            newPopulation += pep.ProcessMonthlyDemographics();
         }
         population = newPopulation;
 
-        // 인구 할당
         AllocateSpecialBuildingPopulation();
     }
 

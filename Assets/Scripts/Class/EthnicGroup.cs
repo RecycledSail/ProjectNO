@@ -86,6 +86,14 @@ public class ProvinceEthnicPop : IBuildingInvestor
             AgeGroupType.OlderAdulthood => 0.0,
             _ => 0.0
         };
+        public double MonthlyDeathRate => type switch
+        {
+            AgeGroupType.Childhood => 0.001,
+            AgeGroupType.YoungAdulthood => 0.0005,
+            AgeGroupType.MiddleAge => 0.001,
+            AgeGroupType.OlderAdulthood => 0.01,
+            _ => 0.0
+        };
         public long EmployablePopulation => (long)(agepopulation * LaborParticipationRate);
 
         public AgeGroup(AgeGroupType type, long agepopulation)
@@ -126,18 +134,27 @@ public class ProvinceEthnicPop : IBuildingInvestor
 
 
     /// <summary>
-    /// 인구수 증가 및 감소 처리
+    /// 청년기와 중년기 인구를 기준으로 출생을 계산하고 계층별 사망을 적용한다.
     /// </summary>
-    /// <returns>증감 이후의 현재 인구</returns>
-    public long PopulationGrowth()
+    /// <returns>월간 출생과 사망 적용 이후의 현재 인구</returns>
+    public long ProcessMonthlyDemographics()
     {
-        // 단순한 인구 증가 -앞으로 문화에 따른 변화도 고려해야 함
-        double growthRate = ethnicGroup.species.baseBirthRate; // 종족당 설정되어 있는 값을 사용
-        //AS-IS: 지금 1초당 2배씩 늘어남!!!!
+        AgeGroup childhood = ageGroups.First(group => group.type == AgeGroupType.Childhood);
+        AgeGroup youngAdulthood = ageGroups.First(group => group.type == AgeGroupType.YoungAdulthood);
+        AgeGroup middleAge = ageGroups.First(group => group.type == AgeGroupType.MiddleAge);
+
+        long births = (long)((youngAdulthood.agepopulation + middleAge.agepopulation * 0.5)
+            * ethnicGroup.species.baseBirthRate);
+        Dictionary<AgeGroup, long> deaths = ageGroups.ToDictionary(
+            ageGroup => ageGroup,
+            ageGroup => (long)(ageGroup.agepopulation * ageGroup.MonthlyDeathRate));
+
         foreach (AgeGroup ageGroup in ageGroups)
         {
-            ageGroup.agepopulation = (long)(ageGroup.agepopulation * (1 + growthRate));
+            ageGroup.agepopulation -= deaths[ageGroup];
         }
+        childhood.agepopulation += births;
+
         population = ageGroups.Sum(ageGroup => ageGroup.agepopulation);
         return population;
     }

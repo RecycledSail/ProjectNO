@@ -231,6 +231,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void AdvanceDay()
     {
+        bool enteredNewMonth = false;
         bool enteredNewYear = false;
         day++; // 하루 증가
         dayoftheWeek++; // 요일 증가
@@ -241,6 +242,7 @@ public class GameManager : MonoBehaviour
         {
             day = 1; // 날짜 초기화
             month++; // 다음 달로 변경
+            enteredNewMonth = true;
 
             // 12월이 넘어가면 새해로 변경
             if (month > 12)
@@ -255,6 +257,10 @@ public class GameManager : MonoBehaviour
         {
             ProcessYearlyEvents();
         }
+        if (enteredNewMonth)
+        {
+            ProcessMonthlyEvents();
+        }
     }
 
     /// <summary>
@@ -265,6 +271,17 @@ public class GameManager : MonoBehaviour
         foreach (Province province in provinces.Values)
         {
             province.AdvanceAgeGroupsOneYear();
+        }
+    }
+
+    /// <summary>
+    /// 새 달이 시작될 때 모든 Province의 출생과 사망을 처리한다.
+    /// </summary>
+    private void ProcessMonthlyEvents()
+    {
+        foreach (Province province in provinces.Values)
+        {
+            province.ProcessMonthlyDemographics();
         }
     }
 
@@ -402,13 +419,7 @@ public class GameManager : MonoBehaviour
             economicEngine.ConsumeFoodsWeekly(province, province.isConnectedToCapital);
         }
 
-        // 6. Province 인구 업데이트
-        foreach (Province province in provinces.Values)
-        {
-            province.UpdatePopulation();
-        }
-
-        // 7. 내 nation market(player의 nation의 market)의 재고 debug로 출력
+        // 6. 내 nation market(player의 nation의 market)의 재고 debug로 출력
         Debug.Log($"--- Nation Market Stock for {player.nation.name} ---");
         foreach (var kv in player.nation.market.Products)
         {
@@ -418,10 +429,10 @@ public class GameManager : MonoBehaviour
 
         }
 
-        // 8. GDP 계산 및 업데이트
+        // 7. GDP 계산 및 업데이트
         economicEngine.UpdateGDPWeekly(nations.Values);
 
-        // 9. 예산 처리: 세금 징수 → 화폐 발행 → 인플레이션 갱신
+        // 8. 예산 처리: 세금 징수 → 화폐 발행 → 인플레이션 갱신
         foreach (Nation nation in nations.Values)
         {
             nation.governmentBudget.CollectTaxes();
