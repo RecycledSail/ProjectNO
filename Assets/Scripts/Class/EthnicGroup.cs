@@ -29,6 +29,14 @@ public class EthnicGroup
 /// 프로빈스에 속한 민족 집단의 인구를 구하는 클래스
 /// Province 하나에 같은 EthnicGroup을 가진 ProvinceEthnicPop은 단 하나 있어야 함
 /// </summary>
+public enum AgeGroupType
+{
+    Childhood,
+    YoungAdulthood,
+    MiddleAge,
+    OlderAdulthood
+}
+
 public class ProvinceEthnicPop : IBuildingInvestor
 {
     public Province province;
@@ -38,6 +46,8 @@ public class ProvinceEthnicPop : IBuildingInvestor
     public long property; // 재산
     public double livingStandard; // 생활 수준 (1.0 = 평균)
     public List<AgeGroup> ageGroups = new List<AgeGroup>();
+    public long EmployablePopulation => ageGroups.Sum(ageGroup => ageGroup.EmployablePopulation);
+
     public ProvinceEthnicPop(Province province, EthnicGroup ethnicGroup, List<int> populationCount)
     {
         this.province = province;
@@ -46,10 +56,10 @@ public class ProvinceEthnicPop : IBuildingInvestor
         this.property = 100000;
         this.livingStandard = 1.0; 
         // 기본 연령대 분포 설정
-        ageGroups.Add(new AgeGroup("Childhood", populationCount[0])); //유년기
-        ageGroups.Add(new AgeGroup("Young Adulthood", populationCount[1])); //청년기
-        ageGroups.Add(new AgeGroup("Middle Age", populationCount[2])); //중년기
-        ageGroups.Add(new AgeGroup("Older Adulthood", populationCount[3]));     //노년기   
+        ageGroups.Add(new AgeGroup(AgeGroupType.Childhood, populationCount[0])); //유년기
+        ageGroups.Add(new AgeGroup(AgeGroupType.YoungAdulthood, populationCount[1])); //청년기
+        ageGroups.Add(new AgeGroup(AgeGroupType.MiddleAge, populationCount[2])); //중년기
+        ageGroups.Add(new AgeGroup(AgeGroupType.OlderAdulthood, populationCount[3])); //노년기
 
     }
 
@@ -57,12 +67,30 @@ public class ProvinceEthnicPop : IBuildingInvestor
 
     public class AgeGroup
     {
+        public AgeGroupType type;
         public string name; // 연령대 이름 유년기 /청년기 /중년기 /노년기
         public long agepopulation; // 해당 연령대의 인구 
-
-        public AgeGroup(string name, long agepopulation)
+        public double LaborParticipationRate => type switch
         {
-            this.name = name;
+            AgeGroupType.Childhood => 0.25,
+            AgeGroupType.YoungAdulthood => 1.0,
+            AgeGroupType.MiddleAge => 0.85,
+            AgeGroupType.OlderAdulthood => 0.0,
+            _ => 0.0
+        };
+        public long EmployablePopulation => (long)(agepopulation * LaborParticipationRate);
+
+        public AgeGroup(AgeGroupType type, long agepopulation)
+        {
+            this.type = type;
+            this.name = type switch
+            {
+                AgeGroupType.Childhood => "Childhood",
+                AgeGroupType.YoungAdulthood => "Young Adulthood",
+                AgeGroupType.MiddleAge => "Middle Age",
+                AgeGroupType.OlderAdulthood => "Older Adulthood",
+                _ => type.ToString()
+            };
             this.agepopulation = agepopulation;
         }
     }
