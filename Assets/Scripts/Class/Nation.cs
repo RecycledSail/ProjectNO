@@ -25,6 +25,9 @@ public class Nation : IBuildingInvestor
     public NationMarket market;
     public GovernmentBudget governmentBudget;
 
+    private readonly List<ConstructionMandate> _constructionMandates = new();
+    public IReadOnlyList<ConstructionMandate> ConstructionMandates => _constructionMandates;
+
     /// <summary>이번 주 GDP (생산 기준: Σ LastSupply × Price)</summary>
     public long GDP { get; set; }
 
@@ -140,8 +143,79 @@ public class Nation : IBuildingInvestor
     /// </summary>
     public void SimulateWeeklyTurn()
     {
-        CalculateManhour();
-        ProgressBuild();
+        RetryPendingConstructionMandates();
+    }
+
+    public ConstructionMandate PlaceConstructionMandate(
+        BuildingType buildingType,
+        Province targetProvince)
+    {
+        if (buildingType == null ||
+            targetProvince == null ||
+            targetProvince.nation != this ||
+            IsConstructionQueued(buildingType, targetProvince) ||
+            !GlobalVariables.BUILDING_RECIPE.TryGetValue(
+                buildingType.name,
+                out BuildingRecipe recipe))
+            return null;
+
+        ConstructionMandate mandate = new(
+            this,
+            buildingType,
+            targetProvince,
+            Math.Max(1, recipe.TimeToBuild));
+
+        _constructionMandates.Add(mandate);
+        TryAssignConstructionCompany(mandate);
+        return mandate;
+    }
+
+    public bool IsConstructionQueued(BuildingType buildingType, Province targetProvince)
+    {
+        return _constructionMandates.Any(mandate =>
+            mandate.IsActive &&
+            mandate.BuildingType == buildingType &&
+            mandate.TargetProvince == targetProvince);
+    }
+
+    public void RetryPendingConstructionMandates()
+    {
+        foreach (ConstructionMandate mandate in _constructionMandates
+            .Where(item => item.Status == ConstructionMandateStatus.Requested))
+        {
+            TryAssignConstructionCompany(mandate);
+        }
+    }
+
+    private bool TryAssignConstructionCompany(ConstructionMandate mandate)
+    {
+        IEnumerable<Province> adjacentProvinces =
+            GlobalVariables.ADJACENT_PROVINCES.TryGetValue(
+                mandate.TargetProvince.name,
+                out List<Province> adjacent)
+                ? adjacent
+                : Enumerable.Empty<Province>();
+
+        IEnumerable<Province> candidateProvinces =
+            new[] { mandate.TargetProvince }
+                .Concat(adjacentProvinces)
+                .Where(province => province != null)
+                .Distinct();
+
+        foreach (Province candidateProvince in candidateProvinces)
+        {
+            if (candidateProvince.nation != this)
+                continue;
+
+            foreach (ConstructionCompanyBuilding constructionCompany in
+                candidateProvince.buildings.Values.OfType<ConstructionCompanyBuilding>())
+            {
+                if (constructionCompany.TryAssign(mandate))
+                    return true;
+            }
+        }
+
+        return false;
     }
 
 
