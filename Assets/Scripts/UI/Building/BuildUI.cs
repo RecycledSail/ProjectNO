@@ -167,22 +167,26 @@ public class BuildUI : MonoBehaviour
         if (currentNation == null)
             return;
 
-        List<Building> queuedBuildings = currentNation.buildingsInProgress.ToList();
-        for (int i = 0; i < queuedBuildings.Count; i++)
+        List<ConstructionMandate> queuedMandates = currentNation.ConstructionMandates
+            .Where(mandate => mandate.IsActive)
+            .ToList();
+        for (int i = 0; i < queuedMandates.Count; i++)
         {
             if (i < BuildQueueParent.childCount)
             {
-                BuildQueueParent.GetChild(i).GetComponent<BuildQueueItem>().SetBuildingData(queuedBuildings[i]);
+                BuildQueueParent.GetChild(i)
+                    .GetComponent<BuildQueueItem>()
+                    .SetMandate(queuedMandates[i]);
             }
             else
             {
                 GameObject child = Instantiate(BuildQueueItemPrefab, BuildQueueParent);
                 BuildQueueItem bqi = child.GetComponent<BuildQueueItem>();
-                bqi.SetBuildingData(queuedBuildings[i]);
+                bqi.SetMandate(queuedMandates[i]);
             }
         }
 
-        for (int i = BuildQueueParent.childCount - 1; i >= queuedBuildings.Count; i--)
+        for (int i = BuildQueueParent.childCount - 1; i >= queuedMandates.Count; i--)
         {
             Destroy(BuildQueueParent.GetChild(i).gameObject);
         }

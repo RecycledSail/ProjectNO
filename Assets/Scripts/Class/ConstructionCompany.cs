@@ -43,13 +43,6 @@ public class ConstructionCompanyBuilding : Building
         return true;
     }
 
-    [Obsolete("Use TryAssign(ConstructionMandate). This compatibility overload is removed with the build UI migration.")]
-    public bool TryAssign(BuildingReservation reservation, out BuildingInProgress buildingInProgress)
-    {
-        buildingInProgress = null;
-        return false;
-    }
-
     public void ProgressWeekly(double weeklyManhoursPerLevel)
     {
         double remainingManhours = Math.Max(0d, weeklyManhoursPerLevel) * level;

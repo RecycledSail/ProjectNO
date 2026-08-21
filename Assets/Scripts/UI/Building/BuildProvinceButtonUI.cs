@@ -100,7 +100,7 @@ public class BuildProvinceButtonUI : MonoBehaviour
         if (nation == null || buildingType == null)
             return false;
 
-        if (nation.IsInBuildQueue(buildingType, provinceData))
+        if (nation.IsConstructionQueued(buildingType, provinceData))
             return false;
 
         if (!GlobalVariables.BUILDING_RECIPE.TryGetValue(buildingType.name, out BuildingRecipe recipe))
@@ -127,7 +127,7 @@ public class BuildProvinceButtonUI : MonoBehaviour
         if (nation == null || buildingType == null)
             return "Cannot build here.";
 
-        if (nation.IsInBuildQueue(buildingType, provinceData))
+        if (nation.IsConstructionQueued(buildingType, provinceData))
             return "Already queued.";
 
         if (!GlobalVariables.BUILDING_RECIPE.TryGetValue(buildingType.name, out BuildingRecipe recipe))
@@ -166,11 +166,12 @@ public class BuildProvinceButtonUI : MonoBehaviour
 
     private int GetReservedAmount(Nation nation, Dictionary<string, ProductState> products, string productName)
     {
-        return nation.constructionRequest.buildingReservations
-            .Where(reservation => GetAccessibleProducts(reservation.targetProvince) == products)
-            .Where(reservation => GlobalVariables.BUILDING_RECIPE.ContainsKey(reservation.buildingType.name))
-            .Sum(reservation =>
-                GlobalVariables.BUILDING_RECIPE[reservation.buildingType.name]
+        return nation.ConstructionMandates
+            .Where(mandate => mandate.IsActive)
+            .Where(mandate => GetAccessibleProducts(mandate.TargetProvince) == products)
+            .Where(mandate => GlobalVariables.BUILDING_RECIPE.ContainsKey(mandate.BuildingType.name))
+            .Sum(mandate =>
+                GlobalVariables.BUILDING_RECIPE[mandate.BuildingType.name]
                     .requireItems.TryGetValue(productName, out int amount)
                         ? amount
                         : 0);
@@ -189,41 +190,18 @@ public class BuildProvinceButtonUI : MonoBehaviour
             return;
         }
 
-        if (!provinceData.buildings.TryGetValue(buildingType, out Building building))
+        ConstructionMandate mandate = nation.PlaceConstructionMandate(
+            buildingType,
+            provinceData);
+        if (mandate == null)
         {
-            building = new Building(buildingType, provinceData);
-            provinceData.buildings[buildingType] = building;
+            Debug.LogWarning(
+                $"[ConstructionMandate] Could not issue {buildingType.name} in {provinceData.name}.");
+            UpdateBuildButtonState();
+            return;
         }
-
-        nation.constructionRequest.AddBuildingReservation(buildingType, provinceData, nation);
-        nation.AddToBuildQueue(building);
-
-        AssignAdjacentConstructionCompany(nation);
 
         BuildUI.Instance.UpdateQueue();
         UpdateBuildButtonState();
-    }
-
-    private void AssignAdjacentConstructionCompany(Nation nation)
-    {
-        List<Province> adjacentProvinces = GlobalVariables.ADJACENT_PROVINCES.TryGetValue(provinceData.name, out var adjProvs)
-            ? adjProvs
-            : new List<Province>();
-
-        foreach (Province adjProvince in adjacentProvinces)
-        {
-            foreach (var bld in adjProvince.buildings.Values)
-            {
-                if (bld is not ConstructionCompanyBuilding constructionCompany)
-                    continue;
-
-                BuildingReservation reservation = new BuildingReservation(buildingType, provinceData, nation);
-                if (constructionCompany.TryAssign(reservation, out BuildingInProgress bip))
-                {
-                    Debug.Log($"Assigned building project for {buildingType.name} in {provinceData.name} to construction company in {adjProvince.name}");
-                    return;
-                }
-            }
-        }
     }
 }

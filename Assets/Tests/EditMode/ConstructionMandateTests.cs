@@ -164,6 +164,37 @@ public class ConstructionMandateTests
             Is.EqualTo(1));
     }
 
+    [Test]
+    public void BuildQueueItem_DisplaysMandateTargetProgressAndStatus()
+    {
+        object buildingType = New("BuildingType", "WheatField");
+        object target = New("Province", 1, "Target", EnumValue("Topography", "Plane"));
+        object mandate = New("ConstructionMandate", null, buildingType, target, 20d);
+
+        UnityEngine.GameObject root = new("QueueItemTest");
+        try
+        {
+            UnityEngine.Component queueItem = root.AddComponent(Find("BuildQueueItem"));
+            object nameText = AddTextComponent(root, "NameText");
+            object provinceText = AddTextComponent(root, "ProvinceText");
+            object countText = AddTextComponent(root, "CountText");
+            SetField(queueItem, "nameText", nameText);
+            SetField(queueItem, "provinceText", provinceText);
+            SetField(queueItem, "countText", countText);
+
+            Invoke(queueItem, "SetMandate", mandate);
+
+            Assert.That(GetProperty(nameText, "text"), Is.EqualTo("WheatField"));
+            Assert.That(GetProperty(provinceText, "text"), Is.EqualTo("Target"));
+            Assert.That(GetProperty(countText, "text"),
+                Is.EqualTo("20 (Requested)"));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+        }
+    }
+
     [Serializable]
     private sealed class ProvinceJson
     {
@@ -231,6 +262,13 @@ public class ConstructionMandateTests
         return (IDictionary)field.GetValue(null);
     }
 
+    private static object AddTextComponent(UnityEngine.GameObject parent, string name)
+    {
+        UnityEngine.GameObject child = new(name);
+        child.transform.SetParent(parent.transform);
+        return child.AddComponent(Find("TMPro.TextMeshProUGUI"));
+    }
+
     private static Type Find(string typeName)
     {
         Type type = AppDomain.CurrentDomain.GetAssemblies()
@@ -264,6 +302,15 @@ public class ConstructionMandateTests
         Assert.That(property, Is.Not.Null,
             $"Could not find property {name} on {instance.GetType().Name}");
         property.SetValue(instance, value);
+    }
+
+    private static void SetField(object instance, string name, object value)
+    {
+        FieldInfo field = instance.GetType().GetField(
+            name, BindingFlags.Instance | BindingFlags.Public);
+        Assert.That(field, Is.Not.Null,
+            $"Could not find field {name} on {instance.GetType().Name}");
+        field.SetValue(instance, value);
     }
 
     private static void Invoke(object instance, string methodName, params object[] arguments)
