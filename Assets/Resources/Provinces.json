@@ -21,6 +21,11 @@
           "buildingTypeName": "LogField",
           "workerScale": 0.5,
           "level": 1
+        },
+        {
+          "buildingTypeName": "construcntionCompany",
+          "workerScale": 0.0,
+          "level": 1
         }
       ]
     },

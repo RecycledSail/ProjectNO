@@ -8,11 +8,11 @@ public static class BuildingFactory
         int level = 0,
         long currentWorkers = 0)
     {
-        Building building = new Building(buildingType, province)
-        {
-            level = level,
-            currentWorkers = currentWorkers
-        };
+        Building building = buildingType.name == ConstructionCompanyTypeName
+            ? new ConstructionCompanyBuilding(buildingType, province, level)
+            : new Building(buildingType, province) { level = level };
+
+        building.currentWorkers = currentWorkers;
 
         return building;
     }

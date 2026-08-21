@@ -226,7 +226,7 @@ public class Nation : IBuildingInvestor
     private void CalculateManhour()
     {
         double currentManhour = 0.0;
-        currentManhour = GlobalVariables.minimumNationManHour;
+        currentManhour = GlobalVariables.minimumConstructionCompanyManHour;
 
         //TODO: 건축업체의 노동력 반영
 

@@ -131,6 +131,59 @@ public class ConstructionMandateTests
             ((IList)GetProperty(company, "ActiveProjects"))[0]), Is.True);
     }
 
+    [Test]
+    public void BuildingFactory_CreatesConstructionCompanySubtype()
+    {
+        object companyType = New("BuildingType", "construcntionCompany");
+        object province = New("Province", 1, "Bebino", EnumValue("Topography", "Plane"));
+        MethodInfo create = Find("BuildingFactory").GetMethod(
+            "Create", BindingFlags.Public | BindingFlags.Static);
+
+        object building = create.Invoke(null,
+            new[] { companyType, province, (object)1, 0L });
+
+        Assert.That(building.GetType().Name, Is.EqualTo("ConstructionCompanyBuilding"));
+        Assert.That((int)GetMember(building, "level"), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void ProvinceData_SeedsOneLevelOneCompanyInBebino()
+    {
+        string path = System.IO.Path.Combine(
+            UnityEngine.Application.dataPath,
+            "Resources",
+            "Provinces.json");
+        ProvinceJson wrapper = UnityEngine.JsonUtility.FromJson<ProvinceJson>(
+            System.IO.File.ReadAllText(path));
+        ProvinceJsonData bebino = wrapper.provinces
+            .Single(province => province.name == "Bebino");
+
+        Assert.That(bebino.buildings.Count(building =>
+            building.buildingTypeName == "construcntionCompany" &&
+            building.level == 1),
+            Is.EqualTo(1));
+    }
+
+    [Serializable]
+    private sealed class ProvinceJson
+    {
+        public ProvinceJsonData[] provinces;
+    }
+
+    [Serializable]
+    private sealed class ProvinceJsonData
+    {
+        public string name;
+        public BuildingJsonData[] buildings;
+    }
+
+    [Serializable]
+    private sealed class BuildingJsonData
+    {
+        public string buildingTypeName;
+        public int level;
+    }
+
     private static object New(string typeName, params object[] arguments)
     {
         Type type = Find(typeName);
