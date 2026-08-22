@@ -12,7 +12,7 @@ This phase includes:
 
 - Data-driven starting wealth for nations and province ethnic populations.
 - Data-driven operating capital for each building type.
-- One monetary ledger per nation.
+- One monetary ledger per nation and one provisional local ledger per neutral province.
 - Conserving transfers, currency issuance, and currency destruction.
 - Construction investment escrow and completed-building capitalization.
 - Producer-owned market inventory.
@@ -27,7 +27,7 @@ This phase excludes:
 - Construction-company fees and construction-worker wages.
 - Autonomous ethnic-pop investment decisions.
 - Product quality, distance, transport cost, seller competition, and exchange rates.
-- Cross-currency and international settlement.
+- Cross-currency and international market settlement. The only cross-ledger operation in scope is the administrative 1:1 absorption of a neutral province into a nation.
 - Additional tax types such as income, corporate, property, or wealth taxes.
 
 ## Approved Decisions
@@ -39,6 +39,7 @@ This phase excludes:
 - A building has no automatically created default balance.
 - Each building recipe defines an explicit `initialCapital` used as operating capital.
 - Each nation owns a separate currency and `MoneyLedger`.
+- A province with no nation owns a provisional local `MoneyLedger` so its populations, buildings, and local market can participate without inventing a country.
 - Ordinary monetary movement uses a ledger transfer. Only national issuance changes supply upward; explicit destruction changes it downward.
 - Market inventory retains producer ownership.
 - Sales are allocated among suppliers in proportion to their owned stock for the sold product.
@@ -63,6 +64,18 @@ Every entry in `Assets/Resources/Provinces.json` gains explicit nonnegative `pro
 ```
 
 The values are content-balancing data. They may differ by province, species, culture, national status, and historical conditions. The migration will seed every existing record with a concrete rough value; no runtime equality formula will override those values.
+
+Neutral province records additionally define a nonnegative `initialLocalTreasury`. It funds that province's pre-existing buildings and belongs to the provisional local monetary authority:
+
+```json
+{
+  "id": 10,
+  "name": "Tarantsusi",
+  "initialLocalTreasury": 50000
+}
+```
+
+Nationally owned provinces must use zero for this field because their starting buildings are capitalized by the national treasury.
 
 ### Nations
 
@@ -102,8 +115,9 @@ Initialization rejects invalid economic data with a clear error identifying the 
 - Negative monetary values.
 - Missing or nonpositive `livingStandard`.
 - Missing or nonpositive `initialCapital`.
-- A nation treasury unable to capitalize all of its starting buildings.
-- A starting province or building that has no owning nation after ownership assignment.
+- A national treasury unable to capitalize all of its starting buildings.
+- A neutral local treasury unable to capitalize all buildings in its province.
+- A population or building that has neither a national ledger nor a neutral province ledger after authority assignment.
 
 The economic ledger is initialized only after these validations pass.
 
@@ -113,11 +127,11 @@ The economic ledger is initialized only after these validations pass.
 
 `Nation`, `ProvinceEthnicPop`, `Building`, and construction mandate escrow participate as monetary accounts. Account balances use `long` consistently. Public gameplay code may read balances but may not assign them directly.
 
-Each account belongs to exactly one nation's currency ledger during this phase. Transfers between different ledgers are rejected because exchange rates and international settlement are out of scope.
+Each account belongs to exactly one national or neutral local currency ledger during this phase. Transfers between different ledgers are rejected because exchange rates and international settlement are out of scope. Neutral-province absorption is a separate administrative migration operation, not a market transfer.
 
 ### MoneyLedger responsibilities
 
-Each `Nation` owns one `MoneyLedger`. It provides three monetary operations:
+Each `Nation` and each neutral `Province` owns one `MoneyLedger`. A neutral ledger has a local treasury account but no authority to call `Mint` or `Burn`. A ledger provides these monetary operations:
 
 - `Transfer(from, to, amount, reason)`: debits and credits the same positive amount atomically. It does not change money supply.
 - `TransferBatch(entries, reason)`: validates a balanced set of debits and credits, then applies all entries atomically. It is used when one purchase pays tax and multiple suppliers.
@@ -130,7 +144,7 @@ The ledger records enough transaction metadata for diagnostics: operation type, 
 
 ### Money supply invariant
 
-After startup capitalization completes:
+After startup capitalization completes, national supply is:
 
 ```text
 MoneySupply =
@@ -142,6 +156,8 @@ MoneySupply =
 
 The initialized `MoneySupply` equals the sum of registered accounts. Ordinary transfers preserve it exactly. `Mint` and `Burn` change both the account sum and recorded supply by the same amount.
 
+For a neutral province, the same invariant substitutes its local treasury for the national treasury and includes only that province's populations, buildings, and construction escrows.
+
 `GovernmentBudget.MoneySupply` becomes a view of the nation's ledger rather than an independently initialized value.
 
 ## Initialization Order
@@ -151,12 +167,27 @@ Economic initialization occurs after nations, provinces, province ownership, pop
 1. Load authored population properties and living standards.
 2. Load authored national starting balances.
 3. Create starting buildings with zero balance.
-4. Assign provinces and their buildings to nations.
-5. Create each nation's ledger and register its treasury and population accounts.
-6. For every starting building level, register the building and transfer `initialCapital` from the owning national treasury into the building.
-7. Sum registered balances and seal that sum as the nation's initial money supply.
+4. Assign configured provinces and their buildings to nations; leave unassigned provinces neutral.
+5. Create each nation's ledger and register its treasury and domestic population accounts.
+6. Create one local ledger and local treasury for every neutral province and register its population accounts.
+7. Register every starting building with its national or neutral ledger and transfer `initialCapital * level` from the applicable treasury into the building.
+8. Sum registered balances and seal that sum as each ledger's initial money supply.
 
 Startup capitalization is a transfer, not issuance. It therefore does not change the total amount loaded from JSON.
+
+## Neutral Province Absorption
+
+When a neutral province later joins a nation, its local currency area is absorbed 1:1 without market exchange:
+
+1. Pause settlement for that province for the duration of the ownership change.
+2. Verify every local population, building, mandate escrow, and supplier-owned local-market lot belongs to the neutral ledger.
+3. Remove those accounts and their unchanged balances from the neutral ledger's registered supply.
+4. Register the population, building, and escrow accounts with the destination nation's ledger and add their unchanged balances to national supply.
+5. Move the remaining local-treasury balance into the destination national treasury as part of the same migration, decreasing neutral supply and increasing national supply by the identical amount without `Mint`.
+6. Keep local-market inventory in the province market with its existing supplier ownership; subsequent settlement uses the destination national ledger.
+7. Close the now-empty neutral ledger and resume settlement.
+
+The combined supply of the source and destination ledgers is identical before and after absorption. Failure during validation changes neither ownership nor monetary state. Nation-to-nation conquest, secession, exchange rates, and conversion ratios other than 1:1 remain outside this phase.
 
 ## Construction Investment
 
@@ -281,6 +312,7 @@ EditMode tests cover:
 - Transfer preserves supply and rejects invalid or unaffordable operations atomically.
 - Mint and Burn change account sum and recorded supply by exactly the requested amount.
 - Cross-ledger transfers are rejected.
+- Neutral province absorption moves account registration and supply 1:1, empties the neutral ledger, and preserves combined supply.
 - Construction placement, cancellation, completion, and upgrade move capital exactly once.
 - Basic and building production create owned inventory but no money.
 - Aggregate stock always equals supplier-owned stock.
