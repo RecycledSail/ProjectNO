@@ -49,16 +49,36 @@ public class ConstructionInvestmentTests
     }
 
     [Test]
+    public void ZeroCapitalPlacement_RegistersAnEmptyEscrowWithoutTransferringMoney()
+    {
+        FundedConstruction context = FundedConstruction.Create(
+            investorBalance: 0L, initialCapital: 0L, timeToBuild: 10,
+            withCompany: false);
+
+        object mandate = context.Place();
+
+        Assert.That(mandate, Is.Not.Null);
+        Assert.That(context.InvestorBalance, Is.EqualTo(0L));
+        Assert.That(context.EscrowBalance(mandate), Is.EqualTo(0L));
+        Assert.That(ReflectionTestHelpers.Get(
+            ReflectionTestHelpers.Get(mandate, "EscrowAccount"), "Ledger"),
+            Is.SameAs(context.Ledger));
+        Assert.That(context.MoneySupply, Is.EqualTo(0L));
+    }
+
+    [Test]
     public void InsufficientCapital_CreatesNoMandateOrMaterialReservation()
     {
         FundedConstruction context = FundedConstruction.Create(
             investorBalance: 299L, initialCapital: 300L, timeToBuild: 10,
             requiredMaterial: "Steel", materialStock: 2);
+        int transactionsBeforePlacement = context.TransactionCount;
 
         Assert.That(context.Place(), Is.Null);
         Assert.That(context.MandateCount, Is.EqualTo(0));
         Assert.That(context.MaterialStock, Is.EqualTo(2));
         Assert.That(context.MoneySupply, Is.EqualTo(299L));
+        Assert.That(context.TransactionCount, Is.EqualTo(transactionsBeforePlacement));
         Assert.That(context.CanPlaceError, Does.Contain("Need operating capital"));
     }
 
@@ -115,6 +135,9 @@ public class ConstructionInvestmentTests
         public long InvestorBalance => (long)ReflectionTestHelpers.Get(
             ReflectionTestHelpers.Get(_nation, "Account"), "Balance");
         public long MoneySupply => (long)ReflectionTestHelpers.Get(_ledger, "MoneySupply");
+        public object Ledger => _ledger;
+        public int TransactionCount => ((ICollection)ReflectionTestHelpers.Get(
+            _ledger, "Transactions")).Count;
         public int MandateCount => ((ICollection)ReflectionTestHelpers.Get(
             _nation, "ConstructionMandates")).Count;
         public int MaterialStock => _requiredMaterial == null ? 0 : (int)ReflectionTestHelpers.Get(

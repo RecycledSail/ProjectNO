@@ -101,6 +101,9 @@ public sealed class ConstructionMandate
         if (!TryTransferEscrowTo(Investor?.InvestmentAccount, "Construction mandate cancellation refund"))
             return false;
 
+        if (!TryUnregisterTerminalEscrow())
+            return false;
+
         Status = ConstructionMandateStatus.Cancelled;
         UntrackActiveMandate(this);
         return true;
@@ -140,12 +143,20 @@ public sealed class ConstructionMandate
         if (EscrowAccount != null)
         {
             if (TargetProvince.ActiveLedger == null ||
-                building.Account.Ledger != TargetProvince.ActiveLedger ||
-                !TryTransferEscrowTo(building.Account, "Construction mandate completion capitalization"))
+                building.Account.Ledger != TargetProvince.ActiveLedger)
             {
                 RollBackCreatedBuilding(createdBuilding, building);
                 return false;
             }
+
+            if (!TryTransferEscrowTo(building.Account, "Construction mandate completion capitalization"))
+            {
+                RollBackCreatedBuilding(createdBuilding, building);
+                return false;
+            }
+
+            if (!TryUnregisterTerminalEscrow())
+                return false;
         }
 
         building.level++;
@@ -163,6 +174,16 @@ public sealed class ConstructionMandate
         MoneyLedger ledger = TargetProvince.ActiveLedger;
         return destination != null && ledger != null && ledger.TryTransfer(
             EscrowAccount, destination, EscrowAccount.Balance, reason);
+    }
+
+    private bool TryUnregisterTerminalEscrow()
+    {
+        if (EscrowAccount == null)
+            return true;
+
+        MoneyLedger ledger = EscrowAccount.Ledger;
+        return EscrowAccount.Balance == 0 &&
+               (ledger == null || ledger.UnregisterEmptyAccount(EscrowAccount));
     }
 
     private void RollBackCreatedBuilding(bool createdBuilding, Building building)

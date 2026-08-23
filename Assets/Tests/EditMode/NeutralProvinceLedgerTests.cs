@@ -115,6 +115,37 @@ public class NeutralProvinceLedgerTests
         Assert.That(ReflectionTestHelpers.Get(mandate, "Status").ToString(), Is.EqualTo("Requested"));
     }
 
+    [Test]
+    public void AbsorbNeutralProvince_AfterMandateCancellationHasNoTerminalEscrowAccount()
+    {
+        NeutralFundedMandate context = NeutralFundedMandate.Create();
+
+        Assert.That(ReflectionTestHelpers.Call<bool>(context.Mandate, "Cancel"), Is.True);
+        Assert.That(ReflectionTestHelpers.Get(context.Escrow, "Balance"), Is.EqualTo(0L));
+        Assert.That(TryAbsorb(context.Province, context.Nation, out string error), Is.True, error);
+        Assert.That(ReflectionTestHelpers.Get(context.Escrow, "Ledger"), Is.Null);
+        Assert.That(ReflectionTestHelpers.Get(context.LocalLedger, "MoneySupply"), Is.EqualTo(0L));
+    }
+
+    [Test]
+    public void AbsorbNeutralProvince_AfterMandateCompletionHasNoTerminalEscrowAccount()
+    {
+        NeutralFundedMandate context = NeutralFundedMandate.Create();
+        object companyType = ReflectionTestHelpers.New("BuildingType", "construcntionCompany");
+        object company = ReflectionTestHelpers.New("ConstructionCompanyBuilding",
+            companyType, context.Province, 1);
+
+        Assert.That(ReflectionTestHelpers.Call<bool>(company, "TryAssign", context.Mandate), Is.True);
+        ReflectionTestHelpers.Call<object>(company, "ProgressWeekly", 10d);
+
+        Assert.That(ReflectionTestHelpers.Get(context.Mandate, "Status").ToString(),
+            Is.EqualTo("Completed"));
+        Assert.That(ReflectionTestHelpers.Get(context.Escrow, "Balance"), Is.EqualTo(0L));
+        Assert.That(TryAbsorb(context.Province, context.Nation, out string error), Is.True, error);
+        Assert.That(ReflectionTestHelpers.Get(context.Escrow, "Ledger"), Is.Null);
+        Assert.That(ReflectionTestHelpers.Get(context.LocalLedger, "MoneySupply"), Is.EqualTo(0L));
+    }
+
     private static void Initialize(object nation, object province)
     {
         ReflectionTestHelpers.Find("EconomicInitializer").GetMethod("Initialize")
@@ -133,5 +164,49 @@ public class NeutralProvinceLedgerTests
         bool result = (bool)method.Invoke(null, arguments);
         error = (string)arguments[2];
         return result;
+    }
+
+    private sealed class NeutralFundedMandate
+    {
+        public object Nation { get; }
+        public object Province { get; }
+        public object LocalLedger { get; }
+        public object Escrow { get; }
+        public object Mandate { get; }
+
+        private NeutralFundedMandate(
+            object nation,
+            object province,
+            object localLedger,
+            object escrow,
+            object mandate)
+        {
+            Nation = nation;
+            Province = province;
+            LocalLedger = localLedger;
+            Escrow = escrow;
+            Mandate = mandate;
+        }
+
+        public static NeutralFundedMandate Create()
+        {
+            object nation = TestEconomyFactory.NewNation("N1", 1000L);
+            object province = TestEconomyFactory.NewProvince(1, "Prano");
+            ReflectionTestHelpers.Set(province, "initialLocalTreasury", 1000L);
+            object population = TestEconomyFactory.AddPop(province, 200L, 1.0);
+            Initialize(nation, province);
+
+            object localLedger = ReflectionTestHelpers.Get(province, "LocalLedger");
+            object escrow = ReflectionTestHelpers.New("MoneyAccount", "mandate:Prano:WheatField", 0L);
+            object populationAccount = ReflectionTestHelpers.Get(population, "Account");
+            Assert.That(ReflectionTestHelpers.Call<bool>(localLedger, "RegisterEmptyAccount", escrow), Is.True);
+            Assert.That(ReflectionTestHelpers.Call<bool>(localLedger, "TryTransfer",
+                populationAccount, escrow, 100L, "Fund neutral mandate"), Is.True);
+
+            object buildingType = ReflectionTestHelpers.New("BuildingType", "WheatField");
+            object mandate = ReflectionTestHelpers.New("ConstructionMandate", population,
+                buildingType, province, 10d, escrow, 100L);
+            return new NeutralFundedMandate(nation, province, localLedger, escrow, mandate);
+        }
     }
 }

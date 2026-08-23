@@ -166,7 +166,7 @@ public class Nation : IBuildingInvestor
         if (!ledger.RegisterEmptyAccount(escrow))
             return null;
 
-        if (!ledger.TryTransfer(
+        if (recipe.InitialCapital > 0 && !ledger.TryTransfer(
             InvestmentAccount,
             escrow,
             recipe.InitialCapital,
