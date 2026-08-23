@@ -204,9 +204,23 @@ public class MoneyConservationIntegrationTests
         Assert.That(GetLong(mints[0], "Amount"), Is.EqualTo(75L));
         Assert.That(ReflectionTestHelpers.Get(mints[0], "Reason"),
             Is.EqualTo("policy issuance"));
-        Assert.That(Transactions(ledger).Count(record =>
-            ReflectionTestHelpers.Get(record, "Kind").ToString() == "Transfer"),
-            Is.EqualTo(2));
+        List<object> policyTransfers = Transactions(ledger).Where(record =>
+            ReflectionTestHelpers.Get(record, "Kind").ToString() == "Transfer").ToList();
+        Assert.That(policyTransfers, Has.Count.EqualTo(2));
+        AssertPolicyTransfer(
+            policyTransfers.Single(record =>
+                ReflectionTestHelpers.Get(record, "Reason").ToString() ==
+                "policy military salary"),
+            20L,
+            treasury,
+            population);
+        AssertPolicyTransfer(
+            policyTransfers.Single(record =>
+                ReflectionTestHelpers.Get(record, "Reason").ToString() ==
+                "policy real estate"),
+            30L,
+            treasury,
+            population);
         AssertAudit(ledger, capturedSupply + 75L);
     }
 
@@ -422,6 +436,25 @@ public class MoneyConservationIntegrationTests
         Assert.That(audited, Is.True);
         Assert.That((long)arguments[0], Is.EqualTo(expectedRegisteredBalance));
     }
+
+    private static void AssertPolicyTransfer(
+        object record,
+        long expectedAmount,
+        object source,
+        object destination)
+    {
+        Assert.That(GetLong(record, "Amount"), Is.EqualTo(expectedAmount));
+        Assert.That(TransactionIds(record, "SourceIds"),
+            Is.EqualTo(new[] { AccountId(source) }));
+        Assert.That(TransactionIds(record, "DestinationIds"),
+            Is.EqualTo(new[] { AccountId(destination) }));
+    }
+
+    private static List<string> TransactionIds(object record, string member) =>
+        ((IEnumerable)ReflectionTestHelpers.Get(record, member))
+            .Cast<object>()
+            .Select(value => (string)value)
+            .ToList();
 
     private static List<object> Transactions(object ledger) =>
         ((IEnumerable)ReflectionTestHelpers.Get(ledger, "Transactions"))
