@@ -54,10 +54,25 @@ public sealed class MoneyLedger
     private readonly List<MoneyTransactionRecord> _transactions = new();
     private readonly IReadOnlyList<MoneyTransactionRecord> _readOnlyTransactions;
     private bool _initializationSealed;
+    private int _salesTaxBasisPoints = 1000;
 
     public string CurrencyId { get; }
     public long MoneySupply { get; private set; }
+    public int SalesTaxBasisPoints
+    {
+        get => _salesTaxBasisPoints;
+        set
+        {
+            if (value < 0 || value > 10_000)
+                throw new ArgumentOutOfRangeException(nameof(value));
+
+            _salesTaxBasisPoints = value;
+        }
+    }
+    public long WeeklyTaxRevenue { get; private set; }
     public IReadOnlyList<MoneyTransactionRecord> Transactions => _readOnlyTransactions;
+
+    internal MoneyAccount TreasuryAccount => _treasuryAccount;
 
     public MoneyLedger(string currencyId, object issuanceAuthority, MoneyAccount treasuryAccount)
     {
@@ -131,17 +146,44 @@ public sealed class MoneyLedger
 
     public bool TryTransferBatch(IReadOnlyList<MoneyTransferEntry> entries, string reason)
     {
+        return TryTransferBatch(entries, reason, 0);
+    }
+
+    public bool TryTransferBatch(
+        IReadOnlyList<MoneyTransferEntry> entries,
+        string reason,
+        long taxRevenue)
+    {
+        if (taxRevenue < 0)
+            return false;
+
         if (!TryValidateBatch(entries, out Dictionary<MoneyAccount, long> deltas))
             return false;
 
         if (!TryCreateTransferRecord(entries, reason, out MoneyTransactionRecord record))
             return false;
 
+        long nextWeeklyTaxRevenue;
+        try
+        {
+            nextWeeklyTaxRevenue = checked(WeeklyTaxRevenue + taxRevenue);
+        }
+        catch (OverflowException)
+        {
+            return false;
+        }
+
         foreach (KeyValuePair<MoneyAccount, long> pair in deltas)
             pair.Key.ApplyDelta(pair.Value);
 
+        WeeklyTaxRevenue = nextWeeklyTaxRevenue;
         _transactions.Add(record);
         return true;
+    }
+
+    public void BeginWeek()
+    {
+        WeeklyTaxRevenue = 0;
     }
 
     public bool TryMint(object authority, MoneyAccount target, long amount, string reason)
@@ -343,6 +385,8 @@ public sealed class MoneyLedger
 
     private bool IsRegistered(MoneyAccount account) =>
         account != null && account.Ledger == this && _registeredAccounts.Contains(account);
+
+    internal bool OwnsAccount(MoneyAccount account) => IsRegistered(account);
 
     private bool HasIssuanceAuthority(object authority) =>
         _issuanceAuthority != null && ReferenceEquals(_issuanceAuthority, authority);

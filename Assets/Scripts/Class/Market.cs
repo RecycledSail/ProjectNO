@@ -154,6 +154,58 @@ public class ProductState
 
     public void CommitSale(IReadOnlyList<SupplierSale> sale) => Inventory.CommitSale(sale);
 
+    internal bool CanCommitPurchase(IReadOnlyList<SupplierSale> sale)
+    {
+        if (sale == null)
+            return false;
+
+        try
+        {
+            int quantity = 0;
+            foreach (SupplierSale entry in sale)
+            {
+                if (entry == null || entry.Supplier == null || entry.Quantity <= 0)
+                    return false;
+
+                quantity = checked(quantity + entry.Quantity);
+            }
+
+            _ = checked(LastDemand + quantity);
+            IReadOnlyList<SupplierSale> expected = PlanSale(quantity);
+            if (expected.Count != sale.Count)
+                return false;
+
+            for (int index = 0; index < sale.Count; index++)
+            {
+                if (!ReferenceEquals(expected[index].Supplier, sale[index].Supplier) ||
+                    expected[index].Quantity != sale[index].Quantity)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        catch (OverflowException)
+        {
+            return false;
+        }
+    }
+
+    internal void CommitPurchase(IReadOnlyList<SupplierSale> sale)
+    {
+        if (!CanCommitPurchase(sale))
+            throw new InvalidOperationException("Purchase must match current inventory and demand capacity.");
+
+        int quantity = 0;
+        foreach (SupplierSale entry in sale)
+            quantity = checked(quantity + entry.Quantity);
+
+        int nextDemand = checked(LastDemand + quantity);
+        CommitSale(sale);
+        LastDemand = nextDemand;
+    }
+
     public void TransferAllStockTo(ProductState destination)
     {
         if (destination == null) throw new ArgumentNullException(nameof(destination));
