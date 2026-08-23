@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -96,6 +97,121 @@ public class EconomicInitializationTests
         object[] arguments = { null };
         Assert.That((bool)audit.Invoke(ledger, arguments), Is.True);
         Assert.That((long)arguments[0], Is.EqualTo(250L));
+    }
+
+    [Test]
+    public void Initialize_RegistersLevelZeroBuildingWithoutCapitalizingIt()
+    {
+        object nation = TestEconomyFactory.NewNation("N1", 1000L);
+        object province = TestEconomyFactory.NewProvince(1, "P1");
+        ReflectionTestHelpers.Call<bool>(nation, "AddProvinces", province);
+        TestEconomyFactory.AddBuilding(province, "WheatField", 0, 100L);
+
+        Initialize(nation, province);
+
+        object building = TestEconomyFactory.GetOnlyBuilding(province);
+        Assert.That(ReflectionTestHelpers.Get(nation, "balance"), Is.EqualTo(1000L));
+        Assert.That(ReflectionTestHelpers.Get(building, "balance"), Is.EqualTo(0L));
+        object ledger = ReflectionTestHelpers.Get(nation, "Ledger");
+        Assert.That(ReflectionTestHelpers.Get(ledger, "MoneySupply"), Is.EqualTo(1000L));
+    }
+
+    [Test]
+    public void Initialize_MissingLateRecipeLeavesNationalActorsRetryable()
+    {
+        object nation = TestEconomyFactory.NewNation("N1", 1000L);
+        object province = TestEconomyFactory.NewProvince(1, "P1");
+        ReflectionTestHelpers.Call<bool>(nation, "AddProvinces", province);
+        object pop = TestEconomyFactory.AddPop(province, 300L, 1.0);
+        TestEconomyFactory.AddBuilding(province, "WheatField", 1, 100L);
+        TestEconomyFactory.AddBuilding(province, "Missing", 1, 100L);
+        Recipes().Remove("Missing");
+
+        InvalidOperationException exception = AssertInitializationFails(nation, province);
+
+        Assert.That(exception.Message, Does.Contain("Nation N1"));
+        Assert.That(exception.Message, Does.Contain("Missing"));
+        AssertUninitialized(nation, province, pop, 1000L, 300L);
+    }
+
+    [Test]
+    public void Initialize_InsufficientAggregateFundsLeavesNationalActorsRetryable()
+    {
+        object nation = TestEconomyFactory.NewNation("N1", 150L);
+        object province = TestEconomyFactory.NewProvince(1, "P1");
+        ReflectionTestHelpers.Call<bool>(nation, "AddProvinces", province);
+        object pop = TestEconomyFactory.AddPop(province, 300L, 1.0);
+        TestEconomyFactory.AddBuilding(province, "WheatField", 1, 100L);
+        TestEconomyFactory.AddBuilding(province, "LogField", 1, 100L);
+
+        InvalidOperationException exception = AssertInitializationFails(nation, province);
+
+        Assert.That(exception.Message, Does.Contain("Nation N1"));
+        Assert.That(exception.Message, Does.Contain("need 200"));
+        AssertUninitialized(nation, province, pop, 150L, 300L);
+    }
+
+    [Test]
+    public void Initialize_OverflowingCapitalLeavesNationalActorsRetryable()
+    {
+        object nation = TestEconomyFactory.NewNation("N1", 1000L);
+        object province = TestEconomyFactory.NewProvince(1, "P1");
+        ReflectionTestHelpers.Call<bool>(nation, "AddProvinces", province);
+        object pop = TestEconomyFactory.AddPop(province, 300L, 1.0);
+        TestEconomyFactory.AddBuilding(province, "WheatField", 1, 100L);
+        TestEconomyFactory.AddBuilding(province, "Overflow", 2, long.MaxValue);
+
+        InvalidOperationException exception = AssertInitializationFails(nation, province);
+
+        Assert.That(exception.Message, Does.Contain("Nation N1"));
+        Assert.That(exception.Message, Does.Contain("Overflow"));
+        AssertUninitialized(nation, province, pop, 1000L, 300L);
+    }
+
+    private static void Initialize(object nation, object province)
+    {
+        ReflectionTestHelpers.Find("EconomicInitializer").GetMethod("Initialize")
+            .Invoke(null, new object[] {
+                TestEconomyFactory.ListOf("Nation", nation),
+                TestEconomyFactory.ListOf("Province", province)
+            });
+    }
+
+    private static InvalidOperationException AssertInitializationFails(object nation, object province)
+    {
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
+            () => Initialize(nation, province));
+        Assert.That(exception.InnerException, Is.TypeOf<InvalidOperationException>());
+        return (InvalidOperationException)exception.InnerException;
+    }
+
+    private static IDictionary Recipes() =>
+        (IDictionary)ReflectionTestHelpers.Find("GlobalVariables").GetField(
+            "BUILDING_RECIPE", BindingFlags.Public | BindingFlags.Static).GetValue(null);
+
+    private static void AssertUninitialized(
+        object nation,
+        object province,
+        object pop,
+        long nationBalance,
+        long populationProperty)
+    {
+        Assert.That(ReflectionTestHelpers.Get(nation, "Ledger"), Is.Null);
+        Assert.That(ReflectionTestHelpers.Get(
+            ReflectionTestHelpers.Get(nation, "Account"), "Ledger"), Is.Null);
+        Assert.That(ReflectionTestHelpers.Get(province, "ActiveLedger"), Is.Null);
+        Assert.That(ReflectionTestHelpers.Get(
+            ReflectionTestHelpers.Get(pop, "Account"), "Ledger"), Is.Null);
+        Assert.That(ReflectionTestHelpers.Get(nation, "balance"), Is.EqualTo(nationBalance));
+        Assert.That(ReflectionTestHelpers.Get(pop, "property"), Is.EqualTo(populationProperty));
+
+        foreach (object building in ((IDictionary)ReflectionTestHelpers.Get(
+            province, "buildings")).Values)
+        {
+            Assert.That(ReflectionTestHelpers.Get(building, "balance"), Is.EqualTo(0L));
+            Assert.That(ReflectionTestHelpers.Get(
+                ReflectionTestHelpers.Get(building, "Account"), "Ledger"), Is.Null);
+        }
     }
 
     private static T ReadResource<T>(string name)
