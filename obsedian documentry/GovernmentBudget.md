@@ -21,7 +21,8 @@ salary moves existing money between registered accounts; it does not create or
 destroy money. `MoneyLedger.Audit` compares recorded supply with the exact sum
 of registered balances and reports any divergence. No tolerance is used.
 
-Only the ledger's authority-gated issuance operations change recorded supply:
+At the aggregate-economy boundary, only the ledger's authority-gated issuance
+operations change combined supply:
 
 - `TryMint` increases a registered account and `MoneySupply` by the same exact
   amount. The caller must be the ledger's issuance authority.
@@ -30,6 +31,12 @@ Only the ledger's authority-gated issuance operations change recorded supply:
 
 For a nation, the `Nation` object is the issuance authority. Neutral-province
 ledgers have no issuance authority and therefore cannot mint or burn.
+
+Individual ledgers also change their recorded share of supply during opening
+account registration and neutral absorption. Registration establishes authored
+opening supply. Absorption subtracts an exact amount from the neutral ledger
+and adds the same amount to the national ledger, so combined economy supply is
+unchanged.
 
 ## Purchases and actual sales tax
 
@@ -71,6 +78,71 @@ that issued money. Research allocation and any channel without a valid
 recipient stay in the treasury. The policy record and related non-monetary
 effects are committed only after the atomic ledger operation succeeds.
 
+## Industry-subsidy allocation helper
+
+`SetIndustrySubsidyTotal(long totalAmount)` prepares the industry portion of
+the pending policy; it does not transfer money by itself. It first clears the
+current `Policy.IndustrySubsidy`. For a positive amount, it collects the
+distinct building-type names present in the nation's provinces in ordinal
+sort order, divides the amount evenly across those types, and assigns any
+integer remainder to the first type. A nonpositive amount or a nation with no
+building types leaves the industry allocation empty.
+
+`BudgetUI` and `FinanceUI` use this helper when their industry slider changes.
+`IndustrySubsidyPanel` can instead rebuild the same pending dictionary by
+building type. The dictionary keys are `BuildingType.name` strings, so renaming
+a building type also changes the policy key expected by these interfaces.
+
+## Inflation statistics
+
+`UpdateInflation()` is statistical and does not move money. It calls the
+private `CalculatePriceIndex()`, assigns `CurrentPriceIndex`, and keeps at most
+four weekly price-index samples. With at least two samples and a positive
+oldest sample, it calculates:
+
+```text
+InflationRate = (current index - oldest retained index)
+                / oldest retained index * 100
+```
+
+Otherwise the rate is `0`.
+
+`CalculatePriceIndex()` computes a national-market weighted average. Each
+product's weight is `LastSupply + LastDemand`; products with nonpositive weight
+are skipped. If the total weight is zero, the index is `1`. Money supply is not
+an input to this price-index formula.
+
+`GetInflationStatus()` maps the current percentage to UI text:
+
+| Condition | Status |
+| --- | --- |
+| `> 10%` | `Hyperinflation` |
+| `> 5%` | `High Inflation` |
+| `> 2%` | `Inflation` |
+| `> 0%` | `Mild Rise` |
+| `< -5%` | `Deflation` |
+| `< -2%` | `Mild Fall` |
+| otherwise | `Stable` |
+
+## Budget and finance UI behavior
+
+`BudgetUI` uses 50% of the nation's rolling `GDPAverage` as its maximum policy
+proposal, with a minimum slider ceiling of `1`. On confirmation it reads the
+research, military, industry, and real-estate sliders. If their sum exceeds
+the ceiling, it scales all four down proportionally, creates a new pending
+`PolicyAllocation`, and calls `SetIndustrySubsidyTotal` for the industry share.
+GDP is only a UI issuance limit here; it is not tax revenue and the confirmation
+does not move money.
+
+`FinanceUI` displays the ledger-backed `MoneySupply`, `WeeklyTaxRevenue`, and
+the current inflation rate. Its sliders are percentages of actual weekly sales-
+tax revenue and convert a percentage to a proposed amount with
+`(long)(pct / 100f * revenue)`. It writes those proposed values into the same
+pending `PolicyAllocation` and highlights a combined percentage over 100%; it
+does not settle purchases, collect tax, or apply policy itself. The next
+successful `PrintMoney()` remains an explicit issuance followed by conserved
+policy transfers, not expenditure of the weekly-tax statistic.
+
 ## Neutral provinces and absorption
 
 A neutral province receives a provisional local ledger, a local treasury, and
@@ -81,8 +153,9 @@ When a nation absorbs a neutral province, the complete local account set,
 including any active construction escrows, migrates to the national ledger.
 The local treasury balance is credited 1:1 to the national treasury, actor
 balances are preserved, local recorded supply falls to zero, and national
-recorded supply rises by exactly the absorbed amount. The migration is a
-currency-ledger move, not issuance.
+recorded supply rises by exactly the absorbed amount. Combined supply across
+the two ledgers is unchanged. The migration is a currency-ledger move, not
+issuance.
 
 ## Construction capital
 

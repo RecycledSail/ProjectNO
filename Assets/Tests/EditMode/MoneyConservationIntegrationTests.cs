@@ -104,11 +104,44 @@ public class MoneyConservationIntegrationTests
         Assert.That(Balance(context.Treasury),
             Is.EqualTo(startingTreasury + actualSettlementTax - 300L));
 
+        long treasuryBeforeGdp = Balance(context.Treasury);
+        long weeklyTaxBeforeGdp = GetLong(context.Ledger, "WeeklyTaxRevenue");
+        long firstPopulationBeforeGdp = Balance(context.FirstPopulation);
+        long secondPopulationBeforeGdp = Balance(context.SecondPopulation);
+        long producerBeforeGdp = Balance(context.Producer);
+        long companyBeforeGdp = Balance(context.ConstructionCompany);
+        long completedBuildingBeforeGdp = Balance(completedBuilding);
+        long supplierBeforeGdp = Balance(context.InputSupplier);
+        long supplyBeforeGdp = GetLong(context.Ledger, "MoneySupply");
+        int transactionsBeforeGdp = Transactions(context.Ledger).Count;
+        int gdpHistoryBefore = ((ICollection)ReflectionTestHelpers.Get(
+            context.Nation, "GDPHistory")).Count;
+
         InvokeEconomicEngine("UpdateGDPWeekly",
             TestEconomyFactory.ListOf("Nation", context.Nation));
 
         Assert.That(GetLong(context.Nation, "GDP"), Is.EqualTo(1_180L));
         Assert.That(GetLong(context.Nation, "GDPAverage"), Is.EqualTo(1_180L));
+        Assert.That(((ICollection)ReflectionTestHelpers.Get(
+            context.Nation, "GDPHistory")).Count, Is.EqualTo(gdpHistoryBefore + 1));
+        Assert.That(((IEnumerable)ReflectionTestHelpers.Get(context.Nation, "GDPHistory"))
+            .Cast<object>().Select(value => Convert.ToInt64(value)),
+            Is.EqualTo(new[] { 1_180L }));
+        Assert.That(Balance(context.Treasury), Is.EqualTo(treasuryBeforeGdp));
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"),
+            Is.EqualTo(weeklyTaxBeforeGdp));
+        Assert.That(GetLong(context.Budget, "WeeklyTaxRevenue"),
+            Is.EqualTo(weeklyTaxBeforeGdp));
+        Assert.That(Balance(context.FirstPopulation), Is.EqualTo(firstPopulationBeforeGdp));
+        Assert.That(Balance(context.SecondPopulation), Is.EqualTo(secondPopulationBeforeGdp));
+        Assert.That(Balance(context.Producer), Is.EqualTo(producerBeforeGdp));
+        Assert.That(Balance(context.ConstructionCompany), Is.EqualTo(companyBeforeGdp));
+        Assert.That(Balance(completedBuilding), Is.EqualTo(completedBuildingBeforeGdp));
+        Assert.That(Balance(context.InputSupplier), Is.EqualTo(supplierBeforeGdp));
+        Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(supplyBeforeGdp));
+        Assert.That(GetLong(context.Budget, "MoneySupply"), Is.EqualTo(supplyBeforeGdp));
+        Assert.That(Transactions(context.Ledger), Has.Count.EqualTo(transactionsBeforeGdp));
+        AssertAudit(context.Ledger, supplyBeforeGdp);
         Assert.That(GetInt(Product(context.NationMarket, Food), "Stock"), Is.EqualTo(80));
         Assert.That(GetInt(Product(context.NationMarket, Input), "Stock"), Is.EqualTo(8));
         Assert.That(GetInt(Product(context.NationMarket, Output), "Stock"), Is.EqualTo(4));
@@ -134,23 +167,46 @@ public class MoneyConservationIntegrationTests
     }
 
     [Test]
-    public void ExplicitMint_IncreasesSupplyByExactlyTheIssuedAmount()
+    public void PolicyIssuance_MintsOnceRedistributesAndAppliesEffectsExactly()
     {
         object nation = TestEconomyFactory.NewNation("MoneyConservationMintNation", 400L);
-        Initialize(nation);
+        object province = TestEconomyFactory.NewProvince(
+            10_002, "MoneyConservationPolicyProvince");
+        Assert.That(ReflectionTestHelpers.Call<bool>(
+            nation, "AddProvinces", province), Is.True);
+        ReflectionTestHelpers.Set(nation, "capital", province);
+        object population = AddPopulation(
+            province, "MoneyConservationPolicyCulture", 10_000, 0L);
+        Call(province, "InitializePopulation");
+        Initialize(nation, province);
         object ledger = ReflectionTestHelpers.Get(nation, "Ledger");
         object treasury = ReflectionTestHelpers.Get(nation, "Account");
+        object budget = ReflectionTestHelpers.Get(nation, "governmentBudget");
+        object policy = ReflectionTestHelpers.Get(budget, "Policy");
+        ReflectionTestHelpers.Set(policy, "ResearchFund", 25L);
+        ReflectionTestHelpers.Set(policy, "MilitarySalary", 20L);
+        ReflectionTestHelpers.Set(policy, "RealEstateFund", 30L);
         long capturedSupply = GetLong(ledger, "MoneySupply");
 
-        Assert.That(ReflectionTestHelpers.Call<bool>(ledger, "TryMint",
-            nation, treasury, 75L, "explicit policy issuance"), Is.True);
+        Assert.That(Call(budget, "PrintMoney"), Is.EqualTo(true));
 
         Assert.That(GetLong(ledger, "MoneySupply"), Is.EqualTo(capturedSupply + 75L));
-        Assert.That(Balance(treasury), Is.EqualTo(475L));
+        Assert.That(Balance(treasury), Is.EqualTo(425L));
+        Assert.That(Balance(population), Is.EqualTo(50L));
+        Assert.That(GetLong(nation, "researchFund"), Is.EqualTo(25L));
+        Assert.That((double)ReflectionTestHelpers.Get(population, "livingStandard"),
+            Is.EqualTo(4.0));
+        Assert.That(ReflectionTestHelpers.Get(budget, "Policy"), Is.Not.SameAs(policy));
+        Assert.That(GetLong(ReflectionTestHelpers.Get(budget, "Policy"), "Total"), Is.Zero);
         List<object> mints = Transactions(ledger).Where(record =>
             ReflectionTestHelpers.Get(record, "Kind").ToString() == "Mint").ToList();
         Assert.That(mints, Has.Count.EqualTo(1));
         Assert.That(GetLong(mints[0], "Amount"), Is.EqualTo(75L));
+        Assert.That(ReflectionTestHelpers.Get(mints[0], "Reason"),
+            Is.EqualTo("policy issuance"));
+        Assert.That(Transactions(ledger).Count(record =>
+            ReflectionTestHelpers.Get(record, "Kind").ToString() == "Transfer"),
+            Is.EqualTo(2));
         AssertAudit(ledger, capturedSupply + 75L);
     }
 
