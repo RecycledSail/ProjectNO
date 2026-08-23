@@ -68,6 +68,69 @@ public class BuildingProductionEconomyTests
         Assert.That(TransactionCount(context.Ledger), Is.EqualTo(transactionsBefore));
     }
 
+    [Test]
+    public void ProduceGoodsWeekly_WithCrossLedgerInputSellerRejectsTheCompleteBasketWithoutMutation()
+    {
+        ProductionContext context = CreateContext(
+            new Dictionary<string, int> { [Input] = 2 },
+            new Dictionary<string, int> { [Output] = 3 });
+        object foreignSeller = CreateForeignSeller("building-production-test-foreign-seller");
+        object input = AddProduct(context, Input, 5, foreignSeller, 4);
+        int transactionsBefore = TransactionCount(context.Ledger);
+
+        Call(context.Province, "ProduceGoodsWeekly");
+
+        Assert.That(Balance(context.Building), Is.EqualTo(10L));
+        Assert.That(Balance(foreignSeller), Is.Zero);
+        Assert.That(Balance(context.Treasury), Is.Zero);
+        Assert.That(GetInt(input, "Stock"), Is.EqualTo(4));
+        Assert.That(GetInt(input, "LastDemand"), Is.Zero);
+        Assert.That(Products(context).Contains(Output), Is.False);
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
+        Assert.That(TransactionCount(context.Ledger), Is.EqualTo(transactionsBefore));
+    }
+
+    [Test]
+    public void ProduceGoodsWeekly_WithUnrepresentableOutputQuantitySkipsInputPurchase()
+    {
+        ProductionContext context = CreateContext(
+            new Dictionary<string, int> { [Input] = 1 },
+            new Dictionary<string, int> { [Output] = int.MaxValue });
+        object supplier = AddSeller(context, "building-production-test-supplier");
+        object input = AddProduct(context, Input, 1, supplier, 2);
+        int transactionsBefore = TransactionCount(context.Ledger);
+
+        Call(context.Province, "ProduceGoodsWeekly");
+
+        Assert.That(Balance(context.Building), Is.EqualTo(10L));
+        Assert.That(Balance(supplier), Is.Zero);
+        Assert.That(Balance(context.Treasury), Is.Zero);
+        Assert.That(GetInt(input, "Stock"), Is.EqualTo(2));
+        Assert.That(GetInt(input, "LastDemand"), Is.Zero);
+        Assert.That(Products(context).Contains(Output), Is.False);
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
+        Assert.That(TransactionCount(context.Ledger), Is.EqualTo(transactionsBefore));
+    }
+
+    [Test]
+    public void ProduceGoodsWeekly_WithZeroInputsRegistersOutputUnderTheBuildingAccount()
+    {
+        ProductionContext context = CreateContext(
+            new Dictionary<string, int>(),
+            new Dictionary<string, int> { [Output] = 2 });
+
+        Call(context.Province, "ProduceGoodsWeekly");
+
+        object output = Products(context)[Output];
+        Assert.That(Balance(context.Building), Is.EqualTo(10L));
+        Assert.That(GetInt(output, "Stock"), Is.EqualTo(4));
+        Assert.That(LotQuantities(output), Is.EqualTo(new Dictionary<string, int>
+        {
+            [AccountId(context.Building)] = 4,
+        }));
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
+    }
+
     private static ProductionContext CreateContext(
         Dictionary<string, int> requiredItems,
         Dictionary<string, int> producedItems)
@@ -106,6 +169,17 @@ public class BuildingProductionEconomyTests
     {
         object seller = ReflectionTestHelpers.New("MoneyAccount", id, 0L);
         Assert.That(ReflectionTestHelpers.Call<bool>(context.Ledger, "RegisterEmptyAccount", seller), Is.True);
+        return seller;
+    }
+
+    private static object CreateForeignSeller(string id)
+    {
+        object treasury = ReflectionTestHelpers.New("MoneyAccount", "building-production-test-foreign-treasury", 0L);
+        object seller = ReflectionTestHelpers.New("MoneyAccount", id, 0L);
+        object ledger = ReflectionTestHelpers.New("MoneyLedger", "building-production-test-foreign", new object(), treasury);
+        Assert.That(ReflectionTestHelpers.Call<bool>(ledger, "RegisterInitialAccount", treasury), Is.True);
+        Assert.That(ReflectionTestHelpers.Call<bool>(ledger, "RegisterInitialAccount", seller), Is.True);
+        Call(ledger, "SealInitialization");
         return seller;
     }
 

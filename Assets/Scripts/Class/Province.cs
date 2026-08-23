@@ -186,18 +186,26 @@ public class Province
             if (building == null || building.level <= 0 || building.currentWorkers <= 0)
                 continue;
 
-            double scale = building.ProduceItem();
-            if (scale <= 0.0)
-                continue;
+            try
+            {
+                double scale = building.ProduceItem();
+                if (scale <= 0.0)
+                    continue;
 
-            scale = GetAffordableProductionScale(building, scale);
-            if (scale <= 0.0)
-                continue;
+                scale = GetAffordableProductionScale(building, scale);
+                if (scale <= 0.0 ||
+                    !TryPrepareBuildingOutputs(building, scale, out List<BuildingOutputPlan> outputs) ||
+                    !TryPurchaseBuildingInputs(building, scale))
+                {
+                    continue;
+                }
 
-            if (!TryPurchaseBuildingInputs(building, scale))
-                continue;
-
-            AddBuildingOutputs(building, scale);
+                AddBuildingOutputs(outputs);
+            }
+            catch (OverflowException)
+            {
+                // Invalid recipe arithmetic must not escape a void production cycle.
+            }
         }
     }
 
@@ -264,24 +272,101 @@ public class Province
             requireFullQuantity: true).Success;
     }
 
-    private void AddBuildingOutputs(Building building, double scale)
+    private bool TryPrepareBuildingOutputs(
+        Building building,
+        double scale,
+        out List<BuildingOutputPlan> outputs)
     {
-        foreach (var produceItem in building.buildingType.produceItems)
-        {
-            int amount = (int)Math.Floor(produceItem.Value * scale);
-            if (amount <= 0)
-                continue;
+        outputs = new List<BuildingOutputPlan>();
+        if (building?.Account == null || building.buildingType?.produceItems == null)
+            return false;
 
-            if (!market.Products.TryGetValue(produceItem.Key, out ProductState product))
+        try
+        {
+            foreach (var produceItem in building.buildingType.produceItems)
             {
-                int basePrice = GlobalVariables.PRODUCTS.TryGetValue(produceItem.Key, out Products productData)
-                    ? productData.InitialPrice
-                    : 1;
-                market.AddProduct(produceItem.Key, basePrice);
-                product = market.Products[produceItem.Key];
+                if (produceItem.Value <= 0)
+                    continue;
+
+                if (string.IsNullOrEmpty(produceItem.Key))
+                    return false;
+
+                int amount = checked((int)Math.Floor(produceItem.Value * scale));
+                if (amount <= 0)
+                    continue;
+
+                bool isNewProduct = !market.Products.TryGetValue(produceItem.Key, out ProductState product);
+                if (isNewProduct)
+                {
+                    int basePrice = GlobalVariables.PRODUCTS.TryGetValue(produceItem.Key, out Products productData)
+                        ? productData.InitialPrice
+                        : 1;
+                    product = new ProductState(produceItem.Key, basePrice);
+                }
+
+                _ = checked(product.LastSupply + amount);
+                product.Inventory.ValidateCanReceive(new Dictionary<MoneyAccount, int>
+                {
+                    [building.Account] = amount
+                });
+                outputs.Add(new BuildingOutputPlan(
+                    produceItem.Key,
+                    product,
+                    amount,
+                    isNewProduct,
+                    building.Account));
             }
 
-            product.AddSupply(building.Account, amount);
+            return true;
+        }
+        catch (OverflowException)
+        {
+            outputs = null;
+            return false;
+        }
+        catch (ArgumentException)
+        {
+            outputs = null;
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            outputs = null;
+            return false;
+        }
+    }
+
+    private void AddBuildingOutputs(IReadOnlyList<BuildingOutputPlan> outputs)
+    {
+        foreach (BuildingOutputPlan output in outputs)
+        {
+            if (output.IsNewProduct)
+                market.Products.Add(output.ProductName, output.Product);
+
+            output.Product.AddSupply(output.Owner, output.Amount);
+        }
+    }
+
+    private sealed class BuildingOutputPlan
+    {
+        public string ProductName { get; }
+        public ProductState Product { get; }
+        public int Amount { get; }
+        public bool IsNewProduct { get; }
+        public MoneyAccount Owner { get; }
+
+        public BuildingOutputPlan(
+            string productName,
+            ProductState product,
+            int amount,
+            bool isNewProduct,
+            MoneyAccount owner)
+        {
+            ProductName = productName;
+            Product = product;
+            Amount = amount;
+            IsNewProduct = isNewProduct;
+            Owner = owner;
         }
     }
 
