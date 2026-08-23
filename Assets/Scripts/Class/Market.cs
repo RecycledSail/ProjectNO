@@ -45,6 +45,7 @@ public class ProvinceMarket
         }
     }
 
+    [Obsolete("Food consumption must use MarketSettlement.TryPurchase.")]
     public void ConsumeBasicFoods(string productName, int amount)
     {
         // 소비 처리 로직 구현
