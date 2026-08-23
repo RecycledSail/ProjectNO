@@ -190,44 +190,78 @@ public class Province
             if (scale <= 0.0)
                 continue;
 
-            scale = GetAvailableProductionScale(building, scale);
+            scale = GetAffordableProductionScale(building, scale);
             if (scale <= 0.0)
                 continue;
 
-            ConsumeBuildingInputs(building, scale);
+            if (!TryPurchaseBuildingInputs(building, scale))
+                continue;
+
             AddBuildingOutputs(building, scale);
         }
     }
 
-    private double GetAvailableProductionScale(Building building, double requestedScale)
+    private double GetAffordableProductionScale(Building building, double requestedScale)
     {
+        if (building?.Account == null || building.buildingType?.requireItems == null ||
+            requestedScale <= 0.0 || double.IsNaN(requestedScale))
+        {
+            return 0.0;
+        }
+
         double availableScale = requestedScale;
+        long oneScaleCost = 0L;
         foreach (var requiredItem in building.buildingType.requireItems)
         {
             if (requiredItem.Value <= 0)
                 continue;
 
-            if (!market.Products.TryGetValue(requiredItem.Key, out ProductState product))
+            if (string.IsNullOrEmpty(requiredItem.Key) ||
+                !market.Products.TryGetValue(requiredItem.Key, out ProductState product) ||
+                product.Price <= 0)
+            {
                 return 0.0;
+            }
 
             availableScale = Math.Min(availableScale, (double)product.Stock / requiredItem.Value);
+            oneScaleCost = checked(oneScaleCost + checked((long)requiredItem.Value * product.Price));
         }
+
+        if (oneScaleCost > 0L)
+            availableScale = Math.Min(availableScale, (double)building.Account.Balance / oneScaleCost);
 
         return availableScale;
     }
 
-    private void ConsumeBuildingInputs(Building building, double scale)
+    private bool TryPurchaseBuildingInputs(Building building, double scale)
     {
+        if (building?.Account == null || ActiveLedger == null ||
+            building.buildingType?.requireItems == null)
+        {
+            return false;
+        }
+
+        List<PurchaseRequest> requests = new();
         foreach (var requiredItem in building.buildingType.requireItems)
         {
-            int amount = (int)Math.Floor(requiredItem.Value * scale);
+            int amount = checked((int)Math.Floor(requiredItem.Value * scale));
             if (amount <= 0)
                 continue;
 
-            ProductState product = market.Products[requiredItem.Key];
-            product.Stock -= amount;
-            product.LastDemand += amount;
+            if (string.IsNullOrEmpty(requiredItem.Key) ||
+                !market.Products.TryGetValue(requiredItem.Key, out ProductState product))
+            {
+                return false;
+            }
+
+            requests.Add(new PurchaseRequest(product, amount));
         }
+
+        return requests.Count == 0 || MarketSettlement.TryPurchaseBasket(
+            requests,
+            building.Account,
+            ActiveLedger,
+            requireFullQuantity: true).Success;
     }
 
     private void AddBuildingOutputs(Building building, double scale)
