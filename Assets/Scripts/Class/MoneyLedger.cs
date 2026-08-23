@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 public enum MoneyTransactionKind
 {
@@ -193,6 +194,108 @@ public sealed class MoneyLedger
             registeredBalance = 0;
             return false;
         }
+    }
+
+    internal bool TryMigrateEntireLedgerTo(
+        MoneyLedger destination,
+        IReadOnlyList<MoneyAccount> sourceAccounts,
+        MoneyAccount sourceTreasury,
+        MoneyAccount destinationTreasury,
+        string reason,
+        out string error)
+    {
+        error = null;
+        if (destination == null || ReferenceEquals(this, destination) ||
+            sourceAccounts == null || sourceTreasury == null || destinationTreasury == null)
+        {
+            error = "The migration ledgers and accounts are required.";
+            return false;
+        }
+
+        if (!_initializationSealed || !destination._initializationSealed)
+        {
+            error = "Both ledgers must be sealed before migration.";
+            return false;
+        }
+
+        if (!destination.IsRegistered(destinationTreasury))
+        {
+            error = "The destination treasury is not registered to its ledger.";
+            return false;
+        }
+
+        HashSet<MoneyAccount> sourceAccountSet = new();
+        long migratedSupply = 0;
+        long treasuryBalance;
+        try
+        {
+            foreach (MoneyAccount account in sourceAccounts)
+            {
+                if (account == null || !sourceAccountSet.Add(account) || !IsRegistered(account))
+                {
+                    error = "Every migration account must be registered to the source ledger exactly once.";
+                    return false;
+                }
+
+                migratedSupply = checked(migratedSupply + account.Balance);
+            }
+
+            if (!sourceAccountSet.Contains(sourceTreasury))
+            {
+                error = "The source treasury must be included in the migration account set.";
+                return false;
+            }
+
+            if (!_registeredAccounts.SetEquals(sourceAccountSet))
+            {
+                error = "The migration account set does not include every source-ledger account.";
+                return false;
+            }
+
+            if (!Audit(out long sourceBalance) || sourceBalance != migratedSupply ||
+                !destination.Audit(out _))
+            {
+                error = "A ledger failed its pre-migration audit.";
+                return false;
+            }
+
+            treasuryBalance = sourceTreasury.Balance;
+            _ = checked(destinationTreasury.Balance + treasuryBalance);
+            _ = checked(destination.MoneySupply + migratedSupply);
+        }
+        catch (OverflowException)
+        {
+            error = "The migration would exceed Int64 capacity.";
+            return false;
+        }
+
+        foreach (MoneyAccount account in sourceAccounts)
+        {
+            _registeredAccounts.Remove(account);
+            if (!ReferenceEquals(account, sourceTreasury))
+            {
+                destination._registeredAccounts.Add(account);
+                account.Ledger = destination;
+            }
+        }
+
+        sourceTreasury.ApplyDelta(-treasuryBalance);
+        sourceTreasury.Ledger = null;
+        MoneySupply -= migratedSupply;
+        destinationTreasury.ApplyDelta(treasuryBalance);
+        destination.MoneySupply += migratedSupply;
+
+        List<string> sourceIds = sourceAccounts.Select(account => account.Id).ToList();
+        List<string> destinationIds = sourceAccounts
+            .Where(account => !ReferenceEquals(account, sourceTreasury))
+            .Select(account => account.Id)
+            .Append(destinationTreasury.Id)
+            .ToList();
+        AppendRecord(MoneyTransactionKind.Migration, sourceIds, destinationIds,
+            migratedSupply, reason);
+        destination.AppendRecord(MoneyTransactionKind.Migration, sourceIds, destinationIds,
+            migratedSupply, reason);
+        return true;
     }
 
     private bool TryValidateBatch(

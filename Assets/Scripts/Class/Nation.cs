@@ -93,6 +93,9 @@ public class Nation : IBuildingInvestor
         return provinces.Find(x => x.Equals(province)) != null;
     }
 
+    internal bool CanAddProvince(Province province) =>
+        province != null && province.nation == null && !HasProvinces(province);
+
     /// <summary>
     /// 프로빈스를 추가하는 메서드
     /// 추가 시도 후 성공 여부에 따라 boolean 반환
@@ -101,13 +104,11 @@ public class Nation : IBuildingInvestor
     /// <returns>추가 가능하면 true, 아니면 false</returns>
     public bool AddProvinces(Province province)
     {
-        if (!HasProvinces(province))
-        {
-            provinces.Add(province);
-            province.AddNation(this);
-            return true;
-        }
-        else return false;
+        if (!CanAddProvince(province)) return false;
+
+        provinces.Add(province);
+        province.AddNation(this);
+        return true;
     }
 
     /// <summary>

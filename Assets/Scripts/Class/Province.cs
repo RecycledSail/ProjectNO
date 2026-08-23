@@ -105,6 +105,39 @@ public class Province
         this.nation = nation;
     }
 
+    internal bool TryCollectMigrationAccounts(
+        out List<MoneyAccount> accounts,
+        out string error)
+    {
+        accounts = new List<MoneyAccount>();
+        HashSet<MoneyAccount> distinctAccounts = new();
+
+        foreach (ProvinceEthnicPop population in provinceEthnicPops)
+        {
+            if (population?.Account == null || !distinctAccounts.Add(population.Account))
+            {
+                error = "The province has an invalid population account.";
+                return false;
+            }
+
+            accounts.Add(population.Account);
+        }
+
+        foreach (Building building in buildings.Values)
+        {
+            if (building?.Account == null || !distinctAccounts.Add(building.Account))
+            {
+                error = "The province has an invalid building account.";
+                return false;
+            }
+
+            accounts.Add(building.Account);
+        }
+
+        error = null;
+        return true;
+    }
+
     /// <summary>
     /// Province에 국가를 제거하는 함수
     /// Province 클래스에서 직접 실행되지 않음에 주의
