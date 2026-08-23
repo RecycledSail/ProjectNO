@@ -247,8 +247,7 @@ public class Province
                 product = market.Products[produceItem.Key];
             }
 
-            product.Stock += amount;
-            product.LastSupply += amount;
+            product.AddSupply(building.Account, amount);
         }
     }
 
@@ -295,13 +294,16 @@ public class Province
     /// </summary>
     private void BaseProduction()
     {
-        long provinceProduction = 1000;
+        if (market == null || population <= 0 || provinceEthnicPops.Count == 0)
+            return;
 
-        foreach (ProvinceEthnicPop pep in provinceEthnicPops)
-        {
-            long ethnicProduction = (long)(provinceProduction * ((double)pep.population / population));
-            pep.property = ethnicProduction;
-        }
+        Dictionary<ProvinceEthnicPop, long> populationWeights = provinceEthnicPops.ToDictionary(
+            pep => pep,
+            pep => pep.population);
+        Dictionary<ProvinceEthnicPop, long> productionByPopulation = ProportionalAllocator.Allocate(
+            100,
+            populationWeights,
+            pep => pep.Account.Id);
 
         foreach (string prodName in GlobalVariables.CATEGORIES["basic_food"])
         {
@@ -309,7 +311,11 @@ public class Province
             if (market.Products.TryGetValue(prodName, out ps))
             {
                 // 여기 적절히 수절
-                ps.Stock += 100;
+                foreach (KeyValuePair<ProvinceEthnicPop, long> share in productionByPopulation)
+                {
+                    if (share.Value > 0)
+                        ps.AddSupply(share.Key.Account, checked((int)share.Value));
+                }
             }
         }
     }

@@ -186,9 +186,11 @@ public class ConstructionInvestmentTests
             {
                 object market = ReflectionTestHelpers.New("ProvinceMarket", "Target");
                 ReflectionTestHelpers.Call<object>(market, "AddProduct", requiredMaterial, 1);
-                ((IDictionary)ReflectionTestHelpers.Get(market, "Products"))[requiredMaterial]
-                    .GetType().GetField("Stock").SetValue(
-                        ((IDictionary)ReflectionTestHelpers.Get(market, "Products"))[requiredMaterial], materialStock);
+                object material = ((IDictionary)ReflectionTestHelpers.Get(
+                    market, "Products"))[requiredMaterial];
+                object supplier = ReflectionTestHelpers.New("MoneyAccount",
+                    $"test:material:{requiredMaterial}", 0L);
+                ReflectionTestHelpers.Call<object>(material, "AddSupply", supplier, materialStock);
                 ReflectionTestHelpers.Set(target, "market", market);
             }
 

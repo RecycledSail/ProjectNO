@@ -114,7 +114,21 @@ public class NationMarket
 public class ProductState
 {
     public string ProductName;
-    public int Stock;        // 현재 재고
+    public ProductInventory Inventory { get; } = new();
+    public int Stock
+    {
+        get => Inventory.TotalQuantity;
+        internal set
+        {
+            if (value < 0) throw new ArgumentOutOfRangeException(nameof(value));
+
+            int current = Stock;
+            if (value > current)
+                throw new InvalidOperationException("Stock increases must identify a supplier.");
+            if (value < current)
+                CommitSale(PlanSale(current - value));
+        }
+    }
     public int Price;        // 현재 가격
     public int LastPrice;    // 지난 턴 가격(가격 업데이트용)
     public int LastDemand;   // 최근 턴 소비량(가격 계산용)
@@ -125,8 +139,36 @@ public class ProductState
     {
         ProductName = name;
         Price = Math.Max(1, basePrice);
-        Stock = 0;
         LastDemand = 0;
         LastSupply = 0;
+    }
+
+    public void AddSupply(MoneyAccount supplier, int amount)
+    {
+        int nextLastSupply = checked(LastSupply + amount);
+        Inventory.Add(supplier, amount);
+        LastSupply = nextLastSupply;
+    }
+
+    public IReadOnlyList<SupplierSale> PlanSale(int amount) => Inventory.PlanSale(amount);
+
+    public void CommitSale(IReadOnlyList<SupplierSale> sale) => Inventory.CommitSale(sale);
+
+    public void TransferAllStockTo(ProductState destination)
+    {
+        if (destination == null) throw new ArgumentNullException(nameof(destination));
+        if (!string.Equals(ProductName, destination.ProductName, StringComparison.Ordinal))
+            throw new ArgumentException("Products must match when transferring stock.", nameof(destination));
+        if (ReferenceEquals(this, destination) || Stock == 0)
+            return;
+
+        destination.Inventory.ValidateCanReceive(Inventory.Lots);
+        int moved = Stock;
+        int nextLastSupply = checked(destination.LastSupply + moved);
+        foreach (KeyValuePair<MoneyAccount, int> lot in Inventory.Lots)
+            destination.Inventory.Add(lot.Key, lot.Value);
+
+        destination.LastSupply = nextLastSupply;
+        Inventory.Clear();
     }
 }

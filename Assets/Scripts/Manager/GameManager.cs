@@ -544,8 +544,7 @@ public class GameManager : MonoBehaviour
                 {
                     string productName = kv.Key;
                     ProductState pstate = kv.Value;
-                    int amount = pstate.Stock;
-                    if (amount <= 0) continue;
+                    if (pstate.Stock <= 0) continue;
 
                     // ensure nation market has the product
                     if (!nation.market.Products.ContainsKey(productName))
@@ -558,11 +557,7 @@ public class GameManager : MonoBehaviour
                     }
 
                     // move stock
-                    nation.market.Products[productName].Stock += amount;
-                    nation.market.Products[productName].LastSupply += amount;
-
-                    // remove from province
-                    pstate.Stock = 0;
+                    pstate.TransferAllStockTo(nation.market.Products[productName]);
                 }
             }
         }
