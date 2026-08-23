@@ -149,6 +149,145 @@ public class MarketSettlementTests
         Assert.That(TransactionCount(context.Ledger), Is.EqualTo(transactions));
     }
 
+    [Test]
+    public void TryPurchaseBasket_SettlesMultipleProductsAsOneExactBasket()
+    {
+        SettlementContext context = CreateContext(1000L);
+        object wheatSeller = AddSeller(context, "basket:wheat-seller", 0L);
+        object coalSeller = AddSeller(context, "basket:coal-seller", 0L);
+        object wheat = NewProduct("BasketWheat", 10, (wheatSeller, 5));
+        object coal = NewProduct("BasketCoal", 20, (coalSeller, 3));
+        Seal(context);
+        long supplyBefore = GetLong(context.Ledger, "MoneySupply");
+        IList requests = ListOf(
+            "PurchaseRequest",
+            New("PurchaseRequest", wheat, 2),
+            New("PurchaseRequest", coal, 3));
+
+        object result = InvokeStatic(
+            "MarketSettlement", "TryPurchaseBasket", requests, context.Buyer, context.Ledger, true);
+
+        Assert.That(GetBool(result, "Success"), Is.True);
+        Assert.That(((ICollection)ReflectionTestHelpers.Get(result, "Purchases")).Count,
+            Is.EqualTo(2));
+        Assert.That(GetLong(result, "TotalPurchasedQuantity"), Is.EqualTo(5L));
+        Assert.That(GetLong(result, "GrossAmount"), Is.EqualTo(80L));
+        Assert.That(GetLong(result, "TaxAmount"), Is.EqualTo(8L));
+        Assert.That(Balance(context.Buyer), Is.EqualTo(920L));
+        Assert.That(Balance(context.Treasury), Is.EqualTo(8L));
+        Assert.That(Balance(wheatSeller), Is.EqualTo(18L));
+        Assert.That(Balance(coalSeller), Is.EqualTo(54L));
+        Assert.That(GetInt(wheat, "Stock"), Is.EqualTo(3));
+        Assert.That(GetInt(wheat, "LastDemand"), Is.EqualTo(2));
+        Assert.That(GetInt(coal, "Stock"), Is.Zero);
+        Assert.That(GetInt(coal, "LastDemand"), Is.EqualTo(3));
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(8L));
+        Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(supplyBefore));
+    }
+
+    [Test]
+    public void TryPurchaseBasket_DuplicateProductRejectsEverythingAtomically()
+    {
+        SettlementContext context = CreateContext(1000L);
+        object seller = AddSeller(context, "duplicate:seller", 0L);
+        object product = NewProduct("DuplicateProduct", 10, (seller, 10));
+        Seal(context);
+        SettlementSnapshot before = Snapshot(context, product, seller);
+        IList requests = ListOf(
+            "PurchaseRequest",
+            New("PurchaseRequest", product, 2),
+            New("PurchaseRequest", product, 3));
+
+        object result = InvokeStatic(
+            "MarketSettlement", "TryPurchaseBasket", requests, context.Buyer, context.Ledger, false);
+
+        Assert.That(GetBool(result, "Success"), Is.False);
+        AssertUnchanged(before, context, product, seller);
+    }
+
+    [Test]
+    public void TryPurchase_AggregatesBuyerAndTreasuryWhenBothAlsoOwnSellerLots()
+    {
+        SettlementContext context = CreateContext(1000L);
+        object product = NewProduct(
+            "AliasedActors",
+            10,
+            (context.Buyer, 10),
+            (context.Treasury, 10));
+        Seal(context);
+        long supplyBefore = GetLong(context.Ledger, "MoneySupply");
+
+        object result = TryPurchase(product, context.Buyer, 10, context.Ledger);
+
+        Assert.That(GetBool(result, "Success"), Is.True);
+        Assert.That(GetLong(result, "GrossAmount"), Is.EqualTo(100L));
+        Assert.That(GetLong(result, "TaxAmount"), Is.EqualTo(10L));
+        Assert.That(Balance(context.Buyer), Is.EqualTo(945L));
+        Assert.That(Balance(context.Treasury), Is.EqualTo(55L));
+        Assert.That(GetInt(product, "Stock"), Is.EqualTo(10));
+        Assert.That(GetInt(product, "LastDemand"), Is.EqualTo(10));
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(10L));
+        Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(supplyBefore));
+    }
+
+    [Test]
+    public void TryPurchase_WhenTaxMultiplicationOverflowsRejectsEverythingAtomically()
+    {
+        SettlementContext context = CreateContext(long.MaxValue);
+        object seller = AddSeller(context, "tax-overflow:seller", 0L);
+        object product = NewProduct(
+            "TaxOverflow", int.MaxValue, (seller, int.MaxValue));
+        Seal(context);
+        SettlementSnapshot before = Snapshot(context, product, seller);
+
+        object result = TryPurchase(
+            product, context.Buyer, int.MaxValue, context.Ledger);
+
+        Assert.That(GetBool(result, "Success"), Is.False);
+        AssertUnchanged(before, context, product, seller);
+    }
+
+    [Test]
+    public void TryPurchase_WhenWeeklyTaxWouldOverflowRejectsEverythingAtomically()
+    {
+        SettlementContext context = CreateContext(1000L);
+        object seller = AddSeller(context, "weekly-overflow:seller", 0L);
+        object product = NewProduct("WeeklyTaxOverflow", 10, (seller, 10));
+        Seal(context);
+        IList seedEntries = ListOf(
+            "MoneyTransferEntry",
+            New("MoneyTransferEntry", context.Buyer, -1L),
+            New("MoneyTransferEntry", seller, 1L));
+        Assert.That(Call<bool>(
+            context.Ledger, "TryTransferBatch", seedEntries, "Seed weekly tax capacity", long.MaxValue),
+            Is.True);
+        SettlementSnapshot before = Snapshot(context, product, seller);
+
+        object result = TryPurchase(product, context.Buyer, 1, context.Ledger);
+
+        Assert.That(GetBool(result, "Success"), Is.False);
+        AssertUnchanged(before, context, product, seller);
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(long.MaxValue));
+    }
+
+    [Test]
+    public void TryPurchaseBasket_RequireFullQuantityRejectsFundsDrivenClampAtomically()
+    {
+        SettlementContext context = CreateContext(25L);
+        object seller = AddSeller(context, "full-funds:seller", 0L);
+        object product = NewProduct("FullFunds", 10, (seller, 10));
+        Seal(context);
+        SettlementSnapshot before = Snapshot(context, product, seller);
+        IList requests = ListOf(
+            "PurchaseRequest", New("PurchaseRequest", product, 3));
+
+        object result = InvokeStatic(
+            "MarketSettlement", "TryPurchaseBasket", requests, context.Buyer, context.Ledger, true);
+
+        Assert.That(GetBool(result, "Success"), Is.False);
+        AssertUnchanged(before, context, product, seller);
+    }
+
     private static SettlementContext CreateContext(long buyerBalance, string prefix = "domestic")
     {
         object treasury = New("MoneyAccount", $"{prefix}:treasury", 0L);

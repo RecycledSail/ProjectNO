@@ -8,6 +8,7 @@ using NUnit.Framework;
 public class BuildingProductionEconomyTests
 {
     private const string Input = "building-production-test-input";
+    private const string SecondInput = "building-production-test-second-input";
     private const string MissingInput = "building-production-test-missing-input";
     private const string Output = "building-production-test-output";
     private const string BuildingName = "BuildingProductionEconomyTestBuilding";
@@ -131,11 +132,72 @@ public class BuildingProductionEconomyTests
         Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
     }
 
+    [Test]
+    public void ProduceGoodsWeekly_WhenFundsCoverOnlyFractionalInputScaleProducesNothing()
+    {
+        ProductionContext context = CreateContext(
+            new Dictionary<string, int> { [Input] = 2 },
+            new Dictionary<string, int> { [Output] = 2 });
+        object supplier = AddSeller(context, "building-production-test-fractional-supplier");
+        object input = AddProduct(context, Input, 6, supplier, 4);
+        int transactionsBefore = TransactionCount(context.Ledger);
+
+        Call(context.Province, "ProduceGoodsWeekly");
+
+        Assert.That(Balance(context.Building), Is.EqualTo(10L));
+        Assert.That(Balance(supplier), Is.Zero);
+        Assert.That(Balance(context.Treasury), Is.Zero);
+        Assert.That(GetInt(input, "Stock"), Is.EqualTo(4));
+        Assert.That(GetInt(input, "LastDemand"), Is.Zero);
+        Assert.That(Products(context).Contains(Output), Is.False);
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
+        Assert.That(TransactionCount(context.Ledger), Is.EqualTo(transactionsBefore));
+    }
+
+    [Test]
+    public void ProduceGoodsWeekly_WithTwoCompleteInputQuantaSettlesEveryInputAndOutputExactly()
+    {
+        ProductionContext context = CreateContext(
+            new Dictionary<string, int> { [Input] = 1, [SecondInput] = 2 },
+            new Dictionary<string, int> { [Output] = 3 },
+            40L,
+            2L);
+        object firstSupplier = AddSeller(context, "building-production-test-first-supplier");
+        object secondSupplier = AddSeller(context, "building-production-test-second-supplier");
+        object firstInput = AddProduct(context, Input, 10, firstSupplier, 2);
+        object secondInput = AddProduct(context, SecondInput, 5, secondSupplier, 4);
+        long supplyBefore = GetLong(context.Ledger, "MoneySupply");
+
+        Call(context.Province, "ProduceGoodsWeekly");
+
+        object output = Products(context)[Output];
+        Assert.That(Balance(context.Building), Is.Zero);
+        Assert.That(Balance(firstSupplier), Is.EqualTo(18L));
+        Assert.That(Balance(secondSupplier), Is.EqualTo(18L));
+        Assert.That(Balance(context.Treasury), Is.EqualTo(4L));
+        Assert.That(GetInt(firstInput, "Stock"), Is.Zero);
+        Assert.That(GetInt(firstInput, "LastDemand"), Is.EqualTo(2));
+        Assert.That(GetInt(secondInput, "Stock"), Is.Zero);
+        Assert.That(GetInt(secondInput, "LastDemand"), Is.EqualTo(4));
+        Assert.That(GetInt(output, "Stock"), Is.EqualTo(6));
+        Assert.That(LotQuantities(output), Is.EqualTo(new Dictionary<string, int>
+        {
+            [AccountId(context.Building)] = 6,
+        }));
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(4L));
+        Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(supplyBefore));
+        Assert.That(ReflectionTestHelpers.Call<bool>(
+            context.Ledger, "Audit", (object)null), Is.True);
+    }
+
     private static ProductionContext CreateContext(
         Dictionary<string, int> requiredItems,
-        Dictionary<string, int> producedItems)
+        Dictionary<string, int> producedItems,
+        long initialCapital = 10L,
+        long currentWorkers = 2L)
     {
-        object nation = TestEconomyFactory.NewNation("BuildingProductionNation", 10L);
+        object nation = TestEconomyFactory.NewNation(
+            "BuildingProductionNation", initialCapital);
         object province = TestEconomyFactory.NewProvince(1, "BuildingProductionProvince");
         Assert.That(ReflectionTestHelpers.Call<bool>(nation, "AddProvinces", province), Is.True);
 
@@ -147,11 +209,11 @@ public class BuildingProductionEconomyTests
         ReflectionTestHelpers.Set(type, "produceItems", producedItems);
         ReflectionTestHelpers.Set(type, "workerNeeded", 1L);
         object recipe = ReflectionTestHelpers.New("BuildingRecipe", BuildingName);
-        ReflectionTestHelpers.Set(recipe, "InitialCapital", 10L);
+        ReflectionTestHelpers.Set(recipe, "InitialCapital", initialCapital);
         Recipes[BuildingName] = recipe;
 
         object building = ReflectionTestHelpers.Find("BuildingFactory").GetMethod("Create")
-            .Invoke(null, new[] { type, province, (object)1, 2L });
+            .Invoke(null, new[] { type, province, (object)1, currentWorkers });
         ((IDictionary)ReflectionTestHelpers.Get(province, "buildings"))[type] = building;
 
         ReflectionTestHelpers.Find("EconomicInitializer").GetMethod("Initialize").Invoke(

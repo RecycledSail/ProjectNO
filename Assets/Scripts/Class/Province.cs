@@ -219,10 +219,13 @@ public class Province
 
         double availableScale = requestedScale;
         long oneScaleCost = 0L;
+        bool requiresDiscreteQuantum = false;
         foreach (var requiredItem in building.buildingType.requireItems)
         {
             if (requiredItem.Value <= 0)
                 continue;
+
+            requiresDiscreteQuantum = true;
 
             if (string.IsNullOrEmpty(requiredItem.Key) ||
                 !market.Products.TryGetValue(requiredItem.Key, out ProductState product) ||
@@ -238,7 +241,7 @@ public class Province
         if (oneScaleCost > 0L)
             availableScale = Math.Min(availableScale, (double)building.Account.Balance / oneScaleCost);
 
-        return availableScale;
+        return requiresDiscreteQuantum ? Math.Floor(availableScale) : availableScale;
     }
 
     private bool TryPurchaseBuildingInputs(Building building, double scale)

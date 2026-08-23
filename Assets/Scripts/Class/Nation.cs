@@ -101,7 +101,7 @@ public class Nation : IBuildingInvestor
     /// <returns>추가 가능하면 true, 아니면 false</returns>
     public bool AddProvinces(Province province)
     {
-        if (!CanAddProvince(province)) return false;
+        if (!CanAddProvince(province) || province.LocalLedger != null) return false;
 
         provinces.Add(province);
         province.AddNation(this);

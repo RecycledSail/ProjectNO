@@ -305,7 +305,12 @@ public static class GlobalVariables
 
     public static void LoadNations()
     {
-        var gameData = LoadJsonFile<GameDataFormat.NationsWrapper>("Nations");
+        LoadNations(LoadJsonFile<GameDataFormat.NationsWrapper>("Nations"));
+    }
+
+    internal static void LoadNations(GameDataFormat.NationsWrapper gameData)
+    {
+        ValidateNationEconomicData(gameData);
         // Load Nations
         foreach (var n in gameData.nations)
         {
@@ -336,7 +341,12 @@ public static class GlobalVariables
     }
     public static void LoadProvinces()
     {
-        var gameData = LoadJsonFile<GameDataFormat.ProvincesWrapper>("Provinces");
+        LoadProvinces(LoadJsonFile<GameDataFormat.ProvincesWrapper>("Provinces"));
+    }
+
+    internal static void LoadProvinces(GameDataFormat.ProvincesWrapper gameData)
+    {
+        ValidateProvinceEconomicData(gameData);
         // Load Provinces
         foreach (var p in gameData.provinces)
         {
@@ -524,7 +534,12 @@ public static class GlobalVariables
 
     public static void LoadBuildingRecipes()
     {
-        var gameData = LoadJsonFile<GameDataFormat.BuildingrecipesWrapper>("BuildingRecipes");
+        LoadBuildingRecipes(LoadJsonFile<GameDataFormat.BuildingrecipesWrapper>("BuildingRecipes"));
+    }
+
+    internal static void LoadBuildingRecipes(GameDataFormat.BuildingrecipesWrapper gameData)
+    {
+        ValidateBuildingRecipeEconomicData(gameData);
         foreach (var data in gameData.buildingrecipes)
         {
             var required = new Dictionary<string,int>();
@@ -539,6 +554,87 @@ public static class GlobalVariables
                 InitialCapital = data.initialCapital
             };
             BUILDING_RECIPE[data.name] = recipe;
+        }
+    }
+
+    private static void ValidateNationEconomicData(GameDataFormat.NationsWrapper gameData)
+    {
+        if (gameData?.nations == null)
+            throw new InvalidOperationException("Nations.json field 'nations' is required.");
+
+        for (int index = 0; index < gameData.nations.Count; index++)
+        {
+            GameDataFormat.NationData nation = gameData.nations[index];
+            string record = nation?.name ?? $"index {index}";
+            if (nation == null)
+                throw new InvalidOperationException($"Nations.json nation '{record}' is required.");
+            if (nation.initialBalance < 0)
+                throw new InvalidOperationException(
+                    $"Nations.json nation '{record}' field 'initialBalance' must be nonnegative.");
+        }
+    }
+
+    private static void ValidateProvinceEconomicData(GameDataFormat.ProvincesWrapper gameData)
+    {
+        if (gameData?.provinces == null)
+            throw new InvalidOperationException("Provinces.json field 'provinces' is required.");
+
+        for (int provinceIndex = 0; provinceIndex < gameData.provinces.Count; provinceIndex++)
+        {
+            GameDataFormat.ProvinceData province = gameData.provinces[provinceIndex];
+            string provinceRecord = province?.name ?? $"index {provinceIndex}";
+            if (province == null)
+                throw new InvalidOperationException(
+                    $"Provinces.json province '{provinceRecord}' is required.");
+            if (province.initialLocalTreasury < 0)
+                throw new InvalidOperationException(
+                    $"Provinces.json province '{provinceRecord}' field 'initialLocalTreasury' must be nonnegative.");
+            if (province.pops == null)
+                throw new InvalidOperationException(
+                    $"Provinces.json province '{provinceRecord}' field 'pops' is required.");
+
+            for (int populationIndex = 0; populationIndex < province.pops.Count; populationIndex++)
+            {
+                GameDataFormat.SpeciesPopData population = province.pops[populationIndex];
+                string populationRecord = population == null
+                    ? $"index {populationIndex}"
+                    : $"{population.name ?? "unknown"}/{population.culture ?? "unknown"}";
+                if (population == null)
+                    throw new InvalidOperationException(
+                        $"Provinces.json province '{provinceRecord}' population '{populationRecord}' is required.");
+                if (population.property < 0)
+                    throw new InvalidOperationException(
+                        $"Provinces.json province '{provinceRecord}' population '{populationRecord}' " +
+                        "field 'property' must be nonnegative.");
+                if (population.livingStandard <= 0.0 ||
+                    double.IsNaN(population.livingStandard) ||
+                    double.IsInfinity(population.livingStandard))
+                {
+                    throw new InvalidOperationException(
+                        $"Provinces.json province '{provinceRecord}' population '{populationRecord}' " +
+                        "field 'livingStandard' must be finite and greater than zero.");
+                }
+            }
+        }
+    }
+
+    private static void ValidateBuildingRecipeEconomicData(
+        GameDataFormat.BuildingrecipesWrapper gameData)
+    {
+        if (gameData?.buildingrecipes == null)
+            throw new InvalidOperationException(
+                "BuildingRecipes.json field 'buildingrecipes' is required.");
+
+        for (int index = 0; index < gameData.buildingrecipes.Count; index++)
+        {
+            GameDataFormat.BuildingrecipeData recipe = gameData.buildingrecipes[index];
+            string record = recipe?.name ?? $"index {index}";
+            if (recipe == null)
+                throw new InvalidOperationException(
+                    $"BuildingRecipes.json recipe '{record}' is required.");
+            if (recipe.initialCapital <= 0)
+                throw new InvalidOperationException(
+                    $"BuildingRecipes.json recipe '{record}' field 'initialCapital' must be greater than zero.");
         }
     }
 

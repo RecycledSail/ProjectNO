@@ -49,6 +49,16 @@ public static class ProvinceCurrencyMigration
             accounts.Add(escrow);
         }
 
+        if (!TryValidateMarketSupplierAccounts(
+                province,
+                sourceLedger,
+                sourceTreasury,
+                new HashSet<MoneyAccount>(accounts),
+                out error))
+        {
+            return false;
+        }
+
         accounts.Add(sourceTreasury);
         if (!sourceLedger.TryMigrateEntireLedgerTo(
             destinationLedger,
@@ -68,6 +78,45 @@ public static class ProvinceCurrencyMigration
         if (!destination.AddProvinces(province))
             throw new System.InvalidOperationException("Province ownership changed during absorption.");
 
+        return true;
+    }
+
+    private static bool TryValidateMarketSupplierAccounts(
+        Province province,
+        MoneyLedger sourceLedger,
+        MoneyAccount sourceTreasury,
+        HashSet<MoneyAccount> migratingActors,
+        out string error)
+    {
+        if (province.market?.Products == null)
+        {
+            error = null;
+            return true;
+        }
+
+        foreach (KeyValuePair<string, ProductState> productEntry in province.market.Products)
+        {
+            ProductState product = productEntry.Value;
+            if (product?.Inventory?.Lots == null)
+            {
+                error = $"The province market product {productEntry.Key} has invalid supplier inventory.";
+                return false;
+            }
+
+            foreach (KeyValuePair<MoneyAccount, int> lot in product.Inventory.Lots)
+            {
+                MoneyAccount supplier = lot.Key;
+                if (supplier == null || ReferenceEquals(supplier, sourceTreasury) ||
+                    supplier.Ledger != sourceLedger || !migratingActors.Contains(supplier))
+                {
+                    error = $"The province market product {productEntry.Key} has a supplier " +
+                            "that is not a migrating source-ledger actor.";
+                    return false;
+                }
+            }
+        }
+
+        error = null;
         return true;
     }
 }

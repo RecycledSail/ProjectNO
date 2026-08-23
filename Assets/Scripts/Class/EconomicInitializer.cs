@@ -11,6 +11,9 @@ public static class EconomicInitializer
         List<Province> provinceList = provinces?.Where(province => province != null).Distinct().ToList()
             ?? new List<Province>();
 
+        ValidateAuthorityAssignments(nationList, provinceList);
+        ValidateEconomicFields(provinceList);
+
         List<NationPlan> nationPlans = nationList.Select(nation =>
             PreflightNation(nation, provinceList.Where(province => province.nation == nation).ToList()))
             .ToList();
@@ -23,6 +26,83 @@ public static class EconomicInitializer
             ApplyNation(plan);
         foreach (NeutralProvincePlan plan in neutralPlans)
             ApplyNeutralProvince(plan);
+    }
+
+    private static void ValidateAuthorityAssignments(
+        IReadOnlyCollection<Nation> nations,
+        IReadOnlyCollection<Province> provinces)
+    {
+        HashSet<Nation> nationSet = new(nations);
+        HashSet<Province> provinceSet = new(provinces);
+
+        foreach (Province province in provinces)
+        {
+            if (province.nation != null && !nationSet.Contains(province.nation))
+            {
+                throw new InvalidOperationException(
+                    $"Province {province.name} is assigned to nation {province.nation.name} " +
+                    "but its actors have no authority ledger in this initialization.");
+            }
+        }
+
+        foreach (Nation nation in nations)
+        {
+            if (nation?.Account == null)
+                throw new InvalidOperationException("An initializing nation has no treasury account.");
+
+            foreach (Province province in nation.provinces)
+            {
+                if (province == null || province.nation != nation || !provinceSet.Contains(province))
+                {
+                    throw new InvalidOperationException(
+                        $"Nation {nation.name} owns a province whose actors have no authority ledger " +
+                        "in this initialization.");
+                }
+            }
+        }
+    }
+
+    private static void ValidateEconomicFields(IEnumerable<Province> provinces)
+    {
+        foreach (Province province in provinces)
+        {
+            if (province.initialLocalTreasury < 0)
+            {
+                throw new InvalidOperationException(
+                    $"Province {province.name} field initialLocalTreasury must be nonnegative.");
+            }
+
+            if (province.nation != null && province.initialLocalTreasury != 0)
+            {
+                throw new InvalidOperationException(
+                    $"Owned province {province.name} field initialLocalTreasury must be zero.");
+            }
+
+            foreach (ProvinceEthnicPop population in province.provinceEthnicPops)
+            {
+                if (population == null || population.Account == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Province {province.name} has a population without a monetary account.");
+                }
+
+                if (population.Account.Balance < 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Province {province.name} population {population.Account.Id} " +
+                        "field property must be nonnegative.");
+                }
+
+                if (population.livingStandard <= 0.0 ||
+                    double.IsNaN(population.livingStandard) ||
+                    double.IsInfinity(population.livingStandard))
+                {
+                    throw new InvalidOperationException(
+                        $"Province {province.name} population {population.Account.Id} " +
+                        "field livingStandard must be finite and greater than zero.");
+                }
+            }
+        }
     }
 
     private static NationPlan PreflightNation(Nation nation, List<Province> provinces)
@@ -136,10 +216,14 @@ public static class EconomicInitializer
             throw new InvalidOperationException(
                 $"{ownerDescription} has no recipe for {building?.buildingType?.name ?? "unknown building"}.");
 
-        if (building.level < 0 || recipe.InitialCapital < 0)
+        if (building.level < 0)
             throw new InvalidOperationException(
                 $"{ownerDescription} cannot capitalize {building.buildingType.name} " +
-                $"level {building.level}: level and initial capital must be nonnegative.");
+                $"level {building.level}: level must be nonnegative.");
+        if (recipe.InitialCapital < 0)
+            throw new InvalidOperationException(
+                $"{ownerDescription} building recipe {building.buildingType.name} " +
+                "field initialCapital must be nonnegative.");
 
         try
         {

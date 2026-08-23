@@ -22,6 +22,7 @@ public class NeutralProvinceLedgerTests
         object building = TestEconomyFactory.GetOnlyBuilding(province);
         object populationAccount = ReflectionTestHelpers.Get(population, "Account");
         object buildingAccount = ReflectionTestHelpers.Get(building, "Account");
+        object inventoryProduct = AddMarketLot(province, populationAccount, 7);
 
         Assert.That(ReflectionTestHelpers.Get(localTreasury, "Balance"), Is.EqualTo(500L));
         Assert.That(TryAbsorb(province, nation, out string error), Is.True, error);
@@ -30,6 +31,8 @@ public class NeutralProvinceLedgerTests
         Assert.That(ReflectionTestHelpers.Get(nationalLedger, "MoneySupply"), Is.EqualTo(2000L));
         Assert.That(ReflectionTestHelpers.Get(populationAccount, "Ledger"), Is.SameAs(nationalLedger));
         Assert.That(ReflectionTestHelpers.Get(buildingAccount, "Ledger"), Is.SameAs(nationalLedger));
+        Assert.That(LotQuantity(inventoryProduct, populationAccount), Is.EqualTo(7));
+        Assert.That(ReflectionTestHelpers.Get(inventoryProduct, "Stock"), Is.EqualTo(7));
         Assert.That(ReflectionTestHelpers.Get(localTreasury, "Ledger"), Is.Null);
         Assert.That(ReflectionTestHelpers.Get(localTreasury, "Balance"), Is.EqualTo(0L));
         Assert.That(ReflectionTestHelpers.Get(nationalTreasury, "Balance"), Is.EqualTo(1500L));
@@ -40,6 +43,64 @@ public class NeutralProvinceLedgerTests
         Assert.That(ReflectionTestHelpers.Get(province, "ActiveLedger"), Is.SameAs(nationalLedger));
         Assert.That(ReflectionTestHelpers.Get(province, "nation"), Is.SameAs(nation));
         Assert.That((bool)ReflectionTestHelpers.Call<bool>(nation, "HasProvinces", province), Is.True);
+    }
+
+    [Test]
+    public void AbsorbNeutralProvince_ForeignMarketLotOwnerLeavesAllStateUnchanged()
+    {
+        NeutralInventoryContext context = NeutralInventoryContext.Create();
+        object foreignTreasury = ReflectionTestHelpers.New("MoneyAccount", "foreign:treasury", 0L);
+        object foreignSupplier = ReflectionTestHelpers.New("MoneyAccount", "foreign:supplier", 0L);
+        object foreignLedger = ReflectionTestHelpers.New(
+            "MoneyLedger", "foreign", new object(), foreignTreasury);
+        Assert.That(ReflectionTestHelpers.Call<bool>(
+            foreignLedger, "RegisterInitialAccount", foreignTreasury), Is.True);
+        Assert.That(ReflectionTestHelpers.Call<bool>(
+            foreignLedger, "RegisterInitialAccount", foreignSupplier), Is.True);
+        ReflectionTestHelpers.Call<object>(foreignLedger, "SealInitialization");
+        object product = AddMarketLot(context.Province, foreignSupplier, 9);
+
+        AssertAbsorptionRejectedWithoutMutation(
+            context, product, foreignSupplier, foreignLedger, "supplier");
+        Assert.That(ReflectionTestHelpers.Get(foreignLedger, "MoneySupply"), Is.Zero);
+    }
+
+    [Test]
+    public void AbsorbNeutralProvince_LocalTreasuryMarketLotOwnerLeavesAllStateUnchanged()
+    {
+        NeutralInventoryContext context = NeutralInventoryContext.Create();
+        object product = AddMarketLot(context.Province, context.LocalTreasury, 9);
+
+        AssertAbsorptionRejectedWithoutMutation(
+            context, product, context.LocalTreasury, context.LocalLedger, "supplier");
+    }
+
+    [Test]
+    public void AbsorbNeutralProvince_UnregisteredMarketLotOwnerLeavesAllStateUnchanged()
+    {
+        NeutralInventoryContext context = NeutralInventoryContext.Create();
+        object unregisteredSupplier = ReflectionTestHelpers.New(
+            "MoneyAccount", "unregistered:supplier", 0L);
+        object product = AddMarketLot(context.Province, unregisteredSupplier, 9);
+
+        AssertAbsorptionRejectedWithoutMutation(
+            context, product, unregisteredSupplier, null, "supplier");
+    }
+
+    [Test]
+    public void AddProvinces_InitializedNeutralProvinceRequiresAbsorption()
+    {
+        NeutralInventoryContext context = NeutralInventoryContext.Create();
+
+        Assert.That(ReflectionTestHelpers.Call<bool>(
+            context.Nation, "AddProvinces", context.Province), Is.False);
+        Assert.That(ReflectionTestHelpers.Get(context.Province, "nation"), Is.Null);
+        Assert.That(ReflectionTestHelpers.Call<bool>(
+            context.Nation, "HasProvinces", context.Province), Is.False);
+        Assert.That(ReflectionTestHelpers.Get(context.Province, "LocalLedger"),
+            Is.SameAs(context.LocalLedger));
+        Assert.That(ReflectionTestHelpers.Get(context.Province, "ActiveLedger"),
+            Is.SameAs(context.LocalLedger));
     }
 
     [Test]
@@ -164,6 +225,135 @@ public class NeutralProvinceLedgerTests
         bool result = (bool)method.Invoke(null, arguments);
         error = (string)arguments[2];
         return result;
+    }
+
+    private static object AddMarketLot(object province, object supplier, int quantity)
+    {
+        object market = ReflectionTestHelpers.Get(province, "market");
+        if (market == null)
+        {
+            market = ReflectionTestHelpers.New(
+                "ProvinceMarket", ReflectionTestHelpers.Get(province, "name"));
+            ReflectionTestHelpers.Set(province, "market", market);
+        }
+
+        ReflectionTestHelpers.Call<object>(market, "AddProduct", "MigrationProduct", 10);
+        object product = ((IDictionary)ReflectionTestHelpers.Get(market, "Products"))[
+            "MigrationProduct"];
+        ReflectionTestHelpers.Call<object>(product, "AddSupply", supplier, quantity);
+        return product;
+    }
+
+    private static int LotQuantity(object product, object supplier)
+    {
+        object inventory = ReflectionTestHelpers.Get(product, "Inventory");
+        foreach (object lot in (IEnumerable)ReflectionTestHelpers.Get(inventory, "Lots"))
+        {
+            if (ReferenceEquals(ReflectionTestHelpers.Get(lot, "Key"), supplier))
+                return (int)ReflectionTestHelpers.Get(lot, "Value");
+        }
+
+        return 0;
+    }
+
+    private static int TransactionCount(object ledger) =>
+        ((ICollection)ReflectionTestHelpers.Get(ledger, "Transactions")).Count;
+
+    private static void AssertAbsorptionRejectedWithoutMutation(
+        NeutralInventoryContext context,
+        object product,
+        object supplier,
+        object expectedSupplierLedger,
+        string expectedError)
+    {
+        long nationalSupply = (long)ReflectionTestHelpers.Get(context.NationalLedger, "MoneySupply");
+        long localSupply = (long)ReflectionTestHelpers.Get(context.LocalLedger, "MoneySupply");
+        long nationalBalance = (long)ReflectionTestHelpers.Get(context.NationalTreasury, "Balance");
+        long localBalance = (long)ReflectionTestHelpers.Get(context.LocalTreasury, "Balance");
+        long populationBalance = (long)ReflectionTestHelpers.Get(context.Population, "property");
+        int nationalTransactions = TransactionCount(context.NationalLedger);
+        int localTransactions = TransactionCount(context.LocalLedger);
+
+        Assert.That(TryAbsorb(context.Province, context.Nation, out string error), Is.False);
+
+        Assert.That(error, Does.Contain(expectedError));
+        Assert.That(ReflectionTestHelpers.Get(context.NationalLedger, "MoneySupply"),
+            Is.EqualTo(nationalSupply));
+        Assert.That(ReflectionTestHelpers.Get(context.LocalLedger, "MoneySupply"),
+            Is.EqualTo(localSupply));
+        Assert.That(ReflectionTestHelpers.Get(context.NationalTreasury, "Balance"),
+            Is.EqualTo(nationalBalance));
+        Assert.That(ReflectionTestHelpers.Get(context.LocalTreasury, "Balance"),
+            Is.EqualTo(localBalance));
+        Assert.That(ReflectionTestHelpers.Get(context.Population, "property"),
+            Is.EqualTo(populationBalance));
+        Assert.That(ReflectionTestHelpers.Get(context.PopulationAccount, "Ledger"),
+            Is.SameAs(context.LocalLedger));
+        Assert.That(ReflectionTestHelpers.Get(supplier, "Ledger"),
+            expectedSupplierLedger == null ? Is.Null : Is.SameAs(expectedSupplierLedger));
+        Assert.That(ReflectionTestHelpers.Get(context.Province, "nation"), Is.Null);
+        Assert.That(ReflectionTestHelpers.Get(context.Province, "LocalLedger"),
+            Is.SameAs(context.LocalLedger));
+        Assert.That(ReflectionTestHelpers.Get(context.Province, "LocalTreasuryAccount"),
+            Is.SameAs(context.LocalTreasury));
+        Assert.That(ReflectionTestHelpers.Get(context.Province, "ActiveLedger"),
+            Is.SameAs(context.LocalLedger));
+        Assert.That(ReflectionTestHelpers.Call<bool>(
+            context.Nation, "HasProvinces", context.Province), Is.False);
+        Assert.That(LotQuantity(product, supplier), Is.EqualTo(9));
+        Assert.That(ReflectionTestHelpers.Get(product, "Stock"), Is.EqualTo(9));
+        Assert.That(ReflectionTestHelpers.Get(product, "LastSupply"), Is.EqualTo(9));
+        Assert.That(ReflectionTestHelpers.Get(product, "LastDemand"), Is.Zero);
+        Assert.That(TransactionCount(context.NationalLedger), Is.EqualTo(nationalTransactions));
+        Assert.That(TransactionCount(context.LocalLedger), Is.EqualTo(localTransactions));
+    }
+
+    private sealed class NeutralInventoryContext
+    {
+        public object Nation { get; }
+        public object Province { get; }
+        public object Population { get; }
+        public object PopulationAccount { get; }
+        public object NationalLedger { get; }
+        public object LocalLedger { get; }
+        public object NationalTreasury { get; }
+        public object LocalTreasury { get; }
+
+        private NeutralInventoryContext(
+            object nation,
+            object province,
+            object population,
+            object nationalLedger,
+            object localLedger,
+            object nationalTreasury,
+            object localTreasury)
+        {
+            Nation = nation;
+            Province = province;
+            Population = population;
+            PopulationAccount = ReflectionTestHelpers.Get(population, "Account");
+            NationalLedger = nationalLedger;
+            LocalLedger = localLedger;
+            NationalTreasury = nationalTreasury;
+            LocalTreasury = localTreasury;
+        }
+
+        public static NeutralInventoryContext Create()
+        {
+            object nation = TestEconomyFactory.NewNation("MigrationNation", 1000L);
+            object province = TestEconomyFactory.NewProvince(1, "MigrationNeutral");
+            ReflectionTestHelpers.Set(province, "initialLocalTreasury", 500L);
+            object population = TestEconomyFactory.AddPop(province, 200L, 1.0);
+            Initialize(nation, province);
+            return new NeutralInventoryContext(
+                nation,
+                province,
+                population,
+                ReflectionTestHelpers.Get(nation, "Ledger"),
+                ReflectionTestHelpers.Get(province, "LocalLedger"),
+                ReflectionTestHelpers.Get(nation, "Account"),
+                ReflectionTestHelpers.Get(province, "LocalTreasuryAccount"));
+        }
     }
 
     private sealed class NeutralFundedMandate
