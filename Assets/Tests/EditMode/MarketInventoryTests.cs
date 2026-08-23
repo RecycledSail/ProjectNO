@@ -74,6 +74,50 @@ public class MarketInventoryTests
     }
 
     [Test]
+    public void ProductState_CommitSale_RejectsForgedNonProportionalAllocationWithoutMutation()
+    {
+        object product = ReflectionTestHelpers.New("ProductState", "Wheat", 10);
+        object alpha = ReflectionTestHelpers.New("MoneyAccount", "supplier:alpha", 0L);
+        object beta = ReflectionTestHelpers.New("MoneyAccount", "supplier:beta", 0L);
+        Call(product, "AddSupply", alpha, 60);
+        Call(product, "AddSupply", beta, 40);
+        object forgedSale = TestEconomyFactory.ListOf("SupplierSale",
+            ReflectionTestHelpers.New("SupplierSale", alpha, 50));
+
+        Assert.That(() => Call(product, "CommitSale", forgedSale),
+            Throws.TypeOf<TargetInvocationException>());
+
+        Assert.That(LotQuantities(product), Is.EqualTo(new Dictionary<string, int>
+        {
+            ["supplier:alpha"] = 60,
+            ["supplier:beta"] = 40,
+        }));
+        AssertReconciled(product, 100);
+    }
+
+    [Test]
+    public void ProductState_CommitSale_RejectsPlanStaleAfterInventoryChangesWithoutMutation()
+    {
+        object product = ReflectionTestHelpers.New("ProductState", "Wheat", 10);
+        object alpha = ReflectionTestHelpers.New("MoneyAccount", "supplier:alpha", 0L);
+        object beta = ReflectionTestHelpers.New("MoneyAccount", "supplier:beta", 0L);
+        Call(product, "AddSupply", alpha, 60);
+        Call(product, "AddSupply", beta, 40);
+        object planned = Call(product, "PlanSale", 50);
+        Call(product, "AddSupply", alpha, 40);
+
+        Assert.That(() => Call(product, "CommitSale", planned),
+            Throws.TypeOf<TargetInvocationException>());
+
+        Assert.That(LotQuantities(product), Is.EqualTo(new Dictionary<string, int>
+        {
+            ["supplier:alpha"] = 100,
+            ["supplier:beta"] = 40,
+        }));
+        AssertReconciled(product, 140);
+    }
+
+    [Test]
     public void ProductState_AddSupply_RejectsInvalidLotsWithoutMutation()
     {
         object product = ReflectionTestHelpers.New("ProductState", "Wheat", 10);

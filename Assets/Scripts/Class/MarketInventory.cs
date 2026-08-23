@@ -66,7 +66,6 @@ public sealed class ProductInventory
     {
         if (sale == null) throw new ArgumentNullException(nameof(sale));
 
-        Dictionary<MoneyAccount, int> requested = new();
         int totalRemoved = 0;
         foreach (SupplierSale entry in sale)
         {
@@ -74,24 +73,29 @@ public sealed class ProductInventory
             if (entry.Supplier == null || entry.Quantity <= 0)
                 throw new ArgumentException("Sale entries must have a supplier and positive quantity.", nameof(sale));
 
-            requested.TryGetValue(entry.Supplier, out int current);
-            requested[entry.Supplier] = checked(current + entry.Quantity);
             totalRemoved = checked(totalRemoved + entry.Quantity);
         }
 
-        foreach (KeyValuePair<MoneyAccount, int> request in requested)
+        IReadOnlyList<SupplierSale> expected = PlanSale(totalRemoved);
+        if (sale.Count != expected.Count)
+            throw new InvalidOperationException("Sale must match the current proportional allocation.");
+
+        for (int index = 0; index < sale.Count; index++)
         {
-            if (!_lots.TryGetValue(request.Key, out int available) || available < request.Value)
-                throw new InvalidOperationException("A supplier no longer owns the planned sale quantity.");
+            if (!ReferenceEquals(sale[index].Supplier, expected[index].Supplier) ||
+                sale[index].Quantity != expected[index].Quantity)
+            {
+                throw new InvalidOperationException("Sale must match the current proportional allocation.");
+            }
         }
 
-        foreach (KeyValuePair<MoneyAccount, int> request in requested)
+        foreach (SupplierSale entry in expected)
         {
-            int remaining = _lots[request.Key] - request.Value;
+            int remaining = _lots[entry.Supplier] - entry.Quantity;
             if (remaining == 0)
-                _lots.Remove(request.Key);
+                _lots.Remove(entry.Supplier);
             else
-                _lots[request.Key] = remaining;
+                _lots[entry.Supplier] = remaining;
         }
 
         _totalQuantity -= totalRemoved;
