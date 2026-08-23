@@ -14,7 +14,13 @@ public class Nation : IBuildingInvestor
     public Color32 color { get; set; }
     public List<Province> provinces { get; set; }
     public Province capital { get; set; } = null;
-    public long balance { get; set; }
+    public MoneyAccount Account { get; }
+    public MoneyLedger Ledger { get; internal set; }
+    public long balance
+    {
+        get => Account.Balance;
+        set => Account.ReplaceForLoading(value);
+    }
     public List<Regiment> regiments { get; set; }
     public Dictionary<(SpeciesSpec, Culture), EthnicGroup> ethnicGroups { get; set; }
     public Dictionary<Nation, Diplomacy> allies;
@@ -50,9 +56,13 @@ public class Nation : IBuildingInvestor
     /// <param name="id">국가의 ID</param>
     /// <param name="name">국가의 이름(코드)</param>
     public Nation(int id, string name, List<ResearchNode> researches)
+        : this(id, name, researches, 0L) { }
+
+    public Nation(int id, string name, List<ResearchNode> researches, long initialBalance)
     {
         this.id = id;
         this.name = name;
+        Account = new MoneyAccount($"nation:{name}:treasury", initialBalance);
         provinces = new List<Province>();
         regiments = new List<Regiment>();
         doneResearches = researches;

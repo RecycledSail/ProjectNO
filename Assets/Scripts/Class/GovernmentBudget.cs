@@ -81,6 +81,11 @@ public class GovernmentBudget
         MoneySupply = 1_000_000L;
     }
 
+    public void SetOpeningMoneySupply(long moneySupply)
+    {
+        MoneySupply = moneySupply;
+    }
+
     // ─── 공개 턴 처리 메서드 ──────────────────────────────────────
 
     /// <summary>매주 GDP 이동평균 × 세율로 세금을 징수합니다.</summary>

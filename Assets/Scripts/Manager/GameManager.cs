@@ -225,6 +225,8 @@ public class GameManager : MonoBehaviour
             if (nationStr == nationCode)
                 player = user;
         }
+
+        EconomicInitializer.Initialize(nations.Values, provinces.Values);
     }
 
     /// <summary>

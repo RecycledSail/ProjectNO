@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
@@ -48,5 +50,60 @@ public static class ReflectionTestHelpers
             .Single(candidate => candidate.Name == name &&
                                  candidate.GetParameters().Length == args.Length);
         return (T)method.Invoke(instance, args);
+    }
+}
+
+public static class TestEconomyFactory
+{
+    public static object NewNation(string name, long openingBalance)
+    {
+        object researches = Activator.CreateInstance(
+            typeof(List<>).MakeGenericType(ReflectionTestHelpers.Find("ResearchNode")));
+        return Activator.CreateInstance(ReflectionTestHelpers.Find("Nation"),
+            new[] { (object)1, name, researches, openingBalance });
+    }
+
+    public static object NewProvince(int id, string name) =>
+        Activator.CreateInstance(ReflectionTestHelpers.Find("Province"),
+            id, name, Enum.Parse(ReflectionTestHelpers.Find("Topography"), "Plane"));
+
+    public static object AddPop(object province, long property, double livingStandard)
+    {
+        object species = Activator.CreateInstance(ReflectionTestHelpers.Find("SpeciesSpec"));
+        ReflectionTestHelpers.Set(species, "name", "Human");
+        object culture = ReflectionTestHelpers.New("Culture", "TestCulture");
+        object group = ReflectionTestHelpers.New("EthnicGroup", species, culture);
+        object pop = ReflectionTestHelpers.New("ProvinceEthnicPop", province, group,
+            new List<int> { 0, 100, 0, 0 }, property, livingStandard);
+        ((IList)ReflectionTestHelpers.Get(province, "provinceEthnicPops")).Add(pop);
+        ReflectionTestHelpers.Call<object>(province, "InitializePopulation");
+        return pop;
+    }
+
+    public static object AddBuilding(
+        object province, string typeName, int level, long initialCapital)
+    {
+        object type = ReflectionTestHelpers.New("BuildingType", typeName);
+        object recipe = ReflectionTestHelpers.New("BuildingRecipe", typeName);
+        ReflectionTestHelpers.Set(recipe, "InitialCapital", initialCapital);
+        FieldInfo recipes = ReflectionTestHelpers.Find("GlobalVariables").GetField(
+            "BUILDING_RECIPE", BindingFlags.Public | BindingFlags.Static);
+        ((IDictionary)recipes.GetValue(null))[typeName] = recipe;
+        MethodInfo create = ReflectionTestHelpers.Find("BuildingFactory").GetMethod("Create");
+        object building = create.Invoke(null, new[] { type, province, (object)level, 0L });
+        ((IDictionary)ReflectionTestHelpers.Get(province, "buildings"))[type] = building;
+        return recipe;
+    }
+
+    public static object GetOnlyBuilding(object province) =>
+        ((IDictionary)ReflectionTestHelpers.Get(province, "buildings")).Values
+            .Cast<object>().Single();
+
+    public static object ListOf(string runtimeType, params object[] values)
+    {
+        IList list = (IList)Activator.CreateInstance(
+            typeof(List<>).MakeGenericType(ReflectionTestHelpers.Find(runtimeType)));
+        foreach (object value in values) list.Add(value);
+        return list;
     }
 }

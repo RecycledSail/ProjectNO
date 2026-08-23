@@ -3,11 +3,14 @@
     {
       "id": 1,
       "name": "Bebino",
+      "initialLocalTreasury": 0,
       "pops": [
         {
           "name": "Human",
           "population": [5000, 3000, 2000, 1000],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 180000,
+          "livingStandard": 1.20
         }
       ],
       "topography": "Plane",
@@ -32,11 +35,14 @@
     {
       "id": 2,
       "name": "Stein",
+      "initialLocalTreasury": 0,
       "pops": [
         {
           "name": "Human",
           "population": [1250, 750, 500, 250],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 40000,
+          "livingStandard": 0.90
         }
       ],
       "topography": "Plane",
@@ -45,11 +51,14 @@
     {
       "id": 3,
       "name": "Eiglepsk",
+      "initialLocalTreasury": 0,
       "pops": [
         {
           "name": "Human",
           "population": [1244, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 15000,
+          "livingStandard": 0.80
         }
       ],
       "topography": "Plane",
@@ -64,16 +73,21 @@
     {
       "id": 4,
       "name": "Sando",
+      "initialLocalTreasury": 0,
       "pops": [
         {
           "name": "Human",
           "population": [12550, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 140000,
+          "livingStandard": 1.00
         },
         {
           "name": "Elf",
           "population": [5333, 0, 0, 0],
-          "culture": "Lisa"
+          "culture": "Lisa",
+          "property": 30000,
+          "livingStandard": 0.70
         }
       ],
       "topography": "Plane",
@@ -88,11 +102,14 @@
     {
       "id": 5,
       "name": "Talem",
+      "initialLocalTreasury": 0,
       "pops": [
         {
           "name": "Human",
           "population": [12550, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 60000,
+          "livingStandard": 0.75
         }
       ],
       "topography": "Plane",
@@ -107,11 +124,14 @@
     {
       "id": 6,
       "name": "Uzyda",
+      "initialLocalTreasury": 0,
       "pops": [
         {
           "name": "Human",
           "population": [12550, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 65000,
+          "livingStandard": 0.80
         }
       ],
       "topography": "Plane",
@@ -126,11 +146,14 @@
     {
       "id": 7,
       "name": "Buske",
+      "initialLocalTreasury": 0,
       "pops": [
         {
           "name": "Human",
           "population": [12550, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 55000,
+          "livingStandard": 0.75
         }
       ],
       "topography": "Plane",
@@ -145,11 +168,14 @@
     {
       "id": 8,
       "name": "Svovoda",
+      "initialLocalTreasury": 0,
       "pops": [
         {
           "name": "Human",
           "population": [12550, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 90000,
+          "livingStandard": 0.90
         }
       ],
       "topography": "Plane",
@@ -178,11 +204,14 @@
     {
       "id": 9,
       "name": "Tarantsusi",
+      "initialLocalTreasury": 50000,
       "pops": [
         {
           "name": "Human",
           "population": [12550, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 80000,
+          "livingStandard": 0.85
         }
       ],
       "topography": "Plane",
@@ -197,11 +226,14 @@
     {
       "id": 10,
       "name": "Jojisha",
+      "initialLocalTreasury": 0,
       "pops": [
         {
           "name": "Human",
           "population": [12550, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 110000,
+          "livingStandard": 0.95
         }
       ],
       "topography": "Plane",
@@ -216,11 +248,14 @@
     {
       "id": 11,
       "name": "Matz",
+      "initialLocalTreasury": 0,
       "pops": [
         {
           "name": "Human",
           "population": [12550, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 90000,
+          "livingStandard": 0.85
         }
       ],
       "topography": "Plane",
@@ -235,11 +270,14 @@
     {
       "id": 12,
       "name": "Zilia",
+      "initialLocalTreasury": 0,
       "pops": [
         {
           "name": "Human",
           "population": [12550, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 70000,
+          "livingStandard": 0.80
         }
       ],
       "topography": "Plane",
@@ -254,11 +292,14 @@
     {
       "id": 13,
       "name": "Prano",
+      "initialLocalTreasury": 50000,
       "pops": [
         {
           "name": "Human",
           "population": [12550, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 75000,
+          "livingStandard": 0.80
         }
       ],
       "topography": "Plane",
@@ -273,11 +314,14 @@
     {
       "id": 14,
       "name": "Meril",
+      "initialLocalTreasury": 50000,
       "pops": [
         {
           "name": "Human",
           "population": [12550, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 100000,
+          "livingStandard": 0.95
         }
       ],
       "topography": "Plane",
@@ -292,11 +336,14 @@
     {
       "id": 15,
       "name": "Ozisk",
+      "initialLocalTreasury": 50000,
       "pops": [
         {
           "name": "Human",
           "population": [12550, 0, 0, 0],
-          "culture": "Paimon"
+          "culture": "Paimon",
+          "property": 60000,
+          "livingStandard": 0.75
         }
       ],
       "topography": "Plane",

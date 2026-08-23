@@ -3,6 +3,7 @@
     {
       "id": 1,
       "name": "Nation1",
+      "initialBalance": 300000,
       "color": { "r": 255, "g": 165, "b": 0, "a": 255 },
       "researchNodeNames": [ "FarmTools" ],
       "regiments": [
@@ -27,6 +28,7 @@
     {
       "id": 2,
       "name": "Nation2",
+      "initialBalance": 220000,
       "color": { "r": 64, "g": 64, "b": 64, "a": 255 },
       "researchNodeNames": [],
       "regiments": [
@@ -46,6 +48,7 @@
     {
       "id": 3,
       "name": "Nation3",
+      "initialBalance": 160000,
       "color": { "r": 135, "g": 206, "b": 235, "a": 255 },
       "researchNodeNames": [ "FarmTools" ],
       "regiments": []

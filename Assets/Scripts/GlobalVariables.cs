@@ -9,9 +9,6 @@ using System;
 /// </summary>
 public static class GlobalVariables
 {
-    // building 들이 처음에 가지는 재산
-    public static int buildingStartBalance = 1000;
-
     // 건설회사 레벨당 매주 공급되는 임시 man-hour (인시)
     public static double minimumConstructionCompanyManHour = 10;
 
@@ -318,7 +315,7 @@ public static class GlobalVariables
                 if (RESEARCH_NODE.TryGetValue(rname, out var rnode))
                     rnodes.Add(rnode);
             }
-            Nation nation = new(n.id, n.name, rnodes);
+            Nation nation = new(n.id, n.name, rnodes, n.initialBalance);
             if (n.color != null)
             {
                 nation.color = new Color32((byte)n.color.r, (byte)n.color.g, (byte)n.color.b, (byte)n.color.a);
@@ -344,7 +341,11 @@ public static class GlobalVariables
         foreach (var p in gameData.provinces)
         {
             //TODO: Load ethnicgroup
-            var province = new Province(p.id, p.name, (Topography)System.Enum.Parse(typeof(Topography), p.topography));
+            var province = new Province(
+                p.id,
+                p.name,
+                (Topography)System.Enum.Parse(typeof(Topography), p.topography),
+                p.initialLocalTreasury);
 
             
             foreach (var pop in p.pops)
@@ -353,7 +354,12 @@ public static class GlobalVariables
                 var culture = CULTURE[pop.culture];
                 
                 EthnicGroup ethnicGroup = new(species, culture);
-                ProvinceEthnicPop provinceEthnicPop = new(province, ethnicGroup, pop.population);
+                ProvinceEthnicPop provinceEthnicPop = new(
+                    province,
+                    ethnicGroup,
+                    pop.population,
+                    pop.property,
+                    pop.livingStandard);
                 province.provinceEthnicPops.Add(provinceEthnicPop);
             }
 
@@ -526,7 +532,12 @@ public static class GlobalVariables
             foreach (var it in requireItems)
                 required[it.Name] = it.amount;
 
-            var recipe = new BuildingRecipe(data.name) { requireItems = required, TimeToBuild = data.TimeToBuild };
+            var recipe = new BuildingRecipe(data.name)
+            {
+                requireItems = required,
+                TimeToBuild = data.TimeToBuild,
+                InitialCapital = data.initialCapital
+            };
             BUILDING_RECIPE[data.name] = recipe;
         }
     }
@@ -699,10 +710,10 @@ public static class GlobalVariables
         public sealed class SquadData { public string unitType; public int capacity; public int population; }
 
         [System.Serializable]
-        public sealed class NationData { public int id; public string name; public ColorData color; public List<string> researchNodeNames; public List<RegimentData> regiments; }
+        public sealed class NationData { public int id; public string name; public long initialBalance; public ColorData color; public List<string> researchNodeNames; public List<RegimentData> regiments; }
 
         [System.Serializable]
-        public sealed class ProvinceData { public int id; public string name; public List<SpeciesPopData> pops; public string topography; public List<BuildingData> buildings; public List<SpecialBuildingData> specialBuildings = new(); }
+        public sealed class ProvinceData { public int id; public string name; public long initialLocalTreasury; public List<SpeciesPopData> pops; public string topography; public List<BuildingData> buildings; public List<SpecialBuildingData> specialBuildings = new(); }
 
         [System.Serializable]
         public sealed class InitialProvinceData { public string nation; public List<string> provinces; public string capital; }
@@ -711,7 +722,7 @@ public static class GlobalVariables
         public sealed class AdjacentProvinceData { public string province; public List<string> adjacents; }
 
         [System.Serializable]
-        public sealed class SpeciesPopData { public string name; public List<int> population; public string culture; }
+        public sealed class SpeciesPopData { public string name; public List<int> population; public string culture; public long property; public double livingStandard; }
 
         [System.Serializable]
         public sealed class BuildingTypeData { public string name; public List<ItemData> requireItems; public List<ItemData> produceItems; public int workerNeeded; }
@@ -738,6 +749,6 @@ public static class GlobalVariables
         public sealed class InitialDiplomacyData { public List<string> lnations; public List<string> rnations; public string type; }
 
         [System.Serializable]
-        public sealed class BuildingrecipeData { public string name; public List<ItemData> requireItems; public List<ItemData> buildRequirements; public int TimeToBuild;}
+        public sealed class BuildingrecipeData { public string name; public List<ItemData> requireItems; public List<ItemData> buildRequirements; public int TimeToBuild; public long initialCapital; }
     }
 }

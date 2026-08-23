@@ -34,6 +34,10 @@ public class Province
     public int desolation { get; private set; } = 0;
     public int road { get; set; } = 0;
     public List<ProvinceEthnicPop> provinceEthnicPops { get; set; } = null;
+    public long initialLocalTreasury;
+    public MoneyAccount LocalTreasuryAccount { get; internal set; }
+    public MoneyLedger LocalLedger { get; internal set; }
+    public MoneyLedger ActiveLedger { get; internal set; }
 
     // 도로 연결 상태 캐시
     public bool isConnectedToCapital { get; set; } = false;
@@ -48,12 +52,16 @@ public class Province
     /// <param name="name">프로빈스의 이름</param>
     /// <param name="topo">프로빈스의 토폴로지</param>
     public Province(int id, string name, Topography topo)
+        : this(id, name, topo, 0L) { }
+
+    public Province(int id, string name, Topography topo, long initialLocalTreasury)
     {
         // this -> instance의 id
         this.id = id;
         this.name = name;
         this.population = 0;
         this.topo = topo;
+        this.initialLocalTreasury = initialLocalTreasury;
         this.provinceEthnicPops = new List<ProvinceEthnicPop>();
         // this.market 할당은 GlobalVariables의 Market.Init()에서 수행
         buildings = new();

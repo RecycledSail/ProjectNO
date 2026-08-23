@@ -43,18 +43,33 @@ public class ProvinceEthnicPop : IBuildingInvestor
     public EthnicGroup ethnicGroup;
     public long population;
     public long dividend; //배당수익
-    public long property; // 재산
+    public MoneyAccount Account { get; }
+    public long property
+    {
+        get => Account.Balance;
+        set => Account.ReplaceForLoading(value);
+    }
     public double livingStandard; // 생활 수준 (1.0 = 평균)
     public List<AgeGroup> ageGroups = new List<AgeGroup>();
     public long EmployablePopulation => ageGroups.Sum(ageGroup => ageGroup.EmployablePopulation);
 
     public ProvinceEthnicPop(Province province, EthnicGroup ethnicGroup, List<int> populationCount)
+        : this(province, ethnicGroup, populationCount, 0L, 1.0) { }
+
+    public ProvinceEthnicPop(
+        Province province,
+        EthnicGroup ethnicGroup,
+        List<int> populationCount,
+        long openingProperty,
+        double openingLivingStandard)
     {
         this.province = province;
         this.ethnicGroup = ethnicGroup;
         this.population = populationCount.Sum();
-        this.property = 100000;
-        this.livingStandard = 1.0; 
+        Account = new MoneyAccount(
+            $"pop:{province.name}:{ethnicGroup.species.name}:{ethnicGroup.culture.name}",
+            openingProperty);
+        this.livingStandard = openingLivingStandard;
         // 기본 연령대 분포 설정
         ageGroups.Add(new AgeGroup(AgeGroupType.Childhood, populationCount[0])); //유년기
         ageGroups.Add(new AgeGroup(AgeGroupType.YoungAdulthood, populationCount[1])); //청년기

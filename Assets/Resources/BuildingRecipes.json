@@ -5,14 +5,16 @@
       "buildRequirements": [
         { "item": "Wood", "amount": 800 }
       ],
-      "TimeToBuild": 40
+      "TimeToBuild": 40,
+      "initialCapital": 5000
     },
     {
       "name": "LogField",
       "buildRequirements": [
         { "item": "Wood", "amount": 500 }
       ],
-      "TimeToBuild": 40
+      "TimeToBuild": 40,
+      "initialCapital": 5000
     },
     {
       "name": "SlimeFarm",
@@ -20,14 +22,16 @@
         { "item": "Wood", "amount": 900 },
         { "item": "Glass", "amount": 120 }
       ],
-      "TimeToBuild": 60
+      "TimeToBuild": 60,
+      "initialCapital": 7000
     },
     {
       "name": "IronMine",
       "buildRequirements": [
         { "item": "Wood", "amount": 1200 }
       ],
-      "TimeToBuild": 70
+      "TimeToBuild": 70,
+      "initialCapital": 8000
     },
     {
       "name": "SwordSmith",
@@ -36,7 +40,8 @@
         { "item": "Iron", "amount": 900 },
         { "item": "Coal", "amount": 300 }
       ],
-      "TimeToBuild": 120
+      "TimeToBuild": 120,
+      "initialCapital": 15000
     },
     {
       "name": "FurnitureShop",
@@ -44,7 +49,8 @@
         { "item": "Wood", "amount": 1800 },
         { "item": "Iron", "amount": 200 }
       ],
-      "TimeToBuild": 90
+      "TimeToBuild": 90,
+      "initialCapital": 10000
     },
     {
       "name": "Stable",
@@ -52,7 +58,8 @@
         { "item": "Wood", "amount": 1400 },
         { "item": "Wheat", "amount": 500 }
       ],
-      "TimeToBuild": 80
+      "TimeToBuild": 80,
+      "initialCapital": 9000
     },
     {
       "name": "GoldMine",
@@ -60,14 +67,16 @@
         { "item": "Wood", "amount": 1500 },
         { "item": "Iron", "amount": 500 }
       ],
-      "TimeToBuild": 120
+      "TimeToBuild": 120,
+      "initialCapital": 15000
     },
     {
       "name": "CoalMine",
       "buildRequirements": [
         { "item": "Wood", "amount": 1100 }
       ],
-      "TimeToBuild": 70
+      "TimeToBuild": 70,
+      "initialCapital": 8000
     },
     {
       "name": "GlassShop",
@@ -75,7 +84,8 @@
         { "item": "Wood", "amount": 1300 },
         { "item": "Coal", "amount": 500 }
       ],
-      "TimeToBuild": 100
+      "TimeToBuild": 100,
+      "initialCapital": 10000
     },
     {
       "name": "PaperShop",
@@ -83,7 +93,8 @@
         { "item": "Wood", "amount": 1400 },
         { "item": "Glass", "amount": 150 }
       ],
-      "TimeToBuild": 90
+      "TimeToBuild": 90,
+      "initialCapital": 9000
     },
     {
       "name": "BookShop",
@@ -91,7 +102,8 @@
         { "item": "Wood", "amount": 1200 },
         { "item": "Paper", "amount": 600 }
       ],
-      "TimeToBuild": 80
+      "TimeToBuild": 80,
+      "initialCapital": 9000
     },
     {
       "name": "PotionShop",
@@ -100,7 +112,8 @@
         { "item": "Glass", "amount": 700 },
         { "item": "Catalyst", "amount": 200 }
       ],
-      "TimeToBuild": 120
+      "TimeToBuild": 120,
+      "initialCapital": 14000
     },
     {
       "name": "WoolField",
@@ -108,7 +121,8 @@
         { "item": "Wood", "amount": 900 },
         { "item": "Wheat", "amount": 300 }
       ],
-      "TimeToBuild": 50
+      "TimeToBuild": 50,
+      "initialCapital": 6000
     },
     {
       "name": "ClothShop",
@@ -116,7 +130,8 @@
         { "item": "Wood", "amount": 1200 },
         { "item": "Wool", "amount": 700 }
       ],
-      "TimeToBuild": 90
+      "TimeToBuild": 90,
+      "initialCapital": 10000
     },
     {
       "name": "LeatherShop",
@@ -125,7 +140,8 @@
         { "item": "Coal", "amount": 300 },
         { "item": "Cloth", "amount": 300 }
       ],
-      "TimeToBuild": 100
+      "TimeToBuild": 100,
+      "initialCapital": 11000
     },
     {
       "name": "SilkField",
@@ -133,7 +149,8 @@
         { "item": "Wood", "amount": 1000 },
         { "item": "Cloth", "amount": 300 }
       ],
-      "TimeToBuild": 70
+      "TimeToBuild": 70,
+      "initialCapital": 9000
     },
     {
       "name": "CatalystShop",
@@ -142,7 +159,8 @@
         { "item": "Glass", "amount": 500 },
         { "item": "Coal", "amount": 500 }
       ],
-      "TimeToBuild": 120
+      "TimeToBuild": 120,
+      "initialCapital": 14000
     },
     {
       "name": "construcntionCompany",
@@ -151,7 +169,8 @@
         { "item": "Iron", "amount": 1500 },
         { "item": "Furniture", "amount": 600 }
       ],
-      "TimeToBuild": 180
+      "TimeToBuild": 180,
+      "initialCapital": 20000
     }
   ]
 }
