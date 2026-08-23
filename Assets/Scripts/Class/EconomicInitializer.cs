@@ -173,7 +173,6 @@ public static class EconomicInitializer
         ApplyCapitalizations(ledger, plan.Nation.Account, plan.Capitalizations);
         ledger.SealInitialization();
         VerifyAudit(ledger, $"Nation {plan.Nation.name}");
-        plan.Nation.governmentBudget.SetOpeningMoneySupply(ledger.MoneySupply);
     }
 
     private static void ApplyNeutralProvince(NeutralProvincePlan plan)

@@ -29,11 +29,7 @@ public class Building
     public long currentWorkers; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
     public int level = 0; // 현재 빌딩의 레벨
     public MoneyAccount Account { get; }
-    public long balance
-    {
-        get => Account.Balance;
-        set => Account.ReplaceForLoading(value);
-    }
+    public long balance => Account.Balance;
     public int previousGain = 0; // 건물의 이전 수입
     public double manhoursLeft = 0.0; // 건물 건축까지 남은 인시
 

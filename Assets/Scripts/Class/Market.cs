@@ -45,18 +45,6 @@ public class ProvinceMarket
         }
     }
 
-    [Obsolete("Food consumption must use MarketSettlement.TryPurchase.")]
-    public void ConsumeBasicFoods(string productName, int amount)
-    {
-        // 소비 처리 로직 구현
-        if (Products.ContainsKey(productName))
-        {
-            Products[productName].LastDemand += amount;
-            Products[productName].Stock = Math.Max(0, Products[productName].Stock - amount);
-        }
-
-    }
-
     public void UpdatePrices()
     {
         // 가격 업데이트 로직 구현
@@ -116,20 +104,7 @@ public class ProductState
 {
     public string ProductName;
     public ProductInventory Inventory { get; } = new();
-    public int Stock
-    {
-        get => Inventory.TotalQuantity;
-        internal set
-        {
-            if (value < 0) throw new ArgumentOutOfRangeException(nameof(value));
-
-            int current = Stock;
-            if (value > current)
-                throw new InvalidOperationException("Stock increases must identify a supplier.");
-            if (value < current)
-                CommitSale(PlanSale(current - value));
-        }
-    }
+    public int Stock => Inventory.TotalQuantity;
     public int Price;        // 현재 가격
     public int LastPrice;    // 지난 턴 가격(가격 업데이트용)
     public int LastDemand;   // 최근 턴 소비량(가격 계산용)

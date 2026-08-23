@@ -45,11 +45,7 @@ public class ProvinceEthnicPop : IBuildingInvestor
     public long dividend; //배당수익
     public MoneyAccount Account { get; }
     public MoneyAccount InvestmentAccount => Account;
-    public long property
-    {
-        get => Account.Balance;
-        set => Account.ReplaceForLoading(value);
-    }
+    public long property => Account.Balance;
     public double livingStandard; // 생활 수준 (1.0 = 평균)
     public List<AgeGroup> ageGroups = new List<AgeGroup>();
     public long EmployablePopulation => ageGroups.Sum(ageGroup => ageGroup.EmployablePopulation);

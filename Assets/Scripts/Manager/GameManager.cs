@@ -370,6 +370,8 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void ProcessWeeklyEvents()
     {
+        BeginLedgerWeeks();
+
         // 0. 모든 마켓의 LastSupply와 LastDemand 초기화 (새 주 시작)
         foreach (Nation nation in nations.Values)
         {
@@ -444,14 +446,49 @@ public class GameManager : MonoBehaviour
         // 7. GDP 계산 및 업데이트
         economicEngine.UpdateGDPWeekly(nations.Values);
 
-        // 8. 예산 처리: 세금 징수 → 화폐 발행 → 인플레이션 갱신
+        // 8. 예산 처리: 화폐 발행 → 인플레이션 갱신
         foreach (Nation nation in nations.Values)
         {
-            nation.governmentBudget.CollectTaxes();
             nation.governmentBudget.PrintMoney();
             nation.governmentBudget.UpdateInflation();
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        AuditEconomyLedgers();
+#endif
     }
+
+    private void BeginLedgerWeeks()
+    {
+        foreach (MoneyLedger ledger in EnumerateEconomyLedgers())
+            ledger.BeginWeek();
+    }
+
+    private IEnumerable<MoneyLedger> EnumerateEconomyLedgers()
+    {
+        HashSet<MoneyLedger> ledgers = new();
+        foreach (Nation nation in nations.Values)
+            if (nation?.Ledger != null && ledgers.Add(nation.Ledger))
+                yield return nation.Ledger;
+
+        foreach (Province province in provinces.Values)
+            if (province?.nation == null && province.LocalLedger != null &&
+                ledgers.Add(province.LocalLedger))
+                yield return province.LocalLedger;
+    }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private void AuditEconomyLedgers()
+    {
+        foreach (MoneyLedger ledger in EnumerateEconomyLedgers())
+        {
+            if (!ledger.Audit(out long registeredBalance))
+                Debug.LogError(
+                    $"Money ledger audit failed: ledger={ledger.CurrencyId}, " +
+                    $"recordedSupply={ledger.MoneySupply}, registeredBalance={registeredBalance}.");
+        }
+    }
+#endif
 
     /// <summary>
     /// 도로 변경 시 호출 - 특정 국가의 캐시를 무효화

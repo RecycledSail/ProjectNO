@@ -1,74 +1,53 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
-// ───────────────────────────────────────────────────────────────────────────────
-// 국가 정책 배분을 정의하는 데이터 클래스
-// ───────────────────────────────────────────────────────────────────────────────
-
-/// <summary>
-/// 발행된 화폐를 주입하는 4가지 국가 정책 채널.
-/// 각 필드에 금액을 설정하면 PrintMoney() 시 해당 경로로 경제에 투입됩니다.
-/// </summary>
 public class PolicyAllocation
 {
-    /// <summary>대학 연구 투자 — 국가 연구 포인트(researchFund)에 직접 적립</summary>
     public long ResearchFund = 0;
-
-    /// <summary>
-    /// 군인/공무원 월급 — 연대 주둔지 팝의 property 증가.
-    /// 연대가 없으면 수도 팝에 분배.
-    /// </summary>
     public long MilitarySalary = 0;
-
-    /// <summary>
-    /// 산업 지원 — BuildingType.name → 보조금 금액.
-    /// 해당 타입의 모든 건물에 레벨 비례로 balance 추가.
-    /// </summary>
     public Dictionary<string, long> IndustrySubsidy = new();
-
-    /// <summary>부동산 정책 — 전체 팝 property 분배 + 생활수준 소폭 상승</summary>
     public long RealEstateFund = 0;
 
-    /// <summary>4개 채널의 합계 = 이번 주 총 발행액</summary>
-    public long Total =>
-        ResearchFund + MilitarySalary +
-        (IndustrySubsidy.Count > 0 ? IndustrySubsidy.Values.Sum() : 0L) +
-        RealEstateFund;
+    public long Total
+    {
+        get
+        {
+            checked
+            {
+                return ResearchFund + MilitarySalary + IndustryTotal() + RealEstateFund;
+            }
+        }
+    }
 
-    /// <summary>산업 보조금 합계</summary>
-    public long IndustryTotal() =>
-        IndustrySubsidy.Count > 0 ? IndustrySubsidy.Values.Sum() : 0L;
+    public long IndustryTotal()
+    {
+        long total = 0;
+        checked
+        {
+            foreach (long amount in IndustrySubsidy.Values)
+                total += amount;
+        }
+        return total;
+    }
 }
-
-// ───────────────────────────────────────────────────────────────────────────────
-// 예산 관리 본체
-// ───────────────────────────────────────────────────────────────────────────────
 
 public class GovernmentBudget
 {
     public NationMarket market;
     public Nation nation;
 
-    public float taxRate = 0.1f;
+    public long MoneySupply => nation.Ledger.MoneySupply;
+    public long WeeklyTaxRevenue => nation.Ledger.WeeklyTaxRevenue;
+    public int SalesTaxBasisPoints
+    {
+        get => nation.Ledger.SalesTaxBasisPoints;
+        set => nation.Ledger.SalesTaxBasisPoints = value;
+    }
 
-    /// <summary>경제 내 총 통화 공급량</summary>
-    public long MoneySupply { get; private set; }
-
-    /// <summary>이번 주 세입</summary>
-    public long WeeklyTaxRevenue { get; private set; }
-
-    /// <summary>인플레이션율 (%) — 최근 4주 가격지수 기준 변화율</summary>
     public float InflationRate { get; private set; }
-
-    /// <summary>현재 가격지수 (가중 평균 물가)</summary>
     public float CurrentPriceIndex { get; private set; }
-
-    /// <summary>다음 주 발행 및 정책 배분 설정. UI에서 이 객체를 채워서 전달합니다.</summary>
     public PolicyAllocation Policy { get; set; } = new();
-
-    /// <summary>이번 주 총 발행 예정액 (Policy.Total의 읽기 전용 뷰)</summary>
     public long PendingMoneyPrint => Policy.Total;
 
     private readonly Queue<float> _priceIndexHistory = new();
@@ -78,38 +57,16 @@ public class GovernmentBudget
     {
         this.market = market;
         this.nation = nation;
-        MoneySupply = 1_000_000L;
     }
 
-    public void SetOpeningMoneySupply(long moneySupply)
-    {
-        MoneySupply = moneySupply;
-    }
-
-    // ─── 공개 턴 처리 메서드 ──────────────────────────────────────
-
-    /// <summary>매주 GDP 이동평균 × 세율로 세금을 징수합니다.</summary>
-    public long CollectTaxes()
-    {
-        long revenue = (long)(nation.GDPAverage * taxRate);
-        WeeklyTaxRevenue = revenue;
-        nation.balance += revenue;
-        return revenue;
-    }
-
-    /// <summary>
-    /// Policy에 설정된 4가지 채널로 화폐를 발행하고 각 정책 효과를 적용합니다.
-    /// 처리 후 Policy는 초기화됩니다.
-    /// </summary>
     public void PrintMoney()
     {
-        long total = Policy.Total;
-        if (total <= 0) return;
+        if (!TryValidatePolicy(out long total, out long nextResearchFund)) return;
+        MoneyLedger ledger = nation.Ledger;
+        if (ledger == null ||
+            !ledger.TryMint(nation, nation.Account, total, "policy issuance")) return;
 
-        nation.balance += total;
-        MoneySupply += total;
-
-        ApplyResearchPolicy();
+        ApplyResearchPolicy(nextResearchFund);
         ApplyMilitarySalary();
         ApplyIndustrySubsidy();
         ApplyRealEstatePolicy();
@@ -117,10 +74,6 @@ public class GovernmentBudget
         Policy = new PolicyAllocation();
     }
 
-    /// <summary>
-    /// 매주 가격지수와 인플레이션율을 갱신합니다.
-    /// 가격 업데이트가 끝난 뒤 호출하세요.
-    /// </summary>
     public void UpdateInflation()
     {
         float priceIndex = CalculatePriceIndex();
@@ -141,32 +94,26 @@ public class GovernmentBudget
         }
     }
 
-    /// <summary>현재 인플레이션 상태를 텍스트로 반환합니다.</summary>
     public string GetInflationStatus()
     {
         if (InflationRate > 10f) return "Hyperinflation";
-        if (InflationRate >  5f) return "High Inflation";
-        if (InflationRate >  2f) return "Inflation";
-        if (InflationRate >  0f) return "Mild Rise";
+        if (InflationRate > 5f) return "High Inflation";
+        if (InflationRate > 2f) return "Inflation";
+        if (InflationRate > 0f) return "Mild Rise";
         if (InflationRate < -5f) return "Deflation";
         if (InflationRate < -2f) return "Mild Fall";
         return "Stable";
     }
 
-    /// <summary>
-    /// 산업 지원을 건물 타입을 지정하지 않고 국가 내 모든 건물에 균등 투자할 때 사용하는
-    /// 편의 메서드. BudgetUI에서 "산업 총액" 슬라이더를 처리할 때 호출합니다.
-    /// </summary>
     public void SetIndustrySubsidyTotal(long totalAmount)
     {
         Policy.IndustrySubsidy.Clear();
         if (totalAmount <= 0) return;
 
-        // 국가 내 존재하는 BuildingType 이름 수집
-        HashSet<string> typeNames = new();
+        SortedSet<string> typeNames = new(StringComparer.Ordinal);
         foreach (Province province in nation.provinces)
-            foreach (BuildingType bt in province.buildings.Keys)
-                typeNames.Add(bt.name);
+            foreach (BuildingType buildingType in province.buildings.Keys)
+                typeNames.Add(buildingType.name);
 
         if (typeNames.Count == 0) return;
 
@@ -180,136 +127,194 @@ public class GovernmentBudget
         }
     }
 
-    // ─── 정책 적용 (private) ──────────────────────────────────────
-
-    /// <summary>
-    /// [연구 투자] 배분액을 국가 연구 포인트에 적립합니다.
-    /// 연구 엔진이 매 턴 nation.researchFund를 소진하여 연구 진행에 사용합니다.
-    /// </summary>
-    private void ApplyResearchPolicy()
+    private bool TryValidatePolicy(out long total, out long nextResearchFund)
     {
-        if (Policy.ResearchFund <= 0) return;
-        nation.researchFund += Policy.ResearchFund;
+        total = 0;
+        nextResearchFund = nation.researchFund;
+        if (Policy == null || Policy.ResearchFund < 0 || Policy.MilitarySalary < 0 ||
+            Policy.RealEstateFund < 0 || Policy.IndustrySubsidy == null ||
+            Policy.IndustrySubsidy.Values.Any(amount => amount < 0))
+        {
+            return false;
+        }
+
+        try
+        {
+            total = Policy.Total;
+            nextResearchFund = checked(nation.researchFund + Policy.ResearchFund);
+            return total > 0;
+        }
+        catch (OverflowException)
+        {
+            return false;
+        }
     }
 
-    /// <summary>
-    /// [군인/공무원 월급] 배분액을 연대 주둔지 팝에 병사 수 비례로 분배합니다.
-    /// 연대가 없으면 수도 팝에 분배합니다.
-    /// </summary>
+    private void ApplyResearchPolicy(long nextResearchFund)
+    {
+        if (Policy.ResearchFund > 0)
+            nation.researchFund = nextResearchFund;
+    }
+
     private void ApplyMilitarySalary()
     {
         if (Policy.MilitarySalary <= 0) return;
 
-        List<(ProvinceEthnicPop pep, long weight)> targets = new();
-        long totalWeight = 0;
-
-        foreach (Regiment regiment in nation.regiments)
+        Dictionary<ProvinceEthnicPop, long> weights = new();
+        try
         {
-            if (regiment.location?.provinceEthnicPops == null) continue;
-            int soldiers = regiment.GetUnitCount();
-            if (soldiers <= 0) continue;
-
-            foreach (ProvinceEthnicPop pep in regiment.location.provinceEthnicPops)
+            foreach (Regiment regiment in nation.regiments)
             {
-                targets.Add((pep, soldiers));
-                totalWeight += soldiers;
+                if (regiment.location?.provinceEthnicPops == null) continue;
+                int soldiers = regiment.GetUnitCount();
+                if (soldiers <= 0) continue;
+
+                foreach (ProvinceEthnicPop population in regiment.location.provinceEthnicPops)
+                {
+                    weights.TryGetValue(population, out long current);
+                    weights[population] = checked(current + soldiers);
+                }
+            }
+
+            if (weights.Count == 0 && nation.capital?.provinceEthnicPops != null)
+            {
+                foreach (ProvinceEthnicPop population in nation.capital.provinceEthnicPops)
+                    if (population.population > 0)
+                        weights[population] = population.population;
             }
         }
-
-        // 연대 없으면 수도 팝으로 대체
-        if (targets.Count == 0 && nation.capital?.provinceEthnicPops != null)
+        catch (OverflowException)
         {
-            foreach (ProvinceEthnicPop pep in nation.capital.provinceEthnicPops)
-            {
-                targets.Add((pep, pep.population));
-                totalWeight += pep.population;
-            }
+            return;
         }
 
-        if (totalWeight <= 0) return;
-
-        long amount = Policy.MilitarySalary;
-        foreach (var (pep, weight) in targets)
-            pep.property += (long)((double)weight / totalWeight * amount);
+        TryDistribute(Policy.MilitarySalary, weights, population => population.Account,
+            population => population.Account.Id, "policy military salary", out _);
     }
 
-    /// <summary>
-    /// [산업 지원] BuildingType별 보조금을 국가 내 동일 타입 건물에 분배합니다.
-    /// 노동 포화도가 낮은 건물일수록 보조금 효과가 증폭되며(한계효용 체감),
-    /// 분배 후 즉시 고용을 시도해 이번 턴 생산에 반영됩니다.
-    ///
-    /// 포화도 구간별 효율 계수:
-    ///   &lt; 60% (인력 부족) → ×1.5  /  60~90% (정상) → ×1.0  /  ≥ 90% (포화) → ×0.5
-    /// </summary>
     private void ApplyIndustrySubsidy()
     {
         if (Policy.IndustrySubsidy.Count == 0) return;
 
-        foreach (var (typeName, subsidy) in Policy.IndustrySubsidy)
+        foreach (KeyValuePair<string, long> policy in Policy.IndustrySubsidy
+            .OrderBy(pair => pair.Key, StringComparer.Ordinal))
         {
+            string typeName = policy.Key;
+            long subsidy = policy.Value;
             if (subsidy <= 0) continue;
 
-            List<Building> targets = new();
-            foreach (Province province in nation.provinces)
-                foreach (var kv in province.buildings)
-                    if (kv.Key.name == typeName)
-                        targets.Add(kv.Value);
-
-            if (targets.Count == 0) continue;
-
-            // 1단계: 포화도 기반 효율 가중치 계산
-            var weights = new double[targets.Count];
-            double totalWeight = 0;
-            for (int i = 0; i < targets.Count; i++)
+            Dictionary<Building, long> weights = new();
+            try
             {
-                Building b = targets[i];
-                long cap = Math.Max(1L, b.level * b.buildingType.workerNeeded);
-                double saturation = (double)b.currentWorkers / cap;
+                foreach (Province province in nation.provinces)
+                {
+                    foreach (KeyValuePair<BuildingType, Building> entry in province.buildings)
+                    {
+                        if (entry.Key.name != typeName) continue;
 
-                double efficiency = saturation >= 0.9 ? 0.5   // 포화 — 효과 감소
-                                  : saturation >= 0.6 ? 1.0   // 정상 가동 — 표준
-                                  : 1.5;                       // 인력 부족 — 효과 증폭
-
-                weights[i] = Math.Max(1, b.level) * efficiency;
-                totalWeight += weights[i];
+                        Building building = entry.Value;
+                        long capacity = Math.Max(1L,
+                            checked(building.level * building.buildingType.workerNeeded));
+                        double saturation = (double)building.currentWorkers / capacity;
+                        long efficiencyWeight = saturation >= 0.9 ? 1L
+                            : saturation >= 0.6 ? 2L
+                            : 3L;
+                        weights[building] = checked(
+                            Math.Max(1, building.level) * efficiencyWeight);
+                    }
+                }
+            }
+            catch (OverflowException)
+            {
+                continue;
             }
 
-            // 2단계: 가중치 비례 분배 + 즉시 고용 시도
-            for (int i = 0; i < targets.Count; i++)
+            if (TryDistribute(subsidy, weights, building => building.Account,
+                building => building.Account.Id, $"policy industry subsidy:{typeName}",
+                out List<Building> fundedBuildings))
             {
-                Building building = targets[i];
-                long share = (long)(weights[i] / totalWeight * subsidy);
-                building.balance += (int)Math.Min(share, int.MaxValue - (long)building.balance);
-                building.HireWorkers();
+                foreach (Building building in fundedBuildings)
+                    building.HireWorkers();
             }
         }
     }
 
-    /// <summary>
-    /// [부동산 정책] 배분액을 전체 팝에 인구 비례로 분배하고 생활수준을 소폭 상승시킵니다.
-    /// 생활수준 상승분 = (투자액 / GDP평균) × 0.1, 최대 10.0 상한.
-    /// </summary>
     private void ApplyRealEstatePolicy()
     {
         if (Policy.RealEstateFund <= 0) return;
 
-        long totalPop = nation.Population;
-        if (totalPop <= 0) return;
-
-        long amount = Policy.RealEstateFund;
-        double lsBoost = (double)amount / Math.Max(1L, nation.GDPAverage) * 0.1;
-
+        Dictionary<ProvinceEthnicPop, long> weights = new();
         foreach (Province province in nation.provinces)
+            foreach (ProvinceEthnicPop population in province.provinceEthnicPops)
+                if (population.population > 0)
+                    weights[population] = population.population;
+
+        if (!TryDistribute(Policy.RealEstateFund, weights,
+            population => population.Account, population => population.Account.Id,
+            "policy real estate", out List<ProvinceEthnicPop> fundedPopulations))
         {
-            foreach (ProvinceEthnicPop pep in province.provinceEthnicPops)
-            {
-                pep.property += (long)((double)pep.population / totalPop * amount);
-                pep.livingStandard = Math.Min(pep.livingStandard + lsBoost, 10.0);
-            }
+            return;
         }
+
+        double livingStandardBoost =
+            (double)Policy.RealEstateFund / Math.Max(1L, nation.GDPAverage) * 0.1;
+        foreach (ProvinceEthnicPop population in fundedPopulations)
+            population.livingStandard = Math.Min(
+                population.livingStandard + livingStandardBoost, 10.0);
     }
 
-    // ─── Private helpers ─────────────────────────────────────────
+    private bool TryDistribute<T>(
+        long amount,
+        IReadOnlyDictionary<T, long> candidateWeights,
+        Func<T, MoneyAccount> accountSelector,
+        Func<T, string> stableKey,
+        string reason,
+        out List<T> fundedTargets)
+    {
+        fundedTargets = new List<T>();
+        if (amount <= 0 || candidateWeights == null || nation.Ledger == null)
+            return false;
+
+        Dictionary<T, long> validWeights = candidateWeights
+            .Where(pair => !ReferenceEquals(pair.Key, null) && pair.Value > 0 &&
+                accountSelector(pair.Key)?.Ledger == nation.Ledger)
+            .ToDictionary(pair => pair.Key, pair => pair.Value);
+        if (validWeights.Count == 0)
+            return false;
+
+        Dictionary<T, long> allocations;
+        try
+        {
+            allocations = ProportionalAllocator.Allocate(amount, validWeights, stableKey);
+        }
+        catch (Exception exception) when (
+            exception is OverflowException || exception is ArgumentException)
+        {
+            return false;
+        }
+
+        List<MoneyTransferEntry> entries = new()
+        {
+            new MoneyTransferEntry(nation.Account, -amount)
+        };
+        foreach (KeyValuePair<T, long> allocation in allocations
+            .OrderBy(pair => stableKey(pair.Key), StringComparer.Ordinal))
+        {
+            if (allocation.Value > 0)
+                entries.Add(new MoneyTransferEntry(
+                    accountSelector(allocation.Key), allocation.Value));
+        }
+
+        if (entries.Count <= 1 || !nation.Ledger.TryTransferBatch(entries, reason))
+            return false;
+
+        fundedTargets = allocations
+            .Where(pair => pair.Value > 0)
+            .OrderBy(pair => stableKey(pair.Key), StringComparer.Ordinal)
+            .Select(pair => pair.Key)
+            .ToList();
+        return true;
+    }
 
     private float CalculatePriceIndex()
     {
@@ -317,15 +322,13 @@ public class GovernmentBudget
 
         float weightedSum = 0f;
         long totalWeight = 0;
-
-        foreach (ProductState ps in market.Products.Values)
+        foreach (ProductState product in market.Products.Values)
         {
-            int weight = ps.LastSupply + ps.LastDemand;
-            if (weight > 0)
-            {
-                weightedSum += ps.Price * weight;
-                totalWeight += weight;
-            }
+            int weight = product.LastSupply + product.LastDemand;
+            if (weight <= 0) continue;
+
+            weightedSum += product.Price * weight;
+            totalWeight += weight;
         }
 
         return totalWeight > 0 ? weightedSum / totalWeight : 1f;

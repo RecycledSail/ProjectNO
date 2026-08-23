@@ -17,11 +17,7 @@ public class Nation : IBuildingInvestor
     public MoneyAccount Account { get; }
     public MoneyAccount InvestmentAccount => Account;
     public MoneyLedger Ledger { get; internal set; }
-    public long balance
-    {
-        get => Account.Balance;
-        set => Account.ReplaceForLoading(value);
-    }
+    public long balance => Account.Balance;
     public List<Regiment> regiments { get; set; }
     public Dictionary<(SpeciesSpec, Culture), EthnicGroup> ethnicGroups { get; set; }
     public Dictionary<Nation, Diplomacy> allies;
