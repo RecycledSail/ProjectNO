@@ -96,6 +96,48 @@ public class MoneyLedgerTests
     }
 
     [Test]
+    public void TransferBatch_RejectsUnrecordableAmountWithoutMutation()
+    {
+        object authority = new object();
+        object source = ReflectionTestHelpers.New("MoneyAccount", "source", long.MaxValue);
+        object intermediary = ReflectionTestHelpers.New("MoneyAccount", "intermediary", 0L);
+        object destination = ReflectionTestHelpers.New("MoneyAccount", "destination", 0L);
+        object ledger = ReflectionTestHelpers.New("MoneyLedger", "N1", authority, source);
+        ReflectionTestHelpers.Call<bool>(ledger, "RegisterInitialAccount", source);
+        ReflectionTestHelpers.Call<bool>(ledger, "RegisterInitialAccount", intermediary);
+        ReflectionTestHelpers.Call<bool>(ledger, "RegisterInitialAccount", destination);
+        ReflectionTestHelpers.Call<object>(ledger, "SealInitialization");
+
+        Type entryType = ReflectionTestHelpers.Find("MoneyTransferEntry");
+        IList entries = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(entryType));
+        entries.Add(ReflectionTestHelpers.New("MoneyTransferEntry", source, -long.MaxValue));
+        entries.Add(ReflectionTestHelpers.New("MoneyTransferEntry", intermediary, long.MaxValue));
+        entries.Add(ReflectionTestHelpers.New("MoneyTransferEntry", intermediary, -long.MaxValue));
+        entries.Add(ReflectionTestHelpers.New("MoneyTransferEntry", destination, long.MaxValue));
+        int transactionCount = ((ICollection)ReflectionTestHelpers.Get(ledger, "Transactions")).Count;
+
+        bool succeeded = true;
+        Exception exception = null;
+        try
+        {
+            succeeded = ReflectionTestHelpers.Call<bool>(ledger,
+                "TryTransferBatch", entries, "unrecordable");
+        }
+        catch (Exception caught)
+        {
+            exception = caught;
+        }
+
+        Assert.That(exception, Is.Null);
+        Assert.That(succeeded, Is.False);
+        Assert.That(ReflectionTestHelpers.Get(source, "Balance"), Is.EqualTo(long.MaxValue));
+        Assert.That(ReflectionTestHelpers.Get(intermediary, "Balance"), Is.EqualTo(0L));
+        Assert.That(ReflectionTestHelpers.Get(destination, "Balance"), Is.EqualTo(0L));
+        Assert.That(((ICollection)ReflectionTestHelpers.Get(ledger, "Transactions")).Count,
+            Is.EqualTo(transactionCount));
+    }
+
+    [Test]
     public void Registration_OnlyAllowsEmptyAccountsAfterInitialization()
     {
         object authority = new object();

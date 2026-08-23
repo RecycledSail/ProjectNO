@@ -133,10 +133,13 @@ public sealed class MoneyLedger
         if (!TryValidateBatch(entries, out Dictionary<MoneyAccount, long> deltas))
             return false;
 
+        if (!TryCreateTransferRecord(entries, reason, out MoneyTransactionRecord record))
+            return false;
+
         foreach (KeyValuePair<MoneyAccount, long> pair in deltas)
             pair.Key.ApplyDelta(pair.Value);
 
-        AppendTransferRecord(entries, reason);
+        _transactions.Add(record);
         return true;
     }
 
@@ -147,7 +150,7 @@ public sealed class MoneyLedger
 
         try
         {
-            long newBalance = checked(target.Balance + amount);
+            _ = checked(target.Balance + amount);
             long newSupply = checked(MoneySupply + amount);
             target.ApplyDelta(amount);
             MoneySupply = newSupply;
@@ -247,25 +250,38 @@ public sealed class MoneyLedger
         account.Ledger = this;
     }
 
-    private void AppendTransferRecord(IReadOnlyList<MoneyTransferEntry> entries, string reason)
+    private bool TryCreateTransferRecord(
+        IReadOnlyList<MoneyTransferEntry> entries,
+        string reason,
+        out MoneyTransactionRecord record)
     {
-        List<string> sources = new();
-        List<string> destinations = new();
-        long amount = 0;
-        foreach (MoneyTransferEntry entry in entries)
+        try
         {
-            if (entry.Delta < 0)
+            List<string> sources = new();
+            List<string> destinations = new();
+            long amount = 0;
+            foreach (MoneyTransferEntry entry in entries)
             {
-                sources.Add(entry.Account.Id);
-                amount = checked(amount - entry.Delta);
+                if (entry.Delta < 0)
+                {
+                    sources.Add(entry.Account.Id);
+                    amount = checked(amount - entry.Delta);
+                }
+                else if (entry.Delta > 0)
+                {
+                    destinations.Add(entry.Account.Id);
+                }
             }
-            else if (entry.Delta > 0)
-            {
-                destinations.Add(entry.Account.Id);
-            }
-        }
 
-        AppendRecord(MoneyTransactionKind.Transfer, sources, destinations, amount, reason);
+            record = new MoneyTransactionRecord(
+                MoneyTransactionKind.Transfer, sources, destinations, amount, reason);
+            return true;
+        }
+        catch (OverflowException)
+        {
+            record = null;
+            return false;
+        }
     }
 
     private void AppendRecord(
