@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -97,28 +95,8 @@ public class BuildProvinceButtonUI : MonoBehaviour
     private bool CanStartConstruction()
     {
         Nation nation = provinceData?.nation;
-        if (nation == null || buildingType == null)
-            return false;
-
-        if (nation.IsConstructionQueued(buildingType, provinceData))
-            return false;
-
-        if (!GlobalVariables.BUILDING_RECIPE.TryGetValue(buildingType.name, out BuildingRecipe recipe))
-            return false;
-
-        Dictionary<string, ProductState> products = GetAccessibleProducts(provinceData);
-        if (products == null)
-            return false;
-
-        foreach (var requirement in recipe.requireItems)
-        {
-            int reserved = GetReservedAmount(nation, products, requirement.Key);
-            if (!products.TryGetValue(requirement.Key, out ProductState product) ||
-                product.Stock - reserved < requirement.Value)
-                return false;
-        }
-
-        return true;
+        return nation != null && buildingType != null &&
+               nation.CanPlaceConstructionMandate(buildingType, provinceData, out _);
     }
 
     private string GetBuildTooltipMessage()
@@ -127,54 +105,9 @@ public class BuildProvinceButtonUI : MonoBehaviour
         if (nation == null || buildingType == null)
             return "Cannot build here.";
 
-        if (nation.IsConstructionQueued(buildingType, provinceData))
-            return "Already queued.";
-
-        if (!GlobalVariables.BUILDING_RECIPE.TryGetValue(buildingType.name, out BuildingRecipe recipe))
-            return $"No recipe for {buildingType.name}.";
-
-        Dictionary<string, ProductState> products = GetAccessibleProducts(provinceData);
-        if (products == null)
-            return "No accessible market.";
-
-        List<string> missing = new();
-        foreach (var requirement in recipe.requireItems)
-        {
-            int reserved = GetReservedAmount(nation, products, requirement.Key);
-            int stock = products.TryGetValue(requirement.Key, out ProductState product) ? product.Stock : 0;
-            int available = Mathf.Max(0, stock - reserved);
-            if (available < requirement.Value)
-                missing.Add($"{requirement.Key}: have {available:N0}, need {requirement.Value:N0}");
-        }
-
-        if (missing.Count == 0)
-            return "";
-
-        return "Need more materials\n" + string.Join("\n", missing);
-    }
-
-    private Dictionary<string, ProductState> GetAccessibleProducts(Province province)
-    {
-        if (province == null)
-            return null;
-
-        if (province.isConnectedToCapital && province.nation?.market != null)
-            return province.nation.market.Products;
-
-        return province.market?.Products;
-    }
-
-    private int GetReservedAmount(Nation nation, Dictionary<string, ProductState> products, string productName)
-    {
-        return nation.ConstructionMandates
-            .Where(mandate => mandate.IsActive)
-            .Where(mandate => GetAccessibleProducts(mandate.TargetProvince) == products)
-            .Where(mandate => GlobalVariables.BUILDING_RECIPE.ContainsKey(mandate.BuildingType.name))
-            .Sum(mandate =>
-                GlobalVariables.BUILDING_RECIPE[mandate.BuildingType.name]
-                    .requireItems.TryGetValue(productName, out int amount)
-                        ? amount
-                        : 0);
+        return nation.CanPlaceConstructionMandate(buildingType, provinceData, out string error)
+            ? ""
+            : error;
     }
 
     public void OnClick()

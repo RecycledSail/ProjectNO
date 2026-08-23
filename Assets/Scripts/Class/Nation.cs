@@ -15,6 +15,7 @@ public class Nation : IBuildingInvestor
     public List<Province> provinces { get; set; }
     public Province capital { get; set; } = null;
     public MoneyAccount Account { get; }
+    public MoneyAccount InvestmentAccount => Account;
     public MoneyLedger Ledger { get; internal set; }
     public long balance
     {
@@ -155,24 +156,123 @@ public class Nation : IBuildingInvestor
         BuildingType buildingType,
         Province targetProvince)
     {
-        if (buildingType == null ||
-            targetProvince == null ||
-            targetProvince.nation != this ||
-            IsConstructionQueued(buildingType, targetProvince) ||
-            !GlobalVariables.BUILDING_RECIPE.TryGetValue(
-                buildingType.name,
-                out BuildingRecipe recipe))
+        if (!CanPlaceConstructionMandate(buildingType, targetProvince, out _))
             return null;
 
-        ConstructionMandate mandate = new(
-            this,
-            buildingType,
-            targetProvince,
-            Math.Max(1, recipe.TimeToBuild));
+        BuildingRecipe recipe = GlobalVariables.BUILDING_RECIPE[buildingType.name];
+        MoneyAccount escrow = new(
+            $"mandate:{name}:{targetProvince.name}:{buildingType.name}:{_constructionMandates.Count}");
+        MoneyLedger ledger = targetProvince.ActiveLedger;
+        if (!ledger.RegisterEmptyAccount(escrow))
+            return null;
+
+        if (!ledger.TryTransfer(
+            InvestmentAccount,
+            escrow,
+            recipe.InitialCapital,
+            "Construction mandate operating capital"))
+        {
+            ledger.UnregisterEmptyAccount(escrow);
+            return null;
+        }
+
+        ConstructionMandate mandate;
+        try
+        {
+            mandate = new ConstructionMandate(
+                this,
+                buildingType,
+                targetProvince,
+                Math.Max(1, recipe.TimeToBuild),
+                escrow,
+                recipe.InitialCapital);
+        }
+        catch
+        {
+            ledger.TryTransfer(escrow, InvestmentAccount, escrow.Balance,
+                "Construction mandate setup rollback");
+            ledger.UnregisterEmptyAccount(escrow);
+            throw;
+        }
 
         _constructionMandates.Add(mandate);
         TryAssignConstructionCompany(mandate);
         return mandate;
+    }
+
+    public bool CanPlaceConstructionMandate(
+        BuildingType buildingType,
+        Province targetProvince,
+        out string error)
+    {
+        error = null;
+        if (buildingType == null || targetProvince == null)
+        {
+            error = "A building type and target province are required.";
+            return false;
+        }
+
+        if (targetProvince.nation != this)
+        {
+            error = "Cannot build outside the nation.";
+            return false;
+        }
+
+        if (IsConstructionQueued(buildingType, targetProvince))
+        {
+            error = "Already queued.";
+            return false;
+        }
+
+        if (!GlobalVariables.BUILDING_RECIPE.TryGetValue(buildingType.name, out BuildingRecipe recipe))
+        {
+            error = $"No recipe for {buildingType.name}.";
+            return false;
+        }
+
+        if (recipe.InitialCapital < 0)
+        {
+            error = "Operating capital must be nonnegative.";
+            return false;
+        }
+
+        MoneyLedger ledger = targetProvince.ActiveLedger;
+        if (ledger == null || InvestmentAccount?.Ledger != ledger)
+        {
+            error = "The investor and target must use the same active ledger.";
+            return false;
+        }
+
+        Dictionary<string, ProductState> products = GetAccessibleProducts(targetProvince);
+        if (recipe.requireItems.Count > 0 && products == null)
+        {
+            error = "No accessible market.";
+            return false;
+        }
+
+        List<string> missingMaterials = new();
+        foreach (KeyValuePair<string, int> requirement in recipe.requireItems)
+        {
+            long available = products != null && products.TryGetValue(requirement.Key, out ProductState product)
+                ? product.Stock - GetReservedAmount(products, requirement.Key)
+                : 0L;
+            if (available < requirement.Value)
+                missingMaterials.Add($"{requirement.Key}: have {Math.Max(0L, available):N0}, need {requirement.Value:N0}");
+        }
+
+        if (missingMaterials.Count > 0)
+        {
+            error = "Need more materials\n" + string.Join("\n", missingMaterials);
+            return false;
+        }
+
+        if (InvestmentAccount.Balance < recipe.InitialCapital)
+        {
+            error = $"Need operating capital: have {InvestmentAccount.Balance:N0}, need {recipe.InitialCapital:N0}.";
+            return false;
+        }
+
+        return true;
     }
 
     public bool IsConstructionQueued(BuildingType buildingType, Province targetProvince)
@@ -221,6 +321,32 @@ public class Nation : IBuildingInvestor
         }
 
         return false;
+    }
+
+    private static Dictionary<string, ProductState> GetAccessibleProducts(Province province)
+    {
+        if (province == null)
+            return null;
+
+        return province.isConnectedToCapital && province.nation?.market != null
+            ? province.nation.market.Products
+            : province.market?.Products;
+    }
+
+    private long GetReservedAmount(Dictionary<string, ProductState> products, string productName)
+    {
+        long reserved = 0;
+        foreach (ConstructionMandate mandate in _constructionMandates.Where(mandate => mandate.IsActive))
+        {
+            if (GetAccessibleProducts(mandate.TargetProvince) != products ||
+                !GlobalVariables.BUILDING_RECIPE.TryGetValue(mandate.BuildingType.name, out BuildingRecipe recipe) ||
+                !recipe.requireItems.TryGetValue(productName, out int amount))
+                continue;
+
+            reserved = checked(reserved + amount);
+        }
+
+        return reserved;
     }
 
     /// <summary>

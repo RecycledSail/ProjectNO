@@ -84,6 +84,37 @@ public class NeutralProvinceLedgerTests
         Assert.That((bool)ReflectionTestHelpers.Call<bool>(nation, "HasProvinces", province), Is.False);
     }
 
+    [Test]
+    public void AbsorbNeutralProvince_MigratesFundedActiveMandateEscrowWithoutChangingSupply()
+    {
+        object nation = TestEconomyFactory.NewNation("N1", 1000L);
+        object province = TestEconomyFactory.NewProvince(1, "Prano");
+        ReflectionTestHelpers.Set(province, "initialLocalTreasury", 1000L);
+        object population = TestEconomyFactory.AddPop(province, 200L, 1.0);
+        Initialize(nation, province);
+
+        object localLedger = ReflectionTestHelpers.Get(province, "LocalLedger");
+        object populationAccount = ReflectionTestHelpers.Get(population, "Account");
+        object escrow = ReflectionTestHelpers.New("MoneyAccount", "mandate:Prano:WheatField", 0L);
+        Assert.That(ReflectionTestHelpers.Call<bool>(localLedger, "RegisterEmptyAccount", escrow), Is.True);
+        Assert.That(ReflectionTestHelpers.Call<bool>(localLedger, "TryTransfer",
+            populationAccount, escrow, 100L, "Fund neutral mandate"), Is.True);
+
+        object buildingType = ReflectionTestHelpers.New("BuildingType", "WheatField");
+        object mandate = ReflectionTestHelpers.New("ConstructionMandate", population,
+            buildingType, province, 10d, escrow, 100L);
+        object nationalLedger = ReflectionTestHelpers.Get(nation, "Ledger");
+
+        Assert.That(ReflectionTestHelpers.Get(escrow, "Balance"), Is.EqualTo(100L));
+        Assert.That(TryAbsorb(province, nation, out string error), Is.True, error);
+
+        Assert.That(ReflectionTestHelpers.Get(escrow, "Ledger"), Is.SameAs(nationalLedger));
+        Assert.That(ReflectionTestHelpers.Get(escrow, "Balance"), Is.EqualTo(100L));
+        Assert.That(ReflectionTestHelpers.Get(nationalLedger, "MoneySupply"), Is.EqualTo(2200L));
+        Assert.That(ReflectionTestHelpers.Get(localLedger, "MoneySupply"), Is.EqualTo(0L));
+        Assert.That(ReflectionTestHelpers.Get(mandate, "Status").ToString(), Is.EqualTo("Requested"));
+    }
+
     private static void Initialize(object nation, object province)
     {
         ReflectionTestHelpers.Find("EconomicInitializer").GetMethod("Initialize")

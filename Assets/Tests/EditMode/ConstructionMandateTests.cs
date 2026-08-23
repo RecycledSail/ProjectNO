@@ -91,6 +91,7 @@ public class ConstructionMandateTests
 
         object buildingType = New("BuildingType", "WheatField");
         ConfigureRecipeAndAdjacency(buildingType, target, builderProvince, 20);
+        InitializeNation(nation, target, builderProvince);
 
         object mandate = Invoke<object>(nation, "PlaceConstructionMandate", buildingType, target);
 
@@ -115,6 +116,7 @@ public class ConstructionMandateTests
 
         object buildingType = New("BuildingType", "WheatField");
         ConfigureRecipeAndAdjacency(buildingType, target, null, 20);
+        InitializeNation(nation, target, builderProvince);
         object mandate = Invoke<object>(nation, "PlaceConstructionMandate", buildingType, target);
 
         Assert.That(GetProperty(mandate, "Status").ToString(), Is.EqualTo("Requested"));
@@ -232,7 +234,7 @@ public class ConstructionMandateTests
         object researches = Activator.CreateInstance(
             typeof(List<>).MakeGenericType(researchType));
         return Activator.CreateInstance(Find("Nation"),
-            new[] { (object)1, name, researches });
+            new[] { (object)1, name, researches, 1000L });
     }
 
     private static void ConfigureRecipeAndAdjacency(
@@ -244,6 +246,7 @@ public class ConstructionMandateTests
         string buildingTypeName = (string)GetMember(buildingType, "name");
         object recipe = New("BuildingRecipe", buildingTypeName);
         SetProperty(recipe, "TimeToBuild", timeToBuild);
+        SetProperty(recipe, "InitialCapital", 100L);
         GetStaticDictionary("BUILDING_RECIPE")[buildingTypeName] = recipe;
 
         IList neighbors = (IList)Activator.CreateInstance(
@@ -252,6 +255,30 @@ public class ConstructionMandateTests
             neighbors.Add(builderProvince);
         string targetName = (string)GetMember(target, "name");
         GetStaticDictionary("ADJACENT_PROVINCES")[targetName] = neighbors;
+    }
+
+    private static void InitializeNation(object nation, params object[] provinces)
+    {
+        foreach (object province in provinces)
+        {
+            foreach (object building in ((IDictionary)GetMember(province, "buildings")).Values)
+            {
+                object type = GetMember(building, "buildingType");
+                string typeName = (string)GetMember(type, "name");
+                if (GetStaticDictionary("BUILDING_RECIPE").Contains(typeName))
+                    continue;
+
+                object recipe = New("BuildingRecipe", typeName);
+                SetProperty(recipe, "InitialCapital", 0L);
+                GetStaticDictionary("BUILDING_RECIPE")[typeName] = recipe;
+            }
+        }
+
+        Find("EconomicInitializer").GetMethod("Initialize").Invoke(null, new object[]
+        {
+            TestEconomyFactory.ListOf("Nation", nation),
+            TestEconomyFactory.ListOf("Province", provinces)
+        });
     }
 
     private static IDictionary GetStaticDictionary(string fieldName)

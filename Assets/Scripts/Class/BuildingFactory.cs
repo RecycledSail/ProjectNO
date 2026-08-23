@@ -16,4 +16,22 @@ public static class BuildingFactory
 
         return building;
     }
+
+    public static bool TryCreateAndRegister(
+        BuildingType buildingType,
+        Province province,
+        out Building building)
+    {
+        building = null;
+        if (buildingType == null || province == null || province.ActiveLedger == null)
+            return false;
+
+        Building candidate = Create(buildingType, province);
+        if (!province.ActiveLedger.RegisterEmptyAccount(candidate.Account))
+            return false;
+
+        province.buildings[buildingType] = candidate;
+        building = candidate;
+        return true;
+    }
 }

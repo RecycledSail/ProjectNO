@@ -44,6 +44,7 @@ public class ProvinceEthnicPop : IBuildingInvestor
     public long population;
     public long dividend; //배당수익
     public MoneyAccount Account { get; }
+    public MoneyAccount InvestmentAccount => Account;
     public long property
     {
         get => Account.Balance;

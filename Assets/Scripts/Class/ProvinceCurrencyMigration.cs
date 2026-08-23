@@ -38,6 +38,17 @@ public static class ProvinceCurrencyMigration
         if (!province.TryCollectMigrationAccounts(out List<MoneyAccount> accounts, out error))
             return false;
 
+        foreach (MoneyAccount escrow in ConstructionMandate.GetActiveEscrowAccountsFor(province))
+        {
+            if (escrow == null || accounts.Contains(escrow))
+            {
+                error = "The province has an invalid construction mandate escrow account.";
+                return false;
+            }
+
+            accounts.Add(escrow);
+        }
+
         accounts.Add(sourceTreasury);
         if (!sourceLedger.TryMigrateEntireLedgerTo(
             destinationLedger,
