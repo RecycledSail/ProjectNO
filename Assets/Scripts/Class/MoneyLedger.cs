@@ -23,6 +23,22 @@ public sealed class MoneyTransferEntry
     }
 }
 
+public sealed class MoneyTransferBatch
+{
+    private readonly IReadOnlyList<MoneyTransferEntry> _entries;
+
+    public IReadOnlyList<MoneyTransferEntry> Entries => _entries;
+    public string Reason { get; }
+
+    public MoneyTransferBatch(IReadOnlyList<MoneyTransferEntry> entries, string reason)
+    {
+        if (entries == null) throw new ArgumentNullException(nameof(entries));
+        _entries = new ReadOnlyCollection<MoneyTransferEntry>(
+            new List<MoneyTransferEntry>(entries));
+        Reason = reason;
+    }
+}
+
 public sealed class MoneyTransactionRecord
 {
     public MoneyTransactionKind Kind { get; }
@@ -207,6 +223,76 @@ public sealed class MoneyLedger
         }
     }
 
+    public bool TryIssueAndTransferBatches(
+        object authority,
+        MoneyAccount target,
+        long amount,
+        string mintReason,
+        IReadOnlyList<MoneyTransferBatch> batches)
+    {
+        if (!HasIssuanceAuthority(authority) || !IsRegistered(target) ||
+            amount <= 0 || batches == null)
+        {
+            return false;
+        }
+
+        Dictionary<MoneyAccount, long> aggregateDeltas = new()
+        {
+            [target] = amount
+        };
+        List<MoneyTransactionRecord> transferRecords = new();
+        long newSupply;
+        int requiredTransactionCount;
+        try
+        {
+            newSupply = checked(MoneySupply + amount);
+            foreach (MoneyTransferBatch batch in batches)
+            {
+                if (batch == null ||
+                    !TryCollectBatchDeltas(batch.Entries, out Dictionary<MoneyAccount, long> deltas) ||
+                    !TryCreateTransferRecord(batch.Entries, batch.Reason,
+                        out MoneyTransactionRecord record))
+                {
+                    return false;
+                }
+
+                foreach (KeyValuePair<MoneyAccount, long> pair in deltas)
+                {
+                    aggregateDeltas.TryGetValue(pair.Key, out long existingDelta);
+                    aggregateDeltas[pair.Key] = checked(existingDelta + pair.Value);
+                }
+                transferRecords.Add(record);
+            }
+
+            foreach (KeyValuePair<MoneyAccount, long> pair in aggregateDeltas)
+                if (checked(pair.Key.Balance + pair.Value) < 0)
+                    return false;
+
+            requiredTransactionCount = checked(
+                _transactions.Count + 1 + transferRecords.Count);
+            if (_transactions.Capacity < requiredTransactionCount)
+                _transactions.Capacity = requiredTransactionCount;
+        }
+        catch (OverflowException)
+        {
+            return false;
+        }
+
+        MoneyTransactionRecord mintRecord = new(
+            MoneyTransactionKind.Mint,
+            Array.Empty<string>(),
+            new[] { target.Id },
+            amount,
+            mintReason);
+
+        foreach (KeyValuePair<MoneyAccount, long> pair in aggregateDeltas)
+            pair.Key.ApplyDelta(pair.Value);
+        MoneySupply = newSupply;
+        _transactions.Add(mintRecord);
+        _transactions.AddRange(transferRecords);
+        return true;
+    }
+
     public bool TryBurn(object authority, MoneyAccount source, long amount, string reason)
     {
         if (!HasIssuanceAuthority(authority) || !IsRegistered(source) || amount <= 0 ||
@@ -344,6 +430,28 @@ public sealed class MoneyLedger
         IReadOnlyList<MoneyTransferEntry> entries,
         out Dictionary<MoneyAccount, long> deltas)
     {
+        if (!TryCollectBatchDeltas(entries, out deltas))
+            return false;
+
+        try
+        {
+            foreach (KeyValuePair<MoneyAccount, long> pair in deltas)
+            {
+                if (checked(pair.Key.Balance + pair.Value) < 0)
+                    return false;
+            }
+            return true;
+        }
+        catch (OverflowException)
+        {
+            return false;
+        }
+    }
+
+    private bool TryCollectBatchDeltas(
+        IReadOnlyList<MoneyTransferEntry> entries,
+        out Dictionary<MoneyAccount, long> deltas)
+    {
         deltas = null;
         if (entries == null || entries.Count == 0)
             return false;
@@ -364,12 +472,6 @@ public sealed class MoneyLedger
 
             if (batchTotal != 0)
                 return false;
-
-            foreach (KeyValuePair<MoneyAccount, long> pair in candidateDeltas)
-            {
-                if (checked(pair.Key.Balance + pair.Value) < 0)
-                    return false;
-            }
 
             deltas = candidateDeltas;
             return true;

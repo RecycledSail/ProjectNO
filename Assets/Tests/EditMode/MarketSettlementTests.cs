@@ -95,7 +95,7 @@ public class MarketSettlementTests
         object seller = AddSeller(context, "seller", 0L);
         object product = NewProduct("Gold", 10, (seller, 1));
         Seal(context);
-        ReplaceBalanceForLoading(seller, long.MaxValue);
+        CorruptBalanceForAuditTest(seller, long.MaxValue);
         SettlementSnapshot before = Snapshot(context, product, seller);
 
         object result = TryPurchase(product, context.Buyer, 1, context.Ledger);
@@ -219,12 +219,12 @@ public class MarketSettlementTests
         Assert.That(GetInt(product, "LastSupply"), Is.EqualTo(before.LastSupply));
     }
 
-    private static void ReplaceBalanceForLoading(object account, long balance)
+    private static void CorruptBalanceForAuditTest(object account, long balance)
     {
-        MethodInfo method = account.GetType().GetMethod(
-            "ReplaceForLoading", BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.That(method, Is.Not.Null);
-        method.Invoke(account, new object[] { balance });
+        FieldInfo field = account.GetType().GetField(
+            "<Balance>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null);
+        field.SetValue(account, balance);
     }
 
     private static int TransactionCount(object ledger) =>

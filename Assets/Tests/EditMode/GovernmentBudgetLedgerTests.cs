@@ -8,11 +8,15 @@ using NUnit.Framework;
 public class GovernmentBudgetLedgerTests
 {
     private const string BuildingTypeName = "government-budget-ledger-test-industry";
+    private const string EarlyIndustryTypeName = "government-budget-atomic-a-early";
+    private const string OverflowIndustryTypeName = "government-budget-atomic-z-overflow";
 
     [TearDown]
     public void RemoveTestRecipe()
     {
         Recipes.Remove(BuildingTypeName);
+        Recipes.Remove(EarlyIndustryTypeName);
+        Recipes.Remove(OverflowIndustryTypeName);
     }
 
     [Test]
@@ -24,7 +28,7 @@ public class GovernmentBudgetLedgerTests
         ReflectionTestHelpers.Set(policy, "RealEstateFund", 100L);
         ((IDictionary)ReflectionTestHelpers.Get(policy, "IndustrySubsidy"))[BuildingTypeName] = 100L;
 
-        Call(context.Budget, "PrintMoney");
+        Assert.That(Call(context.Budget, "PrintMoney"), Is.EqualTo(true));
 
         Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(400L));
         Assert.That(Balance(context.Treasury), Is.EqualTo(100L));
@@ -115,7 +119,7 @@ public class GovernmentBudgetLedgerTests
         ReflectionTestHelpers.Set(policy, "RealEstateFund", 3L);
         int transactionsBefore = Transactions(context.Ledger).Count;
 
-        Assert.That(() => Call(context.Budget, "PrintMoney"), Throws.Nothing);
+        Assert.That(Call(context.Budget, "PrintMoney"), Is.EqualTo(false));
 
         Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(100L));
         Assert.That(Balance(context.Treasury), Is.EqualTo(100L));
@@ -140,7 +144,7 @@ public class GovernmentBudgetLedgerTests
         ReflectionTestHelpers.Set(policy, "RealEstateFund", 70L);
         ((IDictionary)ReflectionTestHelpers.Get(policy, "IndustrySubsidy"))["missing"] = 60L;
 
-        Call(budget, "PrintMoney");
+        Assert.That(Call(budget, "PrintMoney"), Is.EqualTo(true));
 
         object ledger = ReflectionTestHelpers.Get(nation, "Ledger");
         Assert.That(GetLong(ledger, "MoneySupply"), Is.EqualTo(320L));
@@ -161,7 +165,7 @@ public class GovernmentBudgetLedgerTests
         object policy = ReflectionTestHelpers.Get(context.Budget, "Policy");
         ReflectionTestHelpers.Set(policy, "RealEstateFund", 100L);
 
-        Call(context.Budget, "PrintMoney");
+        Assert.That(Call(context.Budget, "PrintMoney"), Is.EqualTo(true));
 
         Assert.That(Balance(context.Population), Is.EqualTo(100L));
         Assert.That(Balance(unregisteredPopulation), Is.Zero);
@@ -169,6 +173,93 @@ public class GovernmentBudgetLedgerTests
             Is.EqualTo(10.0));
         Assert.That((double)ReflectionTestHelpers.Get(unregisteredPopulation, "livingStandard"),
             Is.EqualTo(1.0));
+    }
+
+    [Test]
+    public void PrintMoney_LaterIndustryOverflowLeavesTheCompletePolicyUnchanged()
+    {
+        object nation = TestEconomyFactory.NewNation("GovernmentBudgetAtomicOverflow", 100L);
+        object province = TestEconomyFactory.NewProvince(902, "GovernmentBudgetAtomicOverflowProvince");
+        Assert.That(ReflectionTestHelpers.Call<bool>(nation, "AddProvinces", province), Is.True);
+        ReflectionTestHelpers.Set(nation, "capital", province);
+        object population = TestEconomyFactory.AddPop(province, 0L, 1.0);
+        TestEconomyFactory.AddBuilding(province, EarlyIndustryTypeName, 1, 0L);
+        TestEconomyFactory.AddBuilding(province, OverflowIndustryTypeName, 2, 0L);
+        object earlyBuilding = BuildingByType(province, EarlyIndustryTypeName);
+        object overflowBuilding = BuildingByType(province, OverflowIndustryTypeName);
+        ReflectionTestHelpers.Set(ReflectionTestHelpers.Get(earlyBuilding, "buildingType"),
+            "workerNeeded", 10L);
+        ReflectionTestHelpers.Set(earlyBuilding, "previousGain", 1);
+        ReflectionTestHelpers.Set(ReflectionTestHelpers.Get(overflowBuilding, "buildingType"),
+            "workerNeeded", long.MaxValue);
+        Initialize(nation, province);
+
+        object budget = ReflectionTestHelpers.Get(nation, "governmentBudget");
+        object policy = ReflectionTestHelpers.Get(budget, "Policy");
+        ReflectionTestHelpers.Set(policy, "ResearchFund", 10L);
+        ReflectionTestHelpers.Set(policy, "MilitarySalary", 10L);
+        IDictionary industry = (IDictionary)ReflectionTestHelpers.Get(policy, "IndustrySubsidy");
+        industry[EarlyIndustryTypeName] = 20L;
+        industry[OverflowIndustryTypeName] = 30L;
+        object ledger = ReflectionTestHelpers.Get(nation, "Ledger");
+        int transactionsBefore = Transactions(ledger).Count;
+
+        Assert.That(Call(budget, "PrintMoney"), Is.EqualTo(false));
+
+        Assert.That(GetLong(ledger, "MoneySupply"), Is.EqualTo(100L));
+        Assert.That(Balance(ReflectionTestHelpers.Get(nation, "Account")), Is.EqualTo(100L));
+        Assert.That(Balance(population), Is.Zero);
+        Assert.That(Balance(earlyBuilding), Is.Zero);
+        Assert.That(Balance(overflowBuilding), Is.Zero);
+        Assert.That(GetLong(nation, "researchFund"), Is.Zero);
+        Assert.That(GetLong(earlyBuilding, "currentWorkers"), Is.Zero);
+        Assert.That(GetLong(overflowBuilding, "currentWorkers"), Is.Zero);
+        Assert.That(Transactions(ledger), Has.Count.EqualTo(transactionsBefore));
+        Assert.That(ReflectionTestHelpers.Get(budget, "Policy"), Is.SameAs(policy));
+    }
+
+    [Test]
+    public void PrintMoney_DuplicatePopulationAccountIdsLeaveTheCompletePolicyUnchanged()
+    {
+        object nation = TestEconomyFactory.NewNation("GovernmentBudgetDuplicatePopulation", 100L);
+        object province = TestEconomyFactory.NewProvince(903, "GovernmentBudgetDuplicateProvince");
+        Assert.That(ReflectionTestHelpers.Call<bool>(nation, "AddProvinces", province), Is.True);
+        ReflectionTestHelpers.Set(nation, "capital", province);
+        object firstPopulation = TestEconomyFactory.AddPop(province, 0L, 1.0);
+        object secondPopulation = TestEconomyFactory.AddPop(province, 0L, 1.0);
+        Initialize(nation, province);
+
+        object budget = ReflectionTestHelpers.Get(nation, "governmentBudget");
+        object policy = ReflectionTestHelpers.Get(budget, "Policy");
+        ReflectionTestHelpers.Set(policy, "ResearchFund", 10L);
+        ReflectionTestHelpers.Set(policy, "MilitarySalary", 20L);
+        object ledger = ReflectionTestHelpers.Get(nation, "Ledger");
+        int transactionsBefore = Transactions(ledger).Count;
+
+        Assert.That(Call(budget, "PrintMoney"), Is.EqualTo(false));
+
+        Assert.That(GetLong(ledger, "MoneySupply"), Is.EqualTo(100L));
+        Assert.That(Balance(ReflectionTestHelpers.Get(nation, "Account")), Is.EqualTo(100L));
+        Assert.That(Balance(firstPopulation), Is.Zero);
+        Assert.That(Balance(secondPopulation), Is.Zero);
+        Assert.That(GetLong(nation, "researchFund"), Is.Zero);
+        Assert.That(Transactions(ledger), Has.Count.EqualTo(transactionsBefore));
+        Assert.That(ReflectionTestHelpers.Get(budget, "Policy"), Is.SameAs(policy));
+    }
+
+    [Test]
+    public void MoneyAccount_HasNoLoadingBalanceReplacementBypass()
+    {
+        Type accountType = ReflectionTestHelpers.Find("MoneyAccount");
+        MethodInfo replacement = accountType.GetMethod(
+            "ReplaceForLoading", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.That(replacement, Is.Null);
+        Assert.That(accountType.GetProperty("Balance").SetMethod.IsPrivate, Is.True);
+        Assert.That(accountType.GetMethods(
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+            .Where(method => !method.IsSpecialName)
+            .Select(method => method.Name), Is.EqualTo(new[] { "ApplyDelta" }));
     }
 
     private static PolicyContext CreateContext()
@@ -189,6 +280,25 @@ public class GovernmentBudgetLedgerTests
             });
 
         return new PolicyContext(nation, population, building);
+    }
+
+    private static void Initialize(object nation, object province)
+    {
+        ReflectionTestHelpers.Find("EconomicInitializer").GetMethod("Initialize").Invoke(null,
+            new object[]
+            {
+                TestEconomyFactory.ListOf("Nation", nation),
+                TestEconomyFactory.ListOf("Province", province)
+            });
+    }
+
+    private static object BuildingByType(object province, string typeName)
+    {
+        IDictionary buildings = (IDictionary)ReflectionTestHelpers.Get(province, "buildings");
+        object key = buildings.Keys.Cast<object>()
+            .Single(candidate =>
+                (string)ReflectionTestHelpers.Get(candidate, "name") == typeName);
+        return buildings[key];
     }
 
     private static List<object> Transactions(object ledger) =>

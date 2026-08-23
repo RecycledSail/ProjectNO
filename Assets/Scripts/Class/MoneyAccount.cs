@@ -16,9 +16,4 @@ public sealed class MoneyAccount
 
     internal void ApplyDelta(long delta) => Balance = checked(Balance + delta);
 
-    internal void ReplaceForLoading(long value)
-    {
-        if (value < 0) throw new ArgumentOutOfRangeException(nameof(value));
-        Balance = value;
-    }
 }
