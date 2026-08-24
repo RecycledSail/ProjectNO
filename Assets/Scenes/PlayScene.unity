@@ -3522,6 +3522,9 @@ MonoBehaviour:
   totalGoldText: {fileID: 1076222617}
   inflationText: {fileID: 1543790221}
   weeklyRevenueText: {fileID: 900100003}
+  financeStepText: {fileID: 4705248665256944873}
+  financeStepSlider: {fileID: 0}
+  financeStep: 5
   militarySlider: {fileID: 2970677474203247355}
   industrySlider: {fileID: 1793416762}
   realEstateSlide: {fileID: 1248687376}
@@ -12580,7 +12583,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Weekly Revenue: 0'
+  m_text: 'Weekly Budget: 0'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}

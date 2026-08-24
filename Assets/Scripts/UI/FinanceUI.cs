@@ -8,6 +8,8 @@ public class FinanceUI : MonoBehaviour
     private const float TOTAL_BUDGET_PERCENT = 100f;
     private const float MIN_BUDGET_PERCENT = 5f;
     private const float MAX_BUDGET_PERCENT = 40f;
+    private const float FINANCE_STEP_GDP_RATIO = 0.05f;
+    private const int WEEKS_PER_YEAR = 52;
 
     public GameObject uiPanel;
 
@@ -16,6 +18,9 @@ public class FinanceUI : MonoBehaviour
     
     // Remove this section
     public TMP_Text weeklyRevenueText;  // 주간 세수 (배분 기준)
+    public TMP_Text financeStepText;
+    public Slider financeStepSlider;
+    public int financeStep = 5;
 
     public Slider militarySlider;
     public Slider industrySlider;
@@ -81,6 +86,7 @@ public class FinanceUI : MonoBehaviour
         if (industrySlider != null)  industrySlider.onValueChanged.AddListener(_ => OnSliderChanged(industrySlider));
         if (realEstateSlide != null) realEstateSlide.onValueChanged.AddListener(_ => OnSliderChanged(realEstateSlide));
         if (researchSlider != null)  researchSlider.onValueChanged.AddListener(_ => OnSliderChanged(researchSlider));
+        SetupFinanceStepSlider();
 
         uiPanel.SetActive(false);
         currentNation = null;
@@ -93,6 +99,30 @@ public class FinanceUI : MonoBehaviour
         s.minValue = MIN_BUDGET_PERCENT;
         s.maxValue = MAX_BUDGET_PERCENT;
         s.wholeNumbers = false;
+    }
+
+    private void SetupFinanceStepSlider()
+    {
+        financeStep = Mathf.Clamp(financeStep, 1, 5);
+        if (financeStepSlider == null)
+        {
+            RefreshFinanceStepText();
+            return;
+        }
+
+        financeStepSlider.minValue = 1f;
+        financeStepSlider.maxValue = 5f;
+        financeStepSlider.wholeNumbers = true;
+        financeStepSlider.value = financeStep;
+        financeStepSlider.onValueChanged.AddListener(value =>
+        {
+            financeStep = Mathf.Clamp(Mathf.RoundToInt(value), 1, 5);
+            RefreshFinanceStepText();
+            RefreshFinanceTexts();
+            ApplyPolicyFromSliders();
+        });
+
+        RefreshFinanceStepText();
     }
 
     private void OnDestroy()
@@ -148,7 +178,14 @@ public class FinanceUI : MonoBehaviour
 
         if (totalGoldText != null) totalGoldText.text = $"Total Gold: {budget.MoneySupply:N0}";
         if (inflationText != null) inflationText.text = $"Inflation: {budget.InflationRate:F2}%";
-        if (weeklyRevenueText != null) weeklyRevenueText.text = $"Weekly Revenue: {budget.WeeklyTaxRevenue:N0}";
+        if (weeklyRevenueText != null) weeklyRevenueText.text = $"Weekly Budget: {GetWeeklyFinanceBudget():N0}";
+        RefreshFinanceStepText();
+    }
+
+    private void RefreshFinanceStepText()
+    {
+        if (financeStepText != null)
+            financeStepText.text = financeStep.ToString();
     }
 
     private void LoadBudgetSliders()
@@ -370,18 +407,30 @@ public class FinanceUI : MonoBehaviour
 
     private void ApplyPolicyFromSliders()
     {
-        long revenue = currentNation.governmentBudget.WeeklyTaxRevenue;
-        if (revenue <= 0) return;
+        long weeklyBudget = GetWeeklyFinanceBudget();
+        if (weeklyBudget <= 0) return;
 
         PolicyAllocation policy = currentNation.governmentBudget.Policy;
-        policy.MilitarySalary  = PctToAmount(militarySlider.value,   revenue);
-        policy.RealEstateFund  = PctToAmount(realEstateSlide.value,   revenue);
-        policy.ResearchFund    = PctToAmount(researchSlider.value,    revenue);
-        currentNation.governmentBudget.SetIndustrySubsidyTotal(PctToAmount(industrySlider.value, revenue));
+        policy.MilitarySalary  = PctToAmount(militarySlider.value,   weeklyBudget);
+        policy.RealEstateFund  = PctToAmount(realEstateSlide.value,   weeklyBudget);
+        policy.ResearchFund    = PctToAmount(researchSlider.value,    weeklyBudget);
+        currentNation.governmentBudget.SetIndustrySubsidyTotal(PctToAmount(industrySlider.value, weeklyBudget));
     }
 
     private static long PctToAmount(float pct, long total) =>
         (long)(pct / 100f * total);
+
+    private long GetWeeklyFinanceBudget()
+    {
+        if (currentNation == null)
+            return 0L;
+
+        double annualBudget = currentNation.GDPAverage * financeStep * FINANCE_STEP_GDP_RATIO;
+        if (annualBudget <= 0d || double.IsNaN(annualBudget) || double.IsInfinity(annualBudget))
+            return 0L;
+
+        return System.Math.Max(1L, (long)(annualBudget / WEEKS_PER_YEAR));
+    }
 
     public void ChangeSubUI(int index)
     {
