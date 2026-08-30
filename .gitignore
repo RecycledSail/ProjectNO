@@ -78,3 +78,7 @@ crashlytics-build.properties
 
 # Local isolated Git worktrees
 /.worktrees/
+
+# Gaea mesh exports can exceed GitHub's file size limit.
+/[Aa]ssets/[Pp]refabs/[Gg]aea[Tt]errain/Mesher.obj
+/[Aa]ssets/[Pp]refabs/[Gg]aea[Tt]errain/Mesher.obj.meta
