@@ -1,232 +1,232 @@
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-/*
 /// <summary>
-/// SelectProvince 클래스는 마우스 클릭을 통해 특정 지역(Province)을 선택하고, 
-/// 해당 지역과 인접한 지역을 색상 변경하는 기능을 수행합니다.
+/// Selects a province on a Unity Terrain by sampling a province color map.
+/// The color map is an ID map: each province must use one unique, flat color.
 /// </summary>
+[RequireComponent(typeof(TerrainCollider))]
 public class SelectProvince : MonoBehaviour
 {
-    public Camera cam; // 화면을 비추는 카메라
-    public Texture2D initTex; // 초기 텍스처
-
-
-    private Renderer hereRend; // 현재 오브젝트의 Renderer
-    private Color32 prevColor; // 이전에 선택한 색상
-    private Stack<Color32> paintedColors; // 색칠한 색상들을 저장하는 스택
-
-    // 각 색상에 해당하는 픽셀 좌표 리스트를 저장하는 딕셔너리
-    private Dictionary<Color32, List<Vector2>> colorToVec2;
-
-    // 클릭한 오브젝트의 텍스처 가져오기
-    private Texture2D tex_0; // 변경될 텍스처
-    private Texture2D tex_1; // 기준이 되는 텍스처
-
-    void Start()
+    [Serializable]
+    public struct ProvinceColorBinding
     {
-        // Renderer 컴포넌트 가져오기
-        hereRend = transform.GetComponent<Renderer>();
+        public string provinceName;
+        public Color32 color;
+    }
 
-        // 초기 텍스처를 복제하여 사용 (원본을 변경하지 않기 위해)
-        Texture2D clone = Instantiate(initTex);
-        hereRend.materials[0].mainTexture = clone;
-        clone.Apply();
+    public enum ProvinceVisualMode
+    {
+        Normal,
+        BuildRoad,
+        Nation,
+        Province,
+    }
 
-        colorToVec2 = new Dictionary<Color32, List<Vector2>>();
-        paintedColors = new Stack<Color32>();
+    [Header("Terrain")]
+    [SerializeField] private Camera cam;
+    [SerializeField] private Terrain terrain;
 
-        // 2번째 머티리얼의 텍스처를 가져옴 (각 지역을 구분하는 텍스처)
-        Texture2D lookUp = hereRend.materials[1].mainTexture as Texture2D;
+    [Header("Province Color Map")]
+    [Tooltip("Flat-color province ID map. Leave empty until the map is ready.")]
+    [SerializeField] private Texture2D colorMap;
+    [SerializeField] private List<ProvinceColorBinding> provinceColors = new();
+    [SerializeField] private bool flipColorMapY;
+    [SerializeField, Range(0f, 1f)] private float minimumColorAlpha = 0.01f;
 
-        // 텍스처의 모든 픽셀을 순회하며, 각 색상의 좌표를 저장
-        for (int i = 0; i < initTex.width; i++)
+    public Province HoveredProvince { get; private set; }
+    public Province SelectedProvince { get; private set; }
+    public ProvinceVisualMode VisualMode { get; private set; }
+
+    public event Action<Province> HoveredProvinceChanged;
+    public event Action<Province> ProvinceSelected;
+    public event Action<ProvinceVisualMode> VisualModeChanged;
+
+    private TerrainCollider terrainCollider;
+    private readonly Dictionary<Color32, string> colorToProvinceName = new();
+    private bool isBuildRoadMode;
+    private Nation previousNation;
+    private Province previousProvince;
+    private bool warnedAboutMissingColorMap;
+
+    private void Awake()
+    {
+        terrain = terrain != null ? terrain : GetComponent<Terrain>();
+        terrainCollider = GetComponent<TerrainCollider>();
+        cam = cam != null ? cam : Camera.main;
+        BuildColorLookup();
+    }
+
+    private void OnValidate()
+    {
+        if (terrain == null)
+            terrain = GetComponent<Terrain>();
+
+        terrainCollider = GetComponent<TerrainCollider>();
+        BuildColorLookup();
+    }
+
+    private void Update()
+    {
+        UpdateVisualMode();
+        HandleHoverAndSelection();
+    }
+
+    private void BuildColorLookup()
+    {
+        colorToProvinceName.Clear();
+        foreach (ProvinceColorBinding binding in provinceColors)
         {
-            for (int j = 0; j < initTex.height; j++)
-            {
-                Color32 c = lookUp.GetPixel(i, j);
-                List<Vector2> list;
-                if (colorToVec2.TryGetValue(c, out list))
-                {
-                    list.Add(new Vector2(i, j));
-                }
-                else
-                {
-                    list = new List<Vector2> { new Vector2(i, j) };
-                    colorToVec2.Add(c, list);
-                }
-            }
+            if (string.IsNullOrWhiteSpace(binding.provinceName))
+                continue;
+
+            if (!colorToProvinceName.TryAdd(binding.color, binding.provinceName))
+                Debug.LogWarning($"SelectProvince: duplicate ColorMap color {binding.color}.", this);
+        }
+    }
+
+    private void UpdateVisualMode()
+    {
+        bool buildRoadMode = BuildUI.Instance != null &&
+            BuildUI.Instance.subUIs != null &&
+            BuildUI.Instance.subUIs.Count > 2 &&
+            BuildUI.Instance.subUIs[2].activeInHierarchy;
+
+        bool nationMode = NationUI.Instance != null &&
+            NationUI.Instance.gameObject.activeInHierarchy &&
+            NationUI.Instance.CurrentNation != null;
+
+        bool provinceMode = ProvinceDetailUI.Instance != null &&
+            ProvinceDetailUI.Instance.gameObject.activeInHierarchy &&
+            ProvinceDetailUI.Instance.CurrentProvince != null;
+
+        isBuildRoadMode = buildRoadMode;
+        ProvinceVisualMode nextMode = buildRoadMode ? ProvinceVisualMode.BuildRoad :
+            nationMode ? ProvinceVisualMode.Nation :
+            provinceMode ? ProvinceVisualMode.Province : ProvinceVisualMode.Normal;
+
+        Nation currentNation = nationMode ? NationUI.Instance.CurrentNation : null;
+        Province currentProvince = provinceMode ? ProvinceDetailUI.Instance.CurrentProvince : null;
+        if (VisualMode == nextMode && previousNation == currentNation && previousProvince == currentProvince)
+            return;
+
+        VisualMode = nextMode;
+        previousNation = currentNation;
+        previousProvince = currentProvince;
+        VisualModeChanged?.Invoke(VisualMode);
+    }
+
+    private void HandleHoverAndSelection()
+    {
+        Province province = GetProvinceUnderPointer();
+        if (HoveredProvince != province)
+        {
+            HoveredProvince = province;
+            HoveredProvinceChanged?.Invoke(HoveredProvince);
         }
 
-        prevColor = new Color32(0, 0, 0, 0); // 이전 색상 초기화
+        if (province == null || !Input.GetMouseButtonDown(0))
+            return;
 
-        tex_0 = hereRend.materials[0].mainTexture as Texture2D; // 변경될 텍스처
-        tex_1 = hereRend.materials[1].mainTexture as Texture2D; // 기준이 되는 텍스처
-    }
-
-    void Update()
-    {
-        // 마우스 클릭 여부를 확인하는 부분이 주석 처리되어 있음
-        // if (!Input.GetMouseButton(0))
-        //    return;
-        if (Input.GetMouseButton(0))
+        if (isBuildRoadMode)
         {
-            OpenNationUI();
-        }
-
-        ColorProvince(); // 프로빈스 색칠 함수 호출
-    }
-
-    RaycastHit? HitRenderer()
-    {
-        RaycastHit hit;
-        // 마우스 클릭 위치에 Raycast를 쏴서 충돌이 있는지 확인
-        if (!Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit))
-            return null;
-
-
-        Renderer rend = hit.transform.GetComponent<Renderer>();
-        MeshCollider meshCollider = hit.collider as MeshCollider;
-
-        // 충돌한 오브젝트에 유효한 텍스처가 있는지 확인
-        if (rend != hereRend)
-            return null;
-
-        if (EventSystem.current.IsPointerOverGameObject())
-            return null;
-
-        return hit;
-    }
-
-    void OpenNationUI()
-    {
-        RaycastHit? hit = HitRenderer();
-        if (!hit.HasValue) {
+            ToggleRoad(province);
             return;
         }
 
-        // 클릭한 위치의 UV 좌표를 가져와 픽셀 좌표로 변환
-        Vector2 pixelUV = hit.Value.textureCoord;
-        pixelUV.x *= tex_1.width;
-        pixelUV.y *= tex_1.height;
-
-        // 클릭한 픽셀의 색상을 가져옴
-        Color32 c = tex_1.GetPixel((int)pixelUV.x, (int)pixelUV.y);
-
-        Province cur;
-        Debug.Log(c);
-        if (GlobalVariables.COLORTOPROVINCE.TryGetValue(c, out cur))
-        {
-            if (cur.nation != null)
-                NationUI.Instance.OpenNationUI(cur.nation);
-            else
-                ProvinceDetailUI.Instance.OpenProvinceDetailUI(cur);
-        }
+        SelectedProvince = province;
+        ProvinceSelected?.Invoke(SelectedProvince);
+        if (ProvinceDetailUI.Instance != null)
+            ProvinceDetailUI.Instance.OpenProvinceDetailUI(SelectedProvince);
     }
-    
-    /// <summary>
-    /// 클릭한 위치의 프로빈스를 감지하고 색칠하는 함수
-    /// </summary>
-    void ColorProvince()
+
+    private Province GetProvinceUnderPointer()
     {
-        RaycastHit? hit = HitRenderer();
-        if (!hit.HasValue)
+        if (IsPointerOverUIObject() || cam == null || terrain == null || terrainCollider == null)
+            return null;
+
+        if (colorMap == null)
         {
-            RemoveColors();
-            prevColor = new Color32(0, 0, 0, 0); // 이전 색상 초기화
-            tex_0.Apply(); // 텍스처 변경 적용
+            if (!warnedAboutMissingColorMap)
+            {
+                Debug.LogWarning("SelectProvince: assign a ColorMap before selecting provinces.", this);
+                warnedAboutMissingColorMap = true;
+            }
+
+            return null;
+        }
+
+        if (!Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out RaycastHit hit))
+            return null;
+
+        if (hit.collider != terrainCollider)
+            return null;
+
+        if (!TryGetColorMapColor(hit.point, out Color32 color))
+            return null;
+
+        return colorToProvinceName.TryGetValue(color, out string provinceName) &&
+            GlobalVariables.PROVINCES.TryGetValue(provinceName, out Province province)
+            ? province
+            : null;
+    }
+
+    private bool TryGetColorMapColor(Vector3 worldPosition, out Color32 color)
+    {
+        color = default;
+        if (terrain.terrainData == null || !colorMap.isReadable)
+            return false;
+
+        Vector3 localPoint = terrain.transform.InverseTransformPoint(worldPosition);
+        Vector3 size = terrain.terrainData.size;
+        if (size.x <= 0f || size.z <= 0f)
+            return false;
+
+        float u = localPoint.x / size.x;
+        float v = localPoint.z / size.z;
+        if (u < 0f || u > 1f || v < 0f || v > 1f)
+            return false;
+
+        int x = Mathf.Clamp(Mathf.FloorToInt(u * colorMap.width), 0, colorMap.width - 1);
+        int y = Mathf.Clamp(Mathf.FloorToInt(v * colorMap.height), 0, colorMap.height - 1);
+        if (flipColorMapY)
+            y = colorMap.height - 1 - y;
+
+        color = colorMap.GetPixel(x, y);
+        return color.a / 255f >= minimumColorAlpha;
+    }
+
+    private void ToggleRoad(Province province)
+    {
+        if (GameManager.Instance == null || GameManager.Instance.player == null)
             return;
-        }
 
-        // 클릭한 위치의 UV 좌표를 가져와 픽셀 좌표로 변환
-        Vector2 pixelUV = hit.Value.textureCoord;
-        pixelUV.x *= tex_1.width;
-        pixelUV.y *= tex_1.height;
+        Nation playerNation = GameManager.Instance.player.nation;
+        if (province.nation != playerNation)
+            return;
 
-        // 클릭한 픽셀의 색상을 가져옴
-        Color32 c = tex_1.GetPixel((int)pixelUV.x, (int)pixelUV.y);
+        if (province.road == 0)
+            province.BuildRoad();
+        else
+            province.RemoveRoad();
 
-        // 이전에 클릭한 색상과 다르면 색칠 작업 수행
-        if (!prevColor.Equals(c))
-        {
-            RemoveColors();
-            // 선택한 색상이 유효한 프로빈스인지 확인 후 색칠
-            if (GlobalVariables.COLORTOPROVINCE.ContainsKey(c))
-            {
-                //ColorNewProvinces(c);
-            }
-
-            prevColor = c; // 이전 색상 갱신
-        }
-
-        tex_0.Apply(); // 텍스처 변경 적용
+        SelectedProvince = province;
+        ProvinceSelected?.Invoke(SelectedProvince);
     }
 
-    void RemoveColors()
+    private static bool IsPointerOverUIObject()
     {
-        List<Vector2> list;
-        // 이전에 칠했던 색상을 원래대로 되돌림
-        while (paintedColors.Count != 0)
+        if (EventSystem.current == null)
+            return false;
+
+        PointerEventData eventData = new(EventSystem.current)
         {
-            Color32 painted = paintedColors.Pop();
-            if (colorToVec2.TryGetValue(painted, out list))
-            {
-                foreach (Vector2 v in list)
-                {
-                    tex_0.SetPixel((int)v.x, (int)v.y, painted);
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// 선택한 프로빈스와 인접한 프로빈스들을 색칠하는 함수
-    /// </summary>
-    /// <param name="c">선택한 색상</param>
-    /// <param name="tex_0">변경할 텍스처</param>
-    void ColorNewProvinces(Color32 c)
-    {
-        List<Vector2> list;
-        paintedColors.Push(c); // 현재 색상을 스택에 저장
-
-        // 현재 색상에 해당하는 모든 픽셀을 파란색으로 변경
-        if (colorToVec2.TryGetValue(c, out list))
-        {
-            foreach (Vector2 v in list)
-            {
-                tex_0.SetPixel((int)v.x, (int)v.y, Color.blue);
-            }
-        }
-
-        // 현재 프로빈스를 가져옴
-        Province cur;
-        if (GlobalVariables.COLORTOPROVINCE.TryGetValue(c, out cur))
-        {
-            List<Province> provinces;
-            // 현재 프로빈스와 인접한 프로빈스 목록을 가져옴
-            if (GlobalVariables.ADJACENT_PROVINCES.TryGetValue(cur.name, out provinces))
-            {
-                foreach (Province province in provinces)
-                {
-                    Color32 provColor = province.color;
-                    List<Vector2> provPixelVec;
-
-                    // 인접한 프로빈스의 픽셀을 하늘색으로 변경
-                    if (colorToVec2.TryGetValue(provColor, out provPixelVec))
-                    {
-                        foreach (Vector2 v in provPixelVec)
-                        {
-                            tex_0.SetPixel((int)v.x, (int)v.y, Color.cyan);
-                        }
-                        paintedColors.Push(provColor); // 변경한 색상을 스택에 저장
-                    }
-                }
-            }
-        }
+            position = Input.mousePosition,
+        };
+        List<RaycastResult> results = new();
+        EventSystem.current.RaycastAll(eventData, results);
+        return results.Count > 0;
     }
 }
-*/
