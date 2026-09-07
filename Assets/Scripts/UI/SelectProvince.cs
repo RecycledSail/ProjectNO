@@ -35,6 +35,7 @@ public class SelectProvince : MonoBehaviour
     [SerializeField] private List<ProvinceColorBinding> provinceColors = new();
     [SerializeField] private bool flipColorMapY;
     [SerializeField, Range(0f, 1f)] private float minimumColorAlpha = 0.01f;
+    [SerializeField] private TerrainProvinceOverlay provinceOverlay;
 
     public Province HoveredProvince { get; private set; }
     public Province SelectedProvince { get; private set; }
@@ -50,6 +51,7 @@ public class SelectProvince : MonoBehaviour
     private Nation previousNation;
     private Province previousProvince;
     private bool warnedAboutMissingColorMap;
+    private Color32 hoveredColor;
 
     private void Awake()
     {
@@ -57,6 +59,7 @@ public class SelectProvince : MonoBehaviour
         terrainCollider = GetComponent<TerrainCollider>();
         cam = cam != null ? cam : Camera.main;
         BuildColorLookup();
+        InitializeOverlay();
     }
 
     private void OnValidate()
@@ -66,12 +69,49 @@ public class SelectProvince : MonoBehaviour
 
         terrainCollider = GetComponent<TerrainCollider>();
         BuildColorLookup();
+
+        if (Application.isPlaying)
+            InitializeOverlay();
     }
 
     private void Update()
     {
         UpdateVisualMode();
         HandleHoverAndSelection();
+        RefreshOverlay();
+    }
+
+    private void InitializeOverlay()
+    {
+        if (terrain == null || colorMap == null)
+            return;
+
+        if (provinceOverlay == null)
+        {
+            Transform existingOverlay = transform.Find("ProvinceTerrainOverlay");
+            if (existingOverlay != null)
+                provinceOverlay = existingOverlay.GetComponent<TerrainProvinceOverlay>();
+        }
+
+        if (provinceOverlay == null)
+        {
+            GameObject overlayObject = new GameObject("ProvinceTerrainOverlay");
+            overlayObject.transform.SetParent(transform, false);
+            provinceOverlay = overlayObject.AddComponent<TerrainProvinceOverlay>();
+        }
+
+        provinceOverlay.Configure(terrain, colorMap, flipColorMapY, colorToProvinceName);
+    }
+
+    private void RefreshOverlay()
+    {
+        if (provinceOverlay == null)
+            return;
+
+        Nation focusedNation = VisualMode == ProvinceVisualMode.Nation ? previousNation : null;
+        Province focusedProvince = VisualMode == ProvinceVisualMode.Province ? previousProvince : null;
+        provinceOverlay.RefreshTint(VisualMode, focusedNation, focusedProvince);
+        provinceOverlay.SetHoveredColor(hoveredColor, HoveredProvince != null);
     }
 
     private void BuildColorLookup()
@@ -124,6 +164,10 @@ public class SelectProvince : MonoBehaviour
         if (HoveredProvince != province)
         {
             HoveredProvince = province;
+            if (HoveredProvince == null)
+                hoveredColor = default;
+            else
+                TryGetColorForProvince(HoveredProvince, out hoveredColor);
             HoveredProvinceChanged?.Invoke(HoveredProvince);
         }
 
@@ -138,6 +182,7 @@ public class SelectProvince : MonoBehaviour
 
         SelectedProvince = province;
         ProvinceSelected?.Invoke(SelectedProvince);
+        provinceOverlay?.RefreshTint(VisualMode, previousNation, previousProvince);
         if (ProvinceDetailUI.Instance != null)
             ProvinceDetailUI.Instance.OpenProvinceDetailUI(SelectedProvince);
     }
@@ -214,6 +259,22 @@ public class SelectProvince : MonoBehaviour
 
         SelectedProvince = province;
         ProvinceSelected?.Invoke(SelectedProvince);
+        provinceOverlay?.RefreshTint(VisualMode, previousNation, previousProvince);
+    }
+
+    private bool TryGetColorForProvince(Province province, out Color32 color)
+    {
+        foreach (KeyValuePair<Color32, string> pair in colorToProvinceName)
+        {
+            if (pair.Value == province.name)
+            {
+                color = pair.Key;
+                return true;
+            }
+        }
+
+        color = default;
+        return false;
     }
 
     private static bool IsPointerOverUIObject()

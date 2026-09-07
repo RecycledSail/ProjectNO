@@ -1,64 +1,36 @@
 {
   "adjacentProvinces": [
     {
-      "province": "Stein",
-      "adjacents": [ "Sando", "Svovoda" ]
-    },
-    {
-      "province": "Sando",
-      "adjacents": [ "Stein", "Eiglepsk", "Zilia", "Ozisk" ]
-    },
-    {
       "province": "Bebino",
-      "adjacents": [ "Eiglepsk", "Talem" ]
+      "adjacents": [ "Eiglepsk", "Sando", "Svovoda" ]
     },
     {
       "province": "Eiglepsk",
-      "adjacents": [ "Bebino", "Sando", "Ozisk" ]
+      "adjacents": [ "Bebino", "Sando", "Zilia", "Svovoda", "Talem" ]
     },
     {
-      "province": "Talem",
-      "adjacents": [ "Bebino", "Uzyda", "Svovoda" ]
+      "province": "Sando",
+      "adjacents": [ "Bebino", "Eiglepsk", "Stein", "Zilia" ]
     },
     {
-      "province": "Uzyda",
-      "adjacents": [ "Talem", "Buske" ]
-    },
-    {
-      "province": "Buske",
-      "adjacents": [ "Uzyda", "Svovoda" ]
-    },
-    {
-      "province": "Svovoda",
-      "adjacents": [ "Buske", "Talem", "Stein", "Tarantsusi", "Jojisha" ]
-    },
-    {
-      "province": "Tarantsusi",
-      "adjacents": [ "Svovoda" ]
+      "province": "Stein",
+      "adjacents": [ "Sando", "Zilia", "Jojisha" ]
     },
     {
       "province": "Jojisha",
-      "adjacents": [ "Stein", "Svovoda", "Matz" ]
-    },
-    {
-      "province": "Matz",
-      "adjacents": [ "Jojisha", "Stein", "Zilia" ]
+      "adjacents": [ "Stein", "Zilia", "Talem" ]
     },
     {
       "province": "Zilia",
-      "adjacents": [ "Matz", "Stein", "Sando", "Prano", "Meril" ]
+      "adjacents": [ "Eiglepsk", "Sando", "Stein", "Jojisha", "Talem" ]
     },
     {
-      "province": "Prano",
-      "adjacents": [ "Zilia", "Meril", "Ozisk" ]
+      "province": "Svovoda",
+      "adjacents": [ "Bebino", "Eiglepsk", "Talem" ]
     },
     {
-      "province": "Meril",
-      "adjacents": [ "Zilia", "Prano", "Ozisk" ]
-    },
-    {
-      "province": "Ozisk",
-      "adjacents": [ "Meril", "Prano", "Sando", "Eiglepsk", "Bebino" ]
+      "province": "Talem",
+      "adjacents": [ "Svovoda", "Eiglepsk", "Zilia", "Jojisha" ]
     }
   ]
 }

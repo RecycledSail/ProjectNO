@@ -3606,7 +3606,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -236.67313, y: 263.84134}
+  m_AnchoredPosition: {x: -236.67313, y: 263.84097}
   m_SizeDelta: {x: 473.35, y: 527.68}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &216555515
@@ -4621,7 +4621,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -293, y: 325.47247}
+  m_AnchoredPosition: {x: -293, y: 325.4721}
   m_SizeDelta: {x: 586, y: 632.21}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &272516254
@@ -4823,7 +4823,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 787317455}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999964
+  m_Size: 0.99993813
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -5430,7 +5430,7 @@ MonoBehaviour:
   zoomSpeed: 20
   minZoom: 5
   maxZoom: 60
-  moveThreshold: {x: 500, y: 500}
+  moveThreshold: {x: 1500, y: 1500}
 --- !u!1 &331681480
 GameObject:
   m_ObjectHideFlags: 0
@@ -6957,8 +6957,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 482016252}
   m_HandleRect: {fileID: 482016251}
   m_Direction: 2
-  m_Value: 1.1607143
-  m_Size: 0.9999919
+  m_Value: 1
+  m_Size: 0.9999257
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -11080,7 +11080,6 @@ GameObject:
   - component: {fileID: 767263692}
   - component: {fileID: 767263691}
   - component: {fileID: 767263693}
-  - component: {fileID: 767263694}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -11130,18 +11129,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a08693c840f3431429a88c3ac87b0867, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &767263694
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 767263690}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1c4d7f06a7a64f15ad6dd4e5814df7e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &767505224
@@ -14115,7 +14102,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -293.00012, y: 286.63275}
+  m_AnchoredPosition: {x: -293.00012, y: 286.6332}
   m_SizeDelta: {x: 586, y: 573.27}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &975213884
@@ -17335,7 +17322,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -293.00012, y: 286.63275}
+  m_AnchoredPosition: {x: -293.00012, y: 286.6332}
   m_SizeDelta: {x: 586, y: 573.27}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1162284267
@@ -18119,7 +18106,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 569872495}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999963
+  m_Size: 0.9999262
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -22183,8 +22170,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 147295202}
   m_HandleRect: {fileID: 147295201}
   m_Direction: 2
-  m_Value: 1.1607143
-  m_Size: 0.9999919
+  m_Value: 1
+  m_Size: 0.9999257
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -28935,8 +28922,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1949221750}
   m_HandleRect: {fileID: 1949221749}
   m_Direction: 2
-  m_Value: 1.1428572
-  m_Size: 0.9999918
+  m_Value: 1.0175439
+  m_Size: 0.9999257
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -29346,7 +29333,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -293.00012, y: 286.63278}
+  m_AnchoredPosition: {x: -293.00012, y: 286.6332}
   m_SizeDelta: {x: 586, y: 573.27}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2051390410
@@ -31913,24 +31900,6 @@ TerrainCollider:
   serializedVersion: 2
   m_TerrainData: {fileID: 15600000, guid: 326c646c99ef1ce4bb2aafeeb1b43d4c, type: 2}
   m_EnableTreeColliders: 1
---- !u!114 &7441111234567890001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4559869344267992815}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2999779e384e6d4fa2a9bcb682abf88, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  cam: {fileID: 330585545}
-  terrain: {fileID: 10521317844653199}
-  colorMap: {fileID: 0}
-  provinceColors: []
-  flipColorMapY: 0
-  minimumColorAlpha: 0.01
 --- !u!33 &3289129456273446845
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -34032,6 +34001,57 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &7441111234567890001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4559869344267992815}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2999779e384e6d4fa2a9bcb682abf88, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cam: {fileID: 330585545}
+  terrain: {fileID: 10521317844653199}
+  colorMap: {fileID: 2800000, guid: 5a572c828870ee54ea040a462c516ec0, type: 3}
+  provinceColors:
+  - provinceName: Bebino
+    color:
+      serializedVersion: 2
+      rgba: 4285363944
+  - provinceName: Eiglepsk
+    color:
+      serializedVersion: 2
+      rgba: 4284202997
+  - provinceName: Sando
+    color:
+      serializedVersion: 2
+      rgba: 4283089803
+  - provinceName: Stein
+    color:
+      serializedVersion: 2
+      rgba: 4292189019
+  - provinceName: Jojisha
+    color:
+      serializedVersion: 2
+      rgba: 4291786129
+  - provinceName: Zilia
+    color:
+      serializedVersion: 2
+      rgba: 4289508940
+  - provinceName: Svovoda
+    color:
+      serializedVersion: 2
+      rgba: 4285108655
+  - provinceName: Talem
+    color:
+      serializedVersion: 2
+      rgba: 4289556695
+  flipColorMapY: 0
+  minimumColorAlpha: 0.01
+  provinceOverlay: {fileID: 0}
 --- !u!33 &7512591146655237710
 MeshFilter:
   m_ObjectHideFlags: 0
