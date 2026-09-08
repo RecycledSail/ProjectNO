@@ -227,6 +227,8 @@ public class GameManager : MonoBehaviour
         }
 
         EconomicInitializer.Initialize(nations.Values, provinces.Values);
+        foreach (Province province in provinces.Values)
+            ProvinceEmployment.Initialize(province);
     }
 
     /// <summary>
@@ -368,8 +370,19 @@ public class GameManager : MonoBehaviour
     /// 매주마다 실행되는 게임 이벤트 로직 처리 메서드
     /// 예) 인구 증가 등
     /// </summary>
+    private long employmentWeek;
+
     private void ProcessWeeklyEvents()
     {
+        employmentWeek = checked(employmentWeek + 1);
+        var paidProvinces = new HashSet<Province>();
+        foreach (Province province in provinces.Values)
+        {
+            if (province.Employment != null && province.Employment.TryProcessWeek(employmentWeek))
+                paidProvinces.Add(province);
+            else
+                Debug.LogError($"Payroll failed in {province.name}; production paused: {province.Employment?.LastError}");
+        }
         BeginLedgerWeeks();
 
         // 0. 모든 마켓의 LastSupply와 LastDemand 초기화 (새 주 시작)
@@ -411,6 +424,7 @@ public class GameManager : MonoBehaviour
             .SelectMany(province => province.buildings.Values)
             .OfType<ConstructionCompanyBuilding>())
         {
+            if (!paidProvinces.Contains(constructionCompany.province)) continue;
             constructionCompany.ProgressWeekly(
                 GlobalVariables.minimumConstructionCompanyManHour);
         }
@@ -418,7 +432,7 @@ public class GameManager : MonoBehaviour
         // 3. Province 생산 단계 (생산만 수행)
         foreach (Province province in provinces.Values)
         {
-            province.ProduceGoodsWeekly();
+            if (paidProvinces.Contains(province)) province.ProduceGoodsWeekly();
         }
 
         // 4. 도로로 연결된 Province의 생산품을 Nation market으로 이동

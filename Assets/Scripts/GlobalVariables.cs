@@ -276,12 +276,15 @@ public static class GlobalVariables
             }
 
             int workerNeeded = data.workerNeeded;
+            if (data.weeklyWage <= 0)
+                throw new System.InvalidOperationException($"BuildingTypes.json record '{data.name}': weeklyWage must be positive.");
 
             BuildingType buildingType = new BuildingType(data.name)
             {
                 produceItems = produceItems,
                 requireItems = requiredItems,
-                workerNeeded = workerNeeded
+                workerNeeded = workerNeeded,
+                weeklyWage = data.weeklyWage
             };
 
             BUILDING_TYPE[data.name] = buildingType;
@@ -821,7 +824,7 @@ public static class GlobalVariables
         public sealed class SpeciesPopData { public string name; public List<int> population; public string culture; public long property; public double livingStandard; }
 
         [System.Serializable]
-        public sealed class BuildingTypeData { public string name; public List<ItemData> requireItems; public List<ItemData> produceItems; public int workerNeeded; }
+        public sealed class BuildingTypeData { public string name; public List<ItemData> requireItems; public List<ItemData> produceItems; public int workerNeeded; public long weeklyWage = 1; }
 
         [System.Serializable]
         public sealed class SpecialBuildingTypeData { public string name; public int workerNeeded; public int priority; public List<string> buffs; }

@@ -43,7 +43,17 @@ public class Province
     public bool isConnectedToCapital { get; set; } = false;
 
     // 프로빈스 현재 상태 정의 (고용된 인구)
-    public long hiredPopulation { get; set; }
+    public ProvinceEmployment Employment { get; internal set; }
+    private long legacyHiredPopulation;
+    public long hiredPopulation
+    {
+        get => Employment?.TotalEmployed ?? legacyHiredPopulation;
+        set
+        {
+            if (Employment != null) throw new InvalidOperationException("Employment owns the hired population count.");
+            legacyHiredPopulation = value;
+        }
+    }
 
     /// <summary>
     /// Province 초기화
@@ -392,6 +402,7 @@ public class Province
         }
         population = newPopulation;
 
+        Employment?.Reconcile(false);
         AllocateSpecialBuildingPopulation();
     }
 
@@ -406,6 +417,7 @@ public class Province
         }
 
         population = provinceEthnicPops.Sum(pep => pep.population);
+        Employment?.Reconcile(false);
         AllocateSpecialBuildingPopulation();
     }
 

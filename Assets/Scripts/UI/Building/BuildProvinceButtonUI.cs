@@ -1,4 +1,5 @@
 using TMPro;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -80,7 +81,7 @@ public class BuildProvinceButtonUI : MonoBehaviour
             countText.text = count.ToString() + " || " + "100";
 
         if (unemployedText != null)
-            unemployedText.text = (provinceData.population - provinceData.hiredPopulation).ToString();
+            unemployedText.text = provinceData.provinceEthnicPops.Sum(pop => pop.UnemployedPopulation).ToString();
     }
 
     private void UpdateBuildButtonState()

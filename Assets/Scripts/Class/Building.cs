@@ -12,6 +12,7 @@ public class BuildingType
     public Dictionary<string, int> requireItems;
     public Dictionary<string, int> produceItems;
     public long workerNeeded;
+    public long weeklyWage = 1;
 
     public BuildingType(string name)
     {
@@ -26,7 +27,19 @@ public class Building
 {
     public BuildingType buildingType;
     public Province province;
-    public long currentWorkers; // 일꾼의 비율 (1.0 -> BuildingType의 workerNeeded의 1배율)
+    private long openingWorkers;
+    public long currentWorkers
+    {
+        get => province.Employment?.WorkersAt(this) ?? openingWorkers;
+        set
+        {
+            if (province.Employment != null && value != 0)
+                throw new System.InvalidOperationException("Managed workers must be assigned through employment.");
+            if (province.Employment != null && province.buildings.ContainsValue(this))
+                throw new System.InvalidOperationException("Managed workers cannot be assigned directly.");
+            openingWorkers = value;
+        }
+    }
     public int level = 0; // 현재 빌딩의 레벨
     public MoneyAccount Account { get; }
     public long balance => Account.Balance;
@@ -56,6 +69,8 @@ public class Building
     /// <returns>가능하면 true, 불가능하면 false</returns>
     public bool HireWorkers()
     {
+        // Managed employers recruit and pay together at the weekly boundary.
+        if (province.Employment != null) return false;
         if (IsNewWorkerAvailable())
         {
             // 일단 한번에 50명씩 고용
@@ -73,6 +88,7 @@ public class Building
     /// <returns>고용 가능하면 O, 불가능하면 X</returns>
     public bool IsNewWorkerAvailable()
     {
+        if (province.Employment != null) return false;
         if (balance <= 0 || previousGain <= 0 || ((double)currentWorkers / buildingType.workerNeeded) >= level || province.population <= province.hiredPopulation) return false;
         else return true;
     }

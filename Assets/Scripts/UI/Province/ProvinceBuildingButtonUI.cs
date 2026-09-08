@@ -22,6 +22,8 @@ public class ProvinceBuildingButtonUI : MonoBehaviour
     {
         this.building = building;
         nameText.text = building.buildingType.name;
+        UpdateBuilding();
+        GameManager.Instance.dayUIEvent.AddListener(UpdateBuilding);
     }
 
     private void Update()

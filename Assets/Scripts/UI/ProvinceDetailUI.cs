@@ -165,6 +165,7 @@ public class ProvinceDetailUI : MonoBehaviour
             if (!isTop)
                 provincePopulationText.text += "\n";
             provincePopulationText.text += species.name + "/" + culture.name + " (" + UIManager.ShortenValue(pep.population) + ")";
+            provincePopulationText.text += $"\nLabor: {pep.EmployablePopulation:N0} | Employed: {pep.EmployedPopulation:N0} | Unemployed: {pep.UnemployedPopulation:N0}\nMoney: {pep.property:N0}";
             isTop = false;
         }
     }
