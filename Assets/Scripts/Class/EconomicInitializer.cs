@@ -257,6 +257,9 @@ public static class EconomicInitializer
         ApplyCapitalizations(ledger, plan.Nation.Account, plan.Capitalizations);
         ledger.SealInitialization();
         VerifyAudit(ledger, $"Nation {plan.Nation.name}");
+
+        foreach (BuildingCapitalization capitalization in plan.Capitalizations)
+            capitalization.Building.Owner = plan.Nation;
     }
 
     private static void ApplyNeutralProvince(NeutralProvincePlan plan)

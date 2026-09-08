@@ -543,21 +543,38 @@ public static class GlobalVariables
     internal static void LoadBuildingRecipes(GameDataFormat.BuildingrecipesWrapper gameData)
     {
         ValidateBuildingRecipeEconomicData(gameData);
+        List<BuildingRecipe> recipes = new();
         foreach (var data in gameData.buildingrecipes)
         {
             var required = new Dictionary<string,int>();
-            List<GameDataFormat.ItemData> requireItems = data.requireItems ?? data.buildRequirements ?? new List<GameDataFormat.ItemData>();
+            List<GameDataFormat.ItemData> requireItems = data.requireItems != null && data.requireItems.Count > 0
+                ? data.requireItems
+                : data.buildRequirements ?? new List<GameDataFormat.ItemData>();
             foreach (var it in requireItems)
+            {
+                if (it == null || string.IsNullOrEmpty(it.Name) || it.amount <= 0)
+                {
+                    throw new InvalidOperationException(
+                        $"BuildingRecipes.json recipe '{data.name}' material " +
+                        $"'{it?.Name ?? "unknown"}' field 'amount' must be greater than zero.");
+                }
                 required[it.Name] = it.amount;
+            }
 
             var recipe = new BuildingRecipe(data.name)
             {
                 requireItems = required,
                 TimeToBuild = data.TimeToBuild,
-                InitialCapital = data.initialCapital
+                InitialCapital = data.initialCapital,
+                ConstructionFee = data.constructionFee,
+                StartMaterialBasisPoints = data.startMaterialBasisPoints
             };
-            BUILDING_RECIPE[data.name] = recipe;
+            recipe.ValidateConstructionContract();
+            recipes.Add(recipe);
         }
+
+        foreach (BuildingRecipe recipe in recipes)
+            BUILDING_RECIPE[recipe.name] = recipe;
     }
 
     private static void ValidateNationEconomicData(GameDataFormat.NationsWrapper gameData)
@@ -848,6 +865,15 @@ public static class GlobalVariables
         public sealed class InitialDiplomacyData { public List<string> lnations; public List<string> rnations; public string type; }
 
         [System.Serializable]
-        public sealed class BuildingrecipeData { public string name; public List<ItemData> requireItems; public List<ItemData> buildRequirements; public int TimeToBuild; public long initialCapital; }
+        public sealed class BuildingrecipeData
+        {
+            public string name;
+            public List<ItemData> requireItems;
+            public List<ItemData> buildRequirements;
+            public int TimeToBuild;
+            public long initialCapital;
+            public long constructionFee;
+            public int startMaterialBasisPoints = 3000;
+        }
     }
 }

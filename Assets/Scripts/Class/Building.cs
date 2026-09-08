@@ -41,6 +41,7 @@ public class Building
         }
     }
     public int level = 0; // 현재 빌딩의 레벨
+    public IBuildingInvestor Owner { get; internal set; }
     public MoneyAccount Account { get; }
     public long balance => Account.Balance;
     public int previousGain = 0; // 건물의 이전 수입
@@ -131,10 +132,34 @@ public class BuildingRecipe
     public Dictionary<string, int> requireItems = new();
     public int TimeToBuild { get; set; }
     public long InitialCapital { get; set; }
+    public long ConstructionFee { get; set; }
+    public int StartMaterialBasisPoints { get; set; } = 3000;
 
     public BuildingRecipe(string name)
     {
         this.name = name;
+    }
+
+    internal void ValidateConstructionContract()
+    {
+        if (ConstructionFee < 0)
+            throw new System.InvalidOperationException(
+                $"Building recipe {name} field constructionFee must be nonnegative.");
+        if (StartMaterialBasisPoints < 1 || StartMaterialBasisPoints > 10000)
+            throw new System.InvalidOperationException(
+                $"Building recipe {name} field startMaterialBasisPoints must be between 1 and 10000.");
+        if (TimeToBuild <= 0)
+            throw new System.InvalidOperationException(
+                $"Building recipe {name} field TimeToBuild must be greater than zero.");
+
+        foreach (KeyValuePair<string, int> requirement in requireItems)
+        {
+            if (requirement.Value <= 0)
+            {
+                throw new System.InvalidOperationException(
+                    $"Building recipe {name} material {requirement.Key} amount must be greater than zero.");
+            }
+        }
     }
 }
 
