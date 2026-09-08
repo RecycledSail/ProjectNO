@@ -51,11 +51,11 @@ public class EmploymentTests
     {
         Initialize();
         Set(((IList)Get(a, "ageGroups"))[1], "agepopulation", 10L);
-        Reconcile(false);
+        Reconcile();
         Assert.That(Get(a, "EmployedPopulation"), Is.EqualTo(10L));
         Assert.That(Get(shop, "currentWorkers"), Is.EqualTo(85L));
         ((IDictionary)Get(province, "buildings")).Clear();
-        Reconcile(false);
+        Reconcile();
         Assert.That(Get(province, "hiredPopulation"), Is.EqualTo(0L));
         Assert.That(Get(b, "EmployedPopulation"), Is.EqualTo(0L));
     }
@@ -63,12 +63,13 @@ public class EmploymentTests
     [Test]
     public void WeeklyVacancies_GrowByAtMostFiftyAndPreserveExistingWorkers()
     {
+        Fund(1000);
         Initialize();
-        Reconcile(true);
+        Assert.That(ProcessWeek(1), Is.True);
         Assert.That(Get(shop, "currentWorkers"), Is.EqualTo(150L));
         Assert.That(Workers(shop, a), Is.EqualTo(38));
         Assert.That(Workers(shop, b), Is.EqualTo(112));
-        Reconcile(false);
+        Reconcile();
         Assert.That(Get(shop, "currentWorkers"), Is.EqualTo(150L));
     }
 
@@ -94,13 +95,13 @@ public class EmploymentTests
     {
         Initialize();
         Set(shop, "level", 0);
-        Reconcile(true);
+        Reconcile();
         Assert.That(Get(province, "hiredPopulation"), Is.EqualTo(0L));
         Assert.That(Get(a, "UnemployedPopulation"), Is.EqualTo(100L));
         Set(shop, "level", 1);
         foreach (object pop in new[] { a, b })
             Set(((IList)Get(pop, "ageGroups"))[1], "agepopulation", 0L);
-        Reconcile(true);
+        Reconcile();
         Assert.That(Get(shop, "currentWorkers"), Is.EqualTo(0L));
     }
 
@@ -207,7 +208,7 @@ public class EmploymentTests
             Call<object>(shop, "ProgressWeekly", 20d);
             Assert.That(Get(mandate, "RemainingManhours"), Is.EqualTo(95d));
             foreach (object pop in new[] { a, b }) Set(((IList)Get(pop, "ageGroups"))[1], "agepopulation", 0L);
-            Reconcile(false);
+            Reconcile();
             Call<object>(shop, "ProgressWeekly", 20d);
             Assert.That(Get(mandate, "RemainingManhours"), Is.EqualTo(95d));
         }
@@ -261,6 +262,18 @@ public class EmploymentTests
         Assert.That(Get(shop, "currentWorkers"), Is.EqualTo(100L));
     }
 
+    [Test]
+    public void ReconciliationAfterPayroll_CannotCreateUnpaidWorkers()
+    {
+        Fund(0); Initialize();
+        Assert.That(ProcessWeek(1), Is.True);
+        Reconcile();
+        Assert.That(Get(shop, "currentWorkers"), Is.EqualTo(0L));
+        Assert.That(ProcessWeek(1), Is.True);
+        Assert.That(Get(shop, "currentWorkers"), Is.EqualTo(0L));
+        Assert.That(Get(a, "property"), Is.EqualTo(0L));
+    }
+
     private object Fund(long amount)
     {
         object treasury = New("MoneyAccount", "treasury", amount);
@@ -295,7 +308,7 @@ public class EmploymentTests
     }
 
     private void Initialize() => Find("ProvinceEmployment").GetMethod("Initialize").Invoke(null, new[] { province });
-    private void Reconcile(bool fill) => Call<object>(Get(province, "Employment"), "Reconcile", fill);
+    private void Reconcile() => Call<object>(Get(province, "Employment"), "Reconcile");
     private long Workers(object building, object pop)
     {
         object records = Call<object>(Get(province, "Employment"), "GetWorkers", building);

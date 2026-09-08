@@ -32,12 +32,12 @@ public sealed class ProvinceEmployment
         new ReadOnlyDictionary<ProvinceEthnicPop, long>(records.TryGetValue(building, out var row)
             ? new Dictionary<ProvinceEthnicPop, long>(row) : new Dictionary<ProvinceEthnicPop, long>());
 
-    public void Reconcile(bool fillVacancies)
+    public void Reconcile()
     {
         Validate();
         var targets = province.buildings.Values.ToDictionary(b => b, b =>
-            Math.Min(Capacity(b), checked(WorkersAt(b) + (fillVacancies ? 50L : 0L))));
-        records = Plan(targets, fillVacancies);
+            Math.Min(Capacity(b), WorkersAt(b)));
+        records = Plan(targets, false);
     }
 
     public bool TryProcessWeek(long week)

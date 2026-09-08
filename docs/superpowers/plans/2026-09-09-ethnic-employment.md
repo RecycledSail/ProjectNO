@@ -22,16 +22,16 @@
 
 ## 작업 순서
 
-- [ ] 1. 기준 Unity EditMode 전체 테스트 확인.
-- [ ] 2. 고용 회귀 테스트 추가: 초기 배분, 노동 공급 부족, 여러 건물 중복 고용, 인구 감소, 건물 제거, 안정적 배분과 우회 금지. RED 확인.
-- [ ] 3. ProvinceEmployment.cs와 Building/Province/ProvinceEthnicPop 파생값 구현. 고용 테스트 GREEN, 기존 전체 테스트 확인.
-- [ ] 4. 임금 테스트 추가: 정확한 생산자 계좌 차감과 집단별 수령, 공급량 보존, 잔액 부족, 중복 주간 실행, 교차 원장 실패 원자성. RED 확인.
-- [ ] 5. TryProcessWeek(long week) 구현, 양수 임금 JSON 로딩, 게임 초기화 및 주간 순서, 산업 지원, UI 연결.
-- [ ] 6. 최종 전체 테스트, 직접 노동자 변경 경로와 실행 순서 검토, 사용자 문서 작성.
+- [x] 1. 기준 Unity EditMode 전체 테스트 확인.
+- [x] 2. 고용 회귀 테스트 추가: 초기 배분, 노동 공급 부족, 여러 건물 중복 고용, 인구 감소, 건물 제거, 안정적 배분과 우회 금지. RED 확인.
+- [x] 3. ProvinceEmployment.cs와 Building/Province/ProvinceEthnicPop 파생값 구현. 고용 테스트 GREEN, 기존 전체 테스트 확인.
+- [x] 4. 임금 테스트 추가: 정확한 생산자 계좌 차감과 집단별 수령, 공급량 보존, 잔액 부족, 중복 주간 실행, 교차 원장 실패 원자성. RED 확인.
+- [x] 5. TryProcessWeek(long week) 구현, 양수 임금 JSON 로딩, 게임 초기화 및 주간 순서, 산업 지원, UI 연결.
+- [x] 6. 최종 전체 테스트, 직접 노동자 변경 경로와 실행 순서 검토, 사용자 문서 작성.
 
 ## 인터페이스 및 파일
 
-- 새 `Assets/Scripts/Class/ProvinceEmployment.cs`: Initialize(Province), Reconcile(bool), WorkersAt(Building), Employed(ProvinceEthnicPop), TotalEmployed, GetWorkers(Building), TryProcessWeek(long).
+- 새 `Assets/Scripts/Class/ProvinceEmployment.cs`: Initialize(Province), Reconcile(), WorkersAt(Building), Employed(ProvinceEthnicPop), TotalEmployed, GetWorkers(Building), TryProcessWeek(long).
 - `Building.cs`: currentWorkers 호환 뷰, weeklyWage, HireWorkers 경로.
 - `Province.cs`, `EthnicGroup.cs`: 고용 관리자 및 집단별 파생 합계.
 - `GlobalVariables.cs`: BuildingType 임금 로딩/검증.
@@ -41,3 +41,11 @@
 - `Assets/Tests/EditMode/EmploymentTests.cs`: 기존 ReflectionTestHelpers로 런타임 호출.
 
 검증 명령: Unity 6000.0.71f1 `-batchmode -nographics -projectPath D:/ProjectNO/.worktrees/ethnic-employment -runTests -testPlatform EditMode -testResults <unique.xml> -logFile <unique.log>`; `-quit` 사용하지 않음.
+
+## 최종 검증
+
+고용 7개 RED 후 전체 100/100 GREEN, 임금 5개 RED 후 전체 105/105 GREEN.
+연령 이동 자동 조정 회귀 테스트 및 통합 테스트를 추가했다.
+독립 검토에서 공개 Reconcile(true)의 무급 채용 경로를 확인했고, 자금 0에서 50명으로 증가하는 RED를 재현한 뒤 Reconcile()을 감원 전용으로 변경했다.
+최종 Unity EditMode 결과: 111/111 통과, 실패/스킵/컴파일 오류 0. 검토자 재확인에서 추가 문제 없음.
+테스트 결과: TestResults/review-fixed.xml 및 review-fixed.log (로컬 생성 파일).

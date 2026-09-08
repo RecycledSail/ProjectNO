@@ -402,7 +402,7 @@ public class Province
         }
         population = newPopulation;
 
-        Employment?.Reconcile(false);
+        Employment?.Reconcile();
         AllocateSpecialBuildingPopulation();
     }
 
@@ -417,7 +417,7 @@ public class Province
         }
 
         population = provinceEthnicPops.Sum(pep => pep.population);
-        Employment?.Reconcile(false);
+        Employment?.Reconcile();
         AllocateSpecialBuildingPopulation();
     }
 
