@@ -73,6 +73,105 @@ public sealed class BasketPurchaseResult
 
 public static class MarketSettlement
 {
+    public static bool TryPurchaseBatch(
+        IReadOnlyList<MarketBuyerRequest> requests,
+        MoneyLedger ledger)
+    {
+        if (requests == null || requests.Count == 0 || ledger == null ||
+            !ledger.OwnsAccount(ledger.TreasuryAccount))
+        {
+            return false;
+        }
+
+        try
+        {
+            HashSet<string> requestIds = new(StringComparer.Ordinal);
+            Dictionary<ProductState, int> quantities = new();
+            Dictionary<MoneyAccount, long> buyerGrossAmounts = new();
+            Dictionary<MoneyAccount, long> deltas = new();
+            List<PlannedBatchPurchase> plans = new();
+            long totalTax = 0;
+
+            foreach (MarketBuyerRequest request in requests)
+            {
+                if (request == null || string.IsNullOrWhiteSpace(request.RequestId) ||
+                    request.Buyer == null || request.Product == null || request.Quantity <= 0 ||
+                    request.Product.Price <= 0 || !ledger.OwnsAccount(request.Buyer) ||
+                    !requestIds.Add(request.RequestId))
+                {
+                    return false;
+                }
+
+                quantities.TryGetValue(request.Product, out int currentQuantity);
+                quantities[request.Product] = checked(currentQuantity + request.Quantity);
+                long requestGross = checked((long)request.Quantity * request.Product.Price);
+                AddDelta(buyerGrossAmounts, request.Buyer, requestGross);
+            }
+
+            foreach (KeyValuePair<MoneyAccount, long> buyerGross in buyerGrossAmounts)
+            {
+                if (buyerGross.Key.Balance < buyerGross.Value)
+                    return false;
+                AddDelta(deltas, buyerGross.Key, -buyerGross.Value);
+            }
+
+            foreach (KeyValuePair<ProductState, int> productQuantity in quantities)
+            {
+                ProductState product = productQuantity.Key;
+                int quantity = productQuantity.Value;
+                if (!TryPlanProductSale(
+                        product,
+                        quantity,
+                        ledger,
+                        out IReadOnlyList<SupplierSale> sale,
+                        out _,
+                        out long tax,
+                        out Dictionary<MoneyAccount, long> sellerCredits) ||
+                    !product.CanCommitPurchase(sale))
+                {
+                    return false;
+                }
+
+                foreach (KeyValuePair<MoneyAccount, long> credit in sellerCredits)
+                    AddDelta(deltas, credit.Key, credit.Value);
+
+                totalTax = checked(totalTax + tax);
+                plans.Add(new PlannedBatchPurchase(product, sale));
+            }
+
+            AddDelta(deltas, ledger.TreasuryAccount, totalTax);
+            long batchTotal = 0;
+            foreach (long delta in deltas.Values)
+                batchTotal = checked(batchTotal + delta);
+            if (batchTotal != 0)
+                return false;
+
+            List<MoneyTransferEntry> entries = deltas
+                .OrderBy(pair => pair.Key.Id, StringComparer.Ordinal)
+                .Select(pair => new MoneyTransferEntry(pair.Key, pair.Value))
+                .ToList();
+            if (!ledger.TryTransferBatch(entries, "Market batch purchase", totalTax))
+                return false;
+
+            foreach (PlannedBatchPurchase plan in plans)
+                plan.Product.CommitPurchase(plan.Sale);
+
+            return true;
+        }
+        catch (OverflowException)
+        {
+            return false;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
     public static PurchaseResult TryPurchase(
         ProductState product,
         MoneyAccount buyer,
@@ -132,23 +231,17 @@ public static class MarketSettlement
                 if (quantity == 0)
                     continue;
 
-                long gross = checked((long)quantity * request.Product.Price);
-                long tax = checked(gross * ledger.SalesTaxBasisPoints / 10_000L);
-                long sellerNet = gross - tax;
-                IReadOnlyList<SupplierSale> sale = request.Product.PlanSale(quantity);
-                if (!IsCompleteSalePlan(sale, quantity) ||
-                    sale.Any(entry => !ledger.OwnsAccount(entry.Supplier)))
+                if (!TryPlanProductSale(
+                        request.Product,
+                        quantity,
+                        ledger,
+                        out IReadOnlyList<SupplierSale> sale,
+                        out long gross,
+                        out long tax,
+                        out Dictionary<MoneyAccount, long> sellerCredits))
                 {
                     return BasketPurchaseResult.Failed();
                 }
-
-                Dictionary<MoneyAccount, long> weights = sale.ToDictionary(
-                    entry => entry.Supplier,
-                    entry => (long)entry.Quantity);
-                Dictionary<MoneyAccount, long> sellerCredits = ProportionalAllocator.Allocate(
-                    sellerNet,
-                    weights,
-                    account => account.Id);
 
                 AddDelta(deltas, buyer, -gross);
                 AddDelta(deltas, ledger.TreasuryAccount, tax);
@@ -220,6 +313,42 @@ public static class MarketSettlement
         return total == quantity;
     }
 
+    private static bool TryPlanProductSale(
+        ProductState product,
+        int quantity,
+        MoneyLedger ledger,
+        out IReadOnlyList<SupplierSale> sale,
+        out long gross,
+        out long tax,
+        out Dictionary<MoneyAccount, long> sellerCredits)
+    {
+        sale = null;
+        gross = 0;
+        tax = 0;
+        sellerCredits = null;
+        if (product == null || quantity <= 0 || product.Price <= 0 || ledger == null)
+            return false;
+
+        gross = checked((long)quantity * product.Price);
+        tax = checked(gross * ledger.SalesTaxBasisPoints / 10_000L);
+        long sellerNet = checked(gross - tax);
+        sale = product.PlanSale(quantity);
+        if (!IsCompleteSalePlan(sale, quantity) ||
+            sale.Any(entry => !ledger.OwnsAccount(entry.Supplier)))
+        {
+            return false;
+        }
+
+        Dictionary<MoneyAccount, long> weights = sale.ToDictionary(
+            entry => entry.Supplier,
+            entry => (long)entry.Quantity);
+        sellerCredits = ProportionalAllocator.Allocate(
+            sellerNet,
+            weights,
+            account => account.Id);
+        return true;
+    }
+
     private static void AddDelta(
         IDictionary<MoneyAccount, long> deltas,
         MoneyAccount account,
@@ -248,6 +377,18 @@ public static class MarketSettlement
             Quantity = quantity;
             Gross = gross;
             Tax = tax;
+            Sale = sale;
+        }
+    }
+
+    private sealed class PlannedBatchPurchase
+    {
+        public ProductState Product { get; }
+        public IReadOnlyList<SupplierSale> Sale { get; }
+
+        public PlannedBatchPurchase(ProductState product, IReadOnlyList<SupplierSale> sale)
+        {
+            Product = product;
             Sale = sale;
         }
     }
