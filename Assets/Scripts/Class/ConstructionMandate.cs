@@ -198,14 +198,89 @@ public sealed class ConstructionMandate
         if (!IsActive)
             return false;
 
-        if (!TryTransferEscrowTo(Investor?.InvestmentAccount, "Construction mandate cancellation refund"))
+        MoneyLedger ledger = TargetProvince.ActiveLedger;
+        MoneyAccount investorAccount = Investor?.InvestmentAccount;
+        if (EscrowAccount != null &&
+            (ledger == null || !ledger.OwnsAccount(EscrowAccount) ||
+             !ledger.OwnsAccount(investorAccount) || ReferenceEquals(EscrowAccount, investorAccount)))
             return false;
 
-        if (!TryUnregisterTerminalEscrow())
+        if (!TryPrepareMaterialReturns(ledger, investorAccount, out Dictionary<ProductState, int> returns))
             return false;
 
+        long refund = EscrowAccount?.Balance ?? 0L;
+        if (refund > 0 && !ledger.TryTransferBatch(new[]
+            {
+                new MoneyTransferEntry(EscrowAccount, -refund),
+                new MoneyTransferEntry(investorAccount, refund)
+            }, "Construction mandate cancellation refund"))
+            return false;
+
+        // All product mappings, inventory additions and terminal account removal
+        // were checked before settlement. This phase is synchronous.
+        foreach (KeyValuePair<ProductState, int> item in returns)
+            item.Key.AddSupply(investorAccount, item.Value);
+        TryUnregisterTerminalEscrow();
         Status = ConstructionMandateStatus.Cancelled;
         UntrackActiveMandate(this);
+        return true;
+    }
+
+    private bool TryPrepareMaterialReturns(MoneyLedger ledger, MoneyAccount investorAccount,
+        out Dictionary<ProductState, int> returns)
+    {
+        returns = new Dictionary<ProductState, int>();
+        Dictionary<string, long> unused = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, long> item in AcquiredMaterials)
+        {
+            long quantity = item.Value - ConsumedMaterials[item.Key];
+            if (quantity > 0)
+                unused.Add(item.Key, quantity);
+        }
+        if (unused.Count == 0)
+            return true;
+
+        Dictionary<string, ProductState> products = GetAccessibleProducts();
+        if (products == null)
+            return false;
+        HashSet<ProductState> mapped = new();
+        foreach (KeyValuePair<string, ProductState> item in products)
+            if (string.IsNullOrWhiteSpace(item.Key) || item.Value == null ||
+                !string.Equals(item.Key, item.Value.ProductName, StringComparison.Ordinal) ||
+                !mapped.Add(item.Value))
+                return false;
+
+        foreach (KeyValuePair<string, long> item in unused)
+        {
+            if (item.Value > int.MaxValue || !products.TryGetValue(item.Key, out ProductState product) ||
+                !product.CanReceiveSupply(investorAccount, (int)item.Value, ledger))
+                return false;
+            returns.Add(product, (int)item.Value);
+        }
+        return true;
+    }
+
+    internal static bool TryValidateActiveMigrationAccounts(Province province, MoneyLedger ledger,
+        HashSet<MoneyAccount> actors, out string error)
+    {
+        error = null;
+        if (!ActiveByProvince.TryGetValue(province, out List<ConstructionMandate> mandates))
+            return true;
+        foreach (ConstructionMandate mandate in mandates.Where(mandate => mandate.IsActive))
+        {
+            MoneyAccount investor = mandate.Investor?.InvestmentAccount;
+            MoneyAccount contractor = mandate.AssignedCompany?.Account;
+            if ((mandate.EscrowAccount != null && !ledger.OwnsAccount(mandate.EscrowAccount)) ||
+                ((mandate.EscrowAccount != null || investor != null) &&
+                 (!ledger.OwnsAccount(investor) || !actors.Contains(investor))) ||
+                (mandate.AssignedCompany != null &&
+                 (!ledger.OwnsAccount(contractor) || !actors.Contains(contractor))))
+            {
+                error = "An active construction contract has an investor, contractor or escrow " +
+                        "that cannot migrate with the province.";
+                return false;
+            }
+        }
         return true;
     }
 
@@ -245,16 +320,6 @@ public sealed class ConstructionMandate
         if (capital > 0)
             entries.Add(new MoneyTransferEntry(building.Account, capital));
         return ledger.TryTransferBatch(entries, "Construction progress fee and completion capital");
-    }
-
-    private bool TryTransferEscrowTo(MoneyAccount destination, string reason)
-    {
-        if (EscrowAccount == null || EscrowAccount.Balance == 0)
-            return true;
-
-        MoneyLedger ledger = TargetProvince.ActiveLedger;
-        return destination != null && ledger != null && ledger.TryTransfer(
-            EscrowAccount, destination, EscrowAccount.Balance, reason);
     }
 
     private bool TryUnregisterTerminalEscrow()
