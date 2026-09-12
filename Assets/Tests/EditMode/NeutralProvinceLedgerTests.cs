@@ -148,6 +148,7 @@ public class NeutralProvinceLedgerTests
     [Test]
     public void AbsorbNeutralProvince_MigratesFundedActiveMandateEscrowWithoutChangingSupply()
     {
+        ConfigureFundedRecipe();
         object nation = TestEconomyFactory.NewNation("N1", 1000L);
         object province = TestEconomyFactory.NewProvince(1, "Prano");
         ReflectionTestHelpers.Set(province, "initialLocalTreasury", 1000L);
@@ -195,6 +196,9 @@ public class NeutralProvinceLedgerTests
         object companyType = ReflectionTestHelpers.New("BuildingType", "construcntionCompany");
         object company = ReflectionTestHelpers.New("ConstructionCompanyBuilding",
             companyType, context.Province, 1);
+        Assert.That(ReflectionTestHelpers.Call<bool>(context.LocalLedger,
+            "RegisterEmptyAccount", ReflectionTestHelpers.Get(company, "Account")), Is.True);
+        ((IDictionary)ReflectionTestHelpers.Get(context.Province, "buildings"))[companyType] = company;
 
         Assert.That(ReflectionTestHelpers.Call<bool>(company, "TryAssign", context.Mandate), Is.True);
         ReflectionTestHelpers.Call<object>(company, "ProgressWeekly", 10d);
@@ -215,6 +219,15 @@ public class NeutralProvinceLedgerTests
                 TestEconomyFactory.ListOf("Nation", nation),
                 TestEconomyFactory.ListOf("Province", province)
             });
+    }
+
+    private static void ConfigureFundedRecipe()
+    {
+        object recipe = ReflectionTestHelpers.New("BuildingRecipe", "WheatField");
+        ReflectionTestHelpers.Set(recipe, "TimeToBuild", 10);
+        ReflectionTestHelpers.Set(recipe, "InitialCapital", 100L);
+        ((IDictionary)ReflectionTestHelpers.Find("GlobalVariables").GetField(
+            "BUILDING_RECIPE", BindingFlags.Static | BindingFlags.Public).GetValue(null))["WheatField"] = recipe;
     }
 
     private static bool TryAbsorb(object province, object nation, out string error)
@@ -380,6 +393,7 @@ public class NeutralProvinceLedgerTests
 
         public static NeutralFundedMandate Create()
         {
+            ConfigureFundedRecipe();
             object nation = TestEconomyFactory.NewNation("N1", 1000L);
             object province = TestEconomyFactory.NewProvince(1, "Prano");
             ReflectionTestHelpers.Set(province, "initialLocalTreasury", 1000L);

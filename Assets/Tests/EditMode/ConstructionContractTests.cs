@@ -121,6 +121,22 @@ public class ConstructionContractTests
             recipe.constructionFee > 0 && recipe.constructionFee == recipe.TimeToBuild));
     }
 
+    [Test]
+    public void LegacyMandates_CaptureDistinctStableIdentifiers()
+    {
+        object buildingType = ReflectionTestHelpers.New("BuildingType", "IdentifierTest");
+        object province = TestEconomyFactory.NewProvince(99, "IdentifierProvince");
+        object first = ReflectionTestHelpers.New(
+            "ConstructionMandate", null, buildingType, province, 1d);
+        object second = ReflectionTestHelpers.New(
+            "ConstructionMandate", null, buildingType, province, 1d);
+
+        string firstId = (string)ReflectionTestHelpers.Get(first, "Id");
+        Assert.That(firstId, Is.Not.Empty);
+        Assert.That(ReflectionTestHelpers.Get(first, "Id"), Is.EqualTo(firstId));
+        Assert.That(ReflectionTestHelpers.Get(second, "Id"), Is.Not.EqualTo(firstId));
+    }
+
     private static void LoadRecipe(string json)
     {
         Type wrapperType = ReflectionTestHelpers.Find(
