@@ -179,6 +179,13 @@ public sealed class ConstructionMandate
         return IsActive && _materials.TryPrepareAcquisition(quantities, spending, out acquisition);
     }
 
+    internal Dictionary<string, ProductState> GetAccessibleProducts()
+    {
+        if (TargetProvince.isConnectedToCapital && TargetProvince.nation?.market != null)
+            return TargetProvince.nation.market.Products;
+        return TargetProvince.market?.Products;
+    }
+
     internal void CommitMaterialAcquisition(ConstructionMaterials.Acquisition acquisition)
     {
         if (!IsActive)
