@@ -189,7 +189,11 @@ public class ConstructionMandateTests
             Assert.That(GetProperty(nameText, "text"), Is.EqualTo("WheatField"));
             Assert.That(GetProperty(provinceText, "text"), Is.EqualTo("Target"));
             Assert.That(GetProperty(countText, "text"),
-                Is.EqualTo("20 (Requested)"));
+                Is.EqualTo("Queued\n0%"));
+            string details = (string)Find("ConstructionStatusText").GetMethod("Format")
+                .Invoke(null, new[] { mandate });
+            Assert.That(details, Does.Contain("Remaining labor hours: 20"));
+            Assert.That(details, Does.Contain("Awaiting contractor"));
         }
         finally
         {

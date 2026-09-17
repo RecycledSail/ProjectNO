@@ -419,15 +419,9 @@ public class GameManager : MonoBehaviour
             nation.SimulateWeeklyTurn();
         }
 
-        // 2-1. 건설회사는 투자자 수와 관계없이 회사마다 주 1회만 공사를 진행한다.
-        foreach (ConstructionCompanyBuilding constructionCompany in provinces.Values
-            .SelectMany(province => province.buildings.Values)
-            .OfType<ConstructionCompanyBuilding>())
-        {
-            if (!paidProvinces.Contains(constructionCompany.province)) continue;
-            constructionCompany.ProgressWeekly(
-                GlobalVariables.minimumConstructionCompanyManHour);
-        }
+        // 2-1. 공유 시장별 자재 조달 후, 임금 지급에 성공한 회사만 주 1회 시공한다.
+        ConstructionWeeklySimulation.Process(nations.Values, provinces.Values, paidProvinces,
+            GlobalVariables.minimumConstructionCompanyManHour);
 
         // 3. Province 생산 단계 (생산만 수행)
         foreach (Province province in provinces.Values)

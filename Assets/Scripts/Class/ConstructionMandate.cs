@@ -32,6 +32,7 @@ public sealed class ConstructionMandate
     public long ConstructionFee { get; }
     public long PaidConstructionFee { get; private set; }
     public long MaterialSpending => _materials.Spending;
+    public bool ProcurementFailed { get; internal set; }
     public decimal MaterialProgressLimit => _materials.ProgressLimit;
     public bool CanStart => IsActive && (Status == ConstructionMandateStatus.InProgress || _materials.CanStart);
     public IReadOnlyDictionary<string, long> RequiredMaterials => _materials.Required;

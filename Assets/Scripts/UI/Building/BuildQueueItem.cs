@@ -7,6 +7,7 @@ public class BuildQueueItem : MonoBehaviour
     public TMP_Text provinceText; // 프로빈스 이름 텍스트
     public TMP_Text countText; // 남은 인시
     private ConstructionMandate _mandate;
+    private BuildRequirementTooltip _tooltip;
     public ConstructionMandate Mandate => _mandate;
    
     /// <summary>
@@ -17,6 +18,7 @@ public class BuildQueueItem : MonoBehaviour
         _mandate = mandate;
         nameText.text = mandate.BuildingType.name;
         provinceText.text = mandate.TargetProvince.name;
+        _tooltip = GetComponent<BuildRequirementTooltip>() ?? gameObject.AddComponent<BuildRequirementTooltip>();
         UpdateManhour();
     }
 
@@ -30,7 +32,8 @@ public class BuildQueueItem : MonoBehaviour
         if (_mandate == null || countText == null)
             return;
 
-        countText.text = $"{_mandate.RemainingManhours:0.##} ({_mandate.Status})";
+        countText.text = ConstructionStatusText.Summary(_mandate);
+        _tooltip?.SetMessage(ConstructionStatusText.Format(_mandate));
     }
 
     /// <summary>
