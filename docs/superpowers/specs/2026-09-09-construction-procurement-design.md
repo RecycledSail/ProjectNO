@@ -2,7 +2,7 @@
 
 작성일: 2026-09-09
 
-상태: 구현 완료 (`feature/construction-procurement`, `8fbe0e3`)
+상태: 구현 완료 및 `market` 병합 완료 (`db80975`)
 
 ## 목적과 범위
 
@@ -16,7 +16,7 @@
 - 발주 시 `BuildingRecipe.InitialCapital`을 발주자에게서 예치 계좌로 이체하고, 완공 시 전액을 건물 계좌로 보낸다. 이는 운영자금이지 건설회사 매출이 아니다.
 - `ConstructionMandate.ApplyManhours`에는 자재 확보에 따른 공정 제한과 공사대금 지급이 없다.
 - `MarketSettlement`는 공급자별 판매대금과 세금을 보존하는 실제 구매 기능을 제공한다. 현재 구매 묶음의 구매자는 한 명이다.
-- 고용·임금은 별도 `feature/ethnic-employment` 브랜치의 `46469e6`까지 구현되어 있다. 이번 구현은 그 커밋을 기반으로 하며 `market` 병합은 별도 작업이다.
+- 고용·임금은 `feature/ethnic-employment` 브랜치의 `46469e6`을 기반으로 건설 조달 기능과 함께 `market`에 병합되었다.
 
 ## 합의한 기본 방향
 
@@ -92,8 +92,9 @@
 
 ## 구현 결과
 
-- `feature/construction-procurement` 브랜치의 `8fbe0e3`까지 이 설계를 구현했다. `market` 브랜치 병합은 수행하지 않았다.
+- `feature/construction-procurement` 브랜치의 `8fbe0e3`까지 이 설계를 구현했고, 2026-09-19 `market` 브랜치에 `db80975`로 병합했다.
 - 2026-09-18 전체 EditMode 검증 결과는 `TestResults/final-verification-20260918.xml` 기준 217개 중 217개 통과, 실패 0개, 건너뜀 0개이다.
+- 병합 후 `market`에서 다시 실행한 `TestResults/postmerge-construction-20260919.xml`도 217개 중 217개 통과, 실패 0개, 건너뜀 0개이다.
 - 최종 전체 브랜치 리뷰에서 차단 지적은 없었다.
 - 수동 PlayMode 및 실제 프리팹 화면 확인은 수행하지 않았다.
 - 운송회사, 민간 자동 투자, 자재비 상한은 설계 범위에서 제외한 상태로 구현하지 않았다.

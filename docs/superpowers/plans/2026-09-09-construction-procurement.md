@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-09-construction-procurement-design.md`
 
-**Implementation status:** `D:/ProjectNO/.worktrees/construction-procurement` 작업 트리의 `feature/construction-procurement` 브랜치에서 `8fbe0e3`까지 구현 완료. 2026-09-18 전체 EditMode 검증은 `TestResults/final-verification-20260918.xml` 기준 217/217 통과(실패 0, 건너뜀 0)했고, 최종 전체 브랜치 리뷰에는 차단 지적이 없었다. 수동 PlayMode 및 실제 프리팹 화면 확인과 `market` 브랜치 병합은 수행하지 않았다. 운송회사, 민간 자동 투자, 자재비 상한은 계획대로 미구현이다.
+**Implementation status:** `D:/ProjectNO/.worktrees/construction-procurement` 작업 트리의 `feature/construction-procurement` 브랜치에서 `8fbe0e3`까지 구현했고, 2026-09-19 `market` 브랜치에 `db80975`로 병합했다. 병합 후 전체 EditMode 검증은 `TestResults/postmerge-construction-20260919.xml` 기준 217/217 통과(실패 0, 건너뜀 0)했다. 수동 PlayMode 및 실제 프리팹 화면 확인은 수행하지 않았다. 운송회사, 민간 자동 투자, 자재비 상한은 계획대로 미구현이다.
 
 ## Global Constraints
 
@@ -21,7 +21,7 @@
 - 자동 발행, 대출, 음수 잔고, 자재 구매대금의 가상 환불을 금지한다.
 - 취소한 미사용 자재는 발주자 소유 재고로 반환한다.
 - 같은 종류 건물의 다른 소유자 증설을 금지한다.
-- 고용 기반은 `feature/ethnic-employment`의 `46469e6`이다. `market`에 자동 병합하지 않는다.
+- 고용 기반은 `feature/ethnic-employment`의 `46469e6`이며, 건설 조달 기능과 함께 `market`에 병합되었다.
 - 기존 작업 트리의 사용자 변경과 Unity 생성 파일은 보존한다.
 
 ## 실행 환경과 검증 명령
