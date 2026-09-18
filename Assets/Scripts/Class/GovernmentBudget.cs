@@ -80,7 +80,8 @@ public class GovernmentBudget
 
         nation.researchFund = plan.NextResearchFund;
         foreach (KeyValuePair<Building, long> effect in plan.NextWorkerCounts)
-            effect.Key.currentWorkers = effect.Value;
+            if (effect.Key.province.Employment == null)
+                effect.Key.currentWorkers = effect.Value;
         foreach (KeyValuePair<ProvinceEthnicPop, double> effect in plan.NextLivingStandards)
             effect.Key.livingStandard = effect.Value;
 
@@ -383,6 +384,11 @@ public class GovernmentBudget
             long plannedBalance = checked(building.Account.Balance + monetaryDelta);
             long capacity = checked(building.level * building.buildingType.workerNeeded);
             long nextWorkers = building.currentWorkers;
+            if (building.province.Employment != null)
+            {
+                nextWorkerCounts.Add(building, nextWorkers);
+                continue;
+            }
             if (plannedBalance > 0 && building.previousGain > 0 &&
                 building.currentWorkers < capacity &&
                 building.province.population > building.province.hiredPopulation)

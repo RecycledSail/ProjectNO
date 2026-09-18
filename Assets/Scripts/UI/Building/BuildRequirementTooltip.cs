@@ -60,7 +60,7 @@ public class BuildRequirementTooltip : MonoBehaviour, IPointerEnterHandler, IPoi
         tooltipText.text = message;
 
         Vector2 preferred = tooltipText.GetPreferredValues(message, MaxWidth, 0f);
-        tooltipRect.sizeDelta = new Vector2(preferred.x + PaddingX * 2f, preferred.y + PaddingY * 2f);
+        tooltipRect.sizeDelta = new Vector2(Mathf.Min(MaxWidth, preferred.x) + PaddingX * 2f, preferred.y + PaddingY * 2f);
         PositionTooltip();
         tooltipObject.SetActive(true);
         tooltipObject.transform.SetAsLastSibling();
@@ -113,7 +113,7 @@ public class BuildRequirementTooltip : MonoBehaviour, IPointerEnterHandler, IPoi
         tooltipText = textObject.GetComponent<TMP_Text>();
         tooltipText.fontSize = 20f;
         tooltipText.color = Color.white;
-        tooltipText.textWrappingMode = TextWrappingModes.NoWrap;
+        tooltipText.textWrappingMode = TextWrappingModes.Normal;
         tooltipText.raycastTarget = false;
 
         tooltipObject.SetActive(false);

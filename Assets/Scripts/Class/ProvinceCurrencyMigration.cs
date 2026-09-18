@@ -38,6 +38,11 @@ public static class ProvinceCurrencyMigration
         if (!province.TryCollectMigrationAccounts(out List<MoneyAccount> accounts, out error))
             return false;
 
+        HashSet<MoneyAccount> migratingActors = new(accounts);
+        if (!ConstructionMandate.TryValidateActiveMigrationAccounts(
+                province, sourceLedger, migratingActors, out error))
+            return false;
+
         foreach (MoneyAccount escrow in ConstructionMandate.GetActiveEscrowAccountsFor(province))
         {
             if (escrow == null || accounts.Contains(escrow))
@@ -53,7 +58,7 @@ public static class ProvinceCurrencyMigration
                 province,
                 sourceLedger,
                 sourceTreasury,
-                new HashSet<MoneyAccount>(accounts),
+                migratingActors,
                 out error))
         {
             return false;
@@ -107,7 +112,7 @@ public static class ProvinceCurrencyMigration
             {
                 MoneyAccount supplier = lot.Key;
                 if (supplier == null || ReferenceEquals(supplier, sourceTreasury) ||
-                    supplier.Ledger != sourceLedger || !migratingActors.Contains(supplier))
+                    !sourceLedger.OwnsAccount(supplier) || !migratingActors.Contains(supplier))
                 {
                     error = $"The province market product {productEntry.Key} has a supplier " +
                             "that is not a migrating source-ledger actor.";

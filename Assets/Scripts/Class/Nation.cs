@@ -156,17 +156,18 @@ public class Nation : IBuildingInvestor
             return null;
 
         BuildingRecipe recipe = GlobalVariables.BUILDING_RECIPE[buildingType.name];
+        long escrowAmount = checked(recipe.InitialCapital + recipe.ConstructionFee);
         MoneyAccount escrow = new(
             $"mandate:{name}:{targetProvince.name}:{buildingType.name}:{_constructionMandates.Count}");
         MoneyLedger ledger = targetProvince.ActiveLedger;
         if (!ledger.RegisterEmptyAccount(escrow))
             return null;
 
-        if (recipe.InitialCapital > 0 && !ledger.TryTransfer(
+        if (escrowAmount > 0 && !ledger.TryTransfer(
             InvestmentAccount,
             escrow,
-            recipe.InitialCapital,
-            "Construction mandate operating capital"))
+            escrowAmount,
+            "Construction mandate fee and operating capital"))
         {
             ledger.UnregisterEmptyAccount(escrow);
             return null;
@@ -179,7 +180,7 @@ public class Nation : IBuildingInvestor
                 this,
                 buildingType,
                 targetProvince,
-                Math.Max(1, recipe.TimeToBuild),
+                recipe.TimeToBuild,
                 escrow,
                 recipe.InitialCapital);
         }
@@ -232,6 +233,30 @@ public class Nation : IBuildingInvestor
             return false;
         }
 
+        long escrowAmount;
+        try
+        {
+            recipe.ValidateConstructionContract();
+            escrowAmount = checked(recipe.InitialCapital + recipe.ConstructionFee);
+        }
+        catch (InvalidOperationException exception)
+        {
+            error = exception.Message;
+            return false;
+        }
+        catch (OverflowException)
+        {
+            error = "Construction fee and operating capital exceed Int64 capacity.";
+            return false;
+        }
+
+        if (targetProvince.buildings.TryGetValue(buildingType, out Building existing) &&
+            !ReferenceEquals(existing.Owner, this))
+        {
+            error = "Cannot upgrade a building with a different owner.";
+            return false;
+        }
+
         MoneyLedger ledger = targetProvince.ActiveLedger;
         if (ledger == null || InvestmentAccount?.Ledger != ledger)
         {
@@ -239,32 +264,9 @@ public class Nation : IBuildingInvestor
             return false;
         }
 
-        Dictionary<string, ProductState> products = GetAccessibleProducts(targetProvince);
-        if (recipe.requireItems.Count > 0 && products == null)
+        if (InvestmentAccount.Balance < escrowAmount)
         {
-            error = "No accessible market.";
-            return false;
-        }
-
-        List<string> missingMaterials = new();
-        foreach (KeyValuePair<string, int> requirement in recipe.requireItems)
-        {
-            long available = products != null && products.TryGetValue(requirement.Key, out ProductState product)
-                ? product.Stock - GetReservedAmount(products, requirement.Key)
-                : 0L;
-            if (available < requirement.Value)
-                missingMaterials.Add($"{requirement.Key}: have {Math.Max(0L, available):N0}, need {requirement.Value:N0}");
-        }
-
-        if (missingMaterials.Count > 0)
-        {
-            error = "Need more materials\n" + string.Join("\n", missingMaterials);
-            return false;
-        }
-
-        if (InvestmentAccount.Balance < recipe.InitialCapital)
-        {
-            error = $"Need operating capital: have {InvestmentAccount.Balance:N0}, need {recipe.InitialCapital:N0}.";
+            error = $"Need operating capital and construction fee: have {InvestmentAccount.Balance:N0}, need {escrowAmount:N0}.";
             return false;
         }
 
@@ -317,32 +319,6 @@ public class Nation : IBuildingInvestor
         }
 
         return false;
-    }
-
-    private static Dictionary<string, ProductState> GetAccessibleProducts(Province province)
-    {
-        if (province == null)
-            return null;
-
-        return province.isConnectedToCapital && province.nation?.market != null
-            ? province.nation.market.Products
-            : province.market?.Products;
-    }
-
-    private long GetReservedAmount(Dictionary<string, ProductState> products, string productName)
-    {
-        long reserved = 0;
-        foreach (ConstructionMandate mandate in _constructionMandates.Where(mandate => mandate.IsActive))
-        {
-            if (GetAccessibleProducts(mandate.TargetProvince) != products ||
-                !GlobalVariables.BUILDING_RECIPE.TryGetValue(mandate.BuildingType.name, out BuildingRecipe recipe) ||
-                !recipe.requireItems.TryGetValue(productName, out int amount))
-                continue;
-
-            reserved = checked(reserved + amount);
-        }
-
-        return reserved;
     }
 
     /// <summary>

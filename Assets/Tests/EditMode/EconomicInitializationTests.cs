@@ -218,6 +218,37 @@ public class EconomicInitializationTests
     }
 
     [Test]
+    public void Initialize_NationalStartingBuildingIsOwnedByItsNation()
+    {
+        object nation = TestEconomyFactory.NewNation("N1", 1000L);
+        object province = TestEconomyFactory.NewProvince(1, "P1");
+        ReflectionTestHelpers.Call<bool>(nation, "AddProvinces", province);
+        TestEconomyFactory.AddBuilding(province, "WheatField", 1, 100L);
+
+        Initialize(nation, province);
+
+        object building = TestEconomyFactory.GetOnlyBuilding(province);
+        Assert.That(ReflectionTestHelpers.Get(building, "Owner"), Is.SameAs(nation));
+    }
+
+    [Test]
+    public void Initialize_NeutralStartingBuildingHasNoOwner()
+    {
+        object province = TestEconomyFactory.NewProvince(1, "Prano");
+        ReflectionTestHelpers.Set(province, "initialLocalTreasury", 200L);
+        TestEconomyFactory.AddBuilding(province, "WheatField", 1, 100L);
+
+        ReflectionTestHelpers.Find("EconomicInitializer").GetMethod("Initialize")
+            .Invoke(null, new object[] {
+                TestEconomyFactory.ListOf("Nation"),
+                TestEconomyFactory.ListOf("Province", province)
+            });
+
+        object building = TestEconomyFactory.GetOnlyBuilding(province);
+        Assert.That(ReflectionTestHelpers.Get(building, "Owner"), Is.Null);
+    }
+
+    [Test]
     public void Initialize_ThrowsWhenNationTreasuryCannotFundStartingBuildings()
     {
         object nation = TestEconomyFactory.NewNation("N1", 10L);

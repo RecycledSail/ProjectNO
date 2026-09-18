@@ -49,6 +49,8 @@ public class ProvinceEthnicPop : IBuildingInvestor
     public double livingStandard; // 생활 수준 (1.0 = 평균)
     public List<AgeGroup> ageGroups = new List<AgeGroup>();
     public long EmployablePopulation => ageGroups.Sum(ageGroup => ageGroup.EmployablePopulation);
+    public long EmployedPopulation => province.Employment?.Employed(this) ?? 0L;
+    public long UnemployedPopulation => Math.Max(0L, EmployablePopulation - EmployedPopulation);
 
     public ProvinceEthnicPop(Province province, EthnicGroup ethnicGroup, List<int> populationCount)
         : this(province, ethnicGroup, populationCount, 0L, 1.0) { }

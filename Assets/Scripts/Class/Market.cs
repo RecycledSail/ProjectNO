@@ -126,6 +126,26 @@ public class ProductState
         LastSupply = nextLastSupply;
     }
 
+    internal bool CanReceiveSupply(MoneyAccount supplier, int amount, MoneyLedger ledger)
+    {
+        if (ledger == null || !ledger.OwnsAccount(supplier))
+            return false;
+
+        try
+        {
+            HashSet<string> supplierIds = new(StringComparer.Ordinal);
+            foreach (MoneyAccount existing in Inventory.Lots.Keys)
+                if (!ledger.OwnsAccount(existing) || !supplierIds.Add(existing.Id))
+                    return false;
+
+            Inventory.ValidateCanReceive(new Dictionary<MoneyAccount, int> { [supplier] = amount });
+            _ = checked(LastSupply + amount);
+            return true;
+        }
+        catch (OverflowException) { return false; }
+        catch (ArgumentException) { return false; }
+    }
+
     public IReadOnlyList<SupplierSale> PlanSale(int amount) => Inventory.PlanSale(amount);
 
     public void CommitSale(IReadOnlyList<SupplierSale> sale) => Inventory.CommitSale(sale);

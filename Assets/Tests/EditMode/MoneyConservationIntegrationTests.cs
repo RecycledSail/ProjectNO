@@ -92,6 +92,24 @@ public class MoneyConservationIntegrationTests
         object escrow = ReflectionTestHelpers.Get(mandate, "EscrowAccount");
         Assert.That(Balance(escrow), Is.EqualTo(300L));
 
+        // Prepare the project ledger before the real market settlement, as the
+        // procurement phase does; only the successfully bought unit is acquired.
+        object[] acquisitionArguments =
+        {
+            new Dictionary<string, long> { [Output] = 1L }, 25L, null
+        };
+        Assert.That((bool)mandate.GetType().GetMethod("TryPrepareMaterialAcquisition",
+            BindingFlags.Instance | BindingFlags.NonPublic).Invoke(mandate, acquisitionArguments), Is.True);
+        object purchase = ReflectionTestHelpers.Find("MarketSettlement").GetMethod("TryPurchase")
+            .Invoke(null, new[] { Product(context.NationMarket, Output), context.Treasury,
+                (object)1, context.Ledger });
+        Assert.That(ReflectionTestHelpers.Get(purchase, "Success"), Is.True);
+        Assert.That(ReflectionTestHelpers.Get(purchase, "PurchasedQuantity"), Is.EqualTo(1));
+        Assert.That(ReflectionTestHelpers.Get(purchase, "GrossAmount"), Is.EqualTo(25L));
+        mandate.GetType().GetMethod("CommitMaterialAcquisition",
+            BindingFlags.Instance | BindingFlags.NonPublic).Invoke(mandate, new[] { acquisitionArguments[2] });
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(24L));
+
         Call(context.ConstructionCompany, "ProgressWeekly", 10d);
 
         object completedBuilding = ((IDictionary)ReflectionTestHelpers.Get(
@@ -102,7 +120,7 @@ public class MoneyConservationIntegrationTests
         Assert.That(Balance(escrow), Is.Zero);
         Assert.That(ReflectionTestHelpers.Get(escrow, "Ledger"), Is.Null);
         Assert.That(Balance(context.Treasury),
-            Is.EqualTo(startingTreasury + actualSettlementTax - 300L));
+            Is.EqualTo(startingTreasury + actualSettlementTax - 300L - 25L + 2L));
 
         long treasuryBeforeGdp = Balance(context.Treasury);
         long weeklyTaxBeforeGdp = GetLong(context.Ledger, "WeeklyTaxRevenue");
@@ -144,7 +162,7 @@ public class MoneyConservationIntegrationTests
         AssertAudit(context.Ledger, supplyBeforeGdp);
         Assert.That(GetInt(Product(context.NationMarket, Food), "Stock"), Is.EqualTo(80));
         Assert.That(GetInt(Product(context.NationMarket, Input), "Stock"), Is.EqualTo(8));
-        Assert.That(GetInt(Product(context.NationMarket, Output), "Stock"), Is.EqualTo(4));
+        Assert.That(GetInt(Product(context.NationMarket, Output), "Stock"), Is.EqualTo(3));
         Assert.That(GetInt(Product(context.ProvinceMarket, Food), "Stock"), Is.Zero);
         Assert.That(GetInt(Product(context.ProvinceMarket, Input), "Stock"), Is.Zero);
         Assert.That(GetInt(Product(context.ProvinceMarket, Output), "Stock"), Is.Zero);
@@ -155,7 +173,7 @@ public class MoneyConservationIntegrationTests
         Assert.That(OwnedQuantity(Product(context.NationMarket, Input),
             AccountId(context.InputSupplier)), Is.EqualTo(8));
         Assert.That(OwnedQuantity(Product(context.NationMarket, Output),
-            AccountId(context.Producer)), Is.EqualTo(4));
+            AccountId(context.Producer)), Is.EqualTo(3));
         AssertEveryStockEqualsRegisteredOwnedStock(context);
 
         Assert.That(Balance(context.InputSupplier), Is.EqualTo(18L));

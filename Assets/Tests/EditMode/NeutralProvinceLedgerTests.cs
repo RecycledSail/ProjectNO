@@ -5,6 +5,57 @@ using NUnit.Framework;
 
 public class NeutralProvinceLedgerTests
 {
+    [TestCase("foreign-investor")]
+    [TestCase("foreign-contractor")]
+    public void Absorption_RejectsActiveContractWithNonMigratingParty(string invalid)
+    {
+        CancellationTestContext c = new();
+        c.BuyAndProgress();
+        if (invalid == "foreign-investor") c.ReplaceInvestor(c.Nation);
+        else
+        {
+            object foreignCompany = ReflectionTestHelpers.New("ConstructionCompanyBuilding",
+                ReflectionTestHelpers.New("BuildingType", "construcntionCompany"),
+                TestEconomyFactory.NewProvince(502, "Foreign"), 1);
+            c.Mandate.GetType().GetField("<AssignedCompany>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(c.Mandate, foreignCompany);
+        }
+        string before = c.Snapshot();
+        Assert.That(TryAbsorb(c.Province, c.Nation, out string error), Is.False);
+        Assert.That(error, Is.Not.Empty);
+        Assert.That(c.Snapshot(), Is.EqualTo(before));
+        Assert.That(ReflectionTestHelpers.Get(c.Province, "nation"), Is.Null);
+        Assert.That(ReflectionTestHelpers.Get(c.Escrow, "Ledger"), Is.SameAs(c.Ledger));
+        Assert.That(ReflectionTestHelpers.Get(c.Ledger, "MoneySupply"), Is.EqualTo(1500L));
+        Assert.That(ReflectionTestHelpers.Get(ReflectionTestHelpers.Get(c.Nation, "Ledger"), "MoneySupply"), Is.EqualTo(1000L));
+        c.Audit();
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void Absorption_PreservesReturnedInvestorLotsAndActiveEscrow(bool cancelBeforeMigration)
+    {
+        CancellationTestContext c = new();
+        c.BuyAndProgress();
+        if (cancelBeforeMigration) Assert.That(c.Cancel(), Is.True);
+        Assert.That(TryAbsorb(c.Province, c.Nation, out string error), Is.True, error);
+        object nationalLedger = ReflectionTestHelpers.Get(c.Nation, "Ledger");
+        Assert.That(ReflectionTestHelpers.Get(c.Buyer, "Ledger"), Is.SameAs(nationalLedger));
+        Assert.That(ReflectionTestHelpers.Get(c.CompanyAccount, "Ledger"), Is.SameAs(nationalLedger));
+        if (!cancelBeforeMigration)
+        {
+            Assert.That(ReflectionTestHelpers.Get(c.Escrow, "Ledger"), Is.SameAs(nationalLedger));
+            Assert.That(c.Balance(c.Escrow), Is.EqualTo(350L));
+            Assert.That(c.Cancel(), Is.True);
+        }
+        Assert.That(c.Lot(c.Products["Iron"], c.Buyer), Is.EqualTo(5));
+        Assert.That(c.Lot(c.Products["Wood"], c.Buyer), Is.EqualTo(5));
+        Assert.That(c.Balance(c.Buyer), Is.EqualTo(910L));
+        Assert.That(ReflectionTestHelpers.Get(c.Escrow, "Ledger"), Is.Null);
+        Assert.That(ReflectionTestHelpers.Get(c.Ledger, "MoneySupply"), Is.Zero);
+        Assert.That(ReflectionTestHelpers.Get(nationalLedger, "MoneySupply"), Is.EqualTo(2500L));
+        Assert.That(nationalLedger.GetType().GetMethod("Audit").Invoke(nationalLedger, new object[] { 0L }), Is.True);
+    }
+
     [Test]
     public void AbsorbNeutralProvince_MigratesCombinedSupplyWithoutChangingActorBalances()
     {
@@ -148,6 +199,7 @@ public class NeutralProvinceLedgerTests
     [Test]
     public void AbsorbNeutralProvince_MigratesFundedActiveMandateEscrowWithoutChangingSupply()
     {
+        ConfigureFundedRecipe();
         object nation = TestEconomyFactory.NewNation("N1", 1000L);
         object province = TestEconomyFactory.NewProvince(1, "Prano");
         ReflectionTestHelpers.Set(province, "initialLocalTreasury", 1000L);
@@ -195,6 +247,9 @@ public class NeutralProvinceLedgerTests
         object companyType = ReflectionTestHelpers.New("BuildingType", "construcntionCompany");
         object company = ReflectionTestHelpers.New("ConstructionCompanyBuilding",
             companyType, context.Province, 1);
+        Assert.That(ReflectionTestHelpers.Call<bool>(context.LocalLedger,
+            "RegisterEmptyAccount", ReflectionTestHelpers.Get(company, "Account")), Is.True);
+        ((IDictionary)ReflectionTestHelpers.Get(context.Province, "buildings"))[companyType] = company;
 
         Assert.That(ReflectionTestHelpers.Call<bool>(company, "TryAssign", context.Mandate), Is.True);
         ReflectionTestHelpers.Call<object>(company, "ProgressWeekly", 10d);
@@ -215,6 +270,15 @@ public class NeutralProvinceLedgerTests
                 TestEconomyFactory.ListOf("Nation", nation),
                 TestEconomyFactory.ListOf("Province", province)
             });
+    }
+
+    private static void ConfigureFundedRecipe()
+    {
+        object recipe = ReflectionTestHelpers.New("BuildingRecipe", "WheatField");
+        ReflectionTestHelpers.Set(recipe, "TimeToBuild", 10);
+        ReflectionTestHelpers.Set(recipe, "InitialCapital", 100L);
+        ((IDictionary)ReflectionTestHelpers.Find("GlobalVariables").GetField(
+            "BUILDING_RECIPE", BindingFlags.Static | BindingFlags.Public).GetValue(null))["WheatField"] = recipe;
     }
 
     private static bool TryAbsorb(object province, object nation, out string error)
@@ -380,6 +444,7 @@ public class NeutralProvinceLedgerTests
 
         public static NeutralFundedMandate Create()
         {
+            ConfigureFundedRecipe();
             object nation = TestEconomyFactory.NewNation("N1", 1000L);
             object province = TestEconomyFactory.NewProvince(1, "Prano");
             ReflectionTestHelpers.Set(province, "initialLocalTreasury", 1000L);

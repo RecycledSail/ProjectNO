@@ -46,6 +46,11 @@ public class ConstructionCompanyBuilding : Building
     public void ProgressWeekly(double weeklyManhoursPerLevel)
     {
         double remainingManhours = Math.Max(0d, weeklyManhoursPerLevel) * level;
+        if (province.Employment != null)
+        {
+            double capacity = (double)level * buildingType.workerNeeded;
+            remainingManhours *= capacity > 0 ? Math.Min(1d, currentWorkers / capacity) : 0d;
+        }
 
         foreach (int slot in _active.Keys.OrderBy(index => index).ToList())
         {
