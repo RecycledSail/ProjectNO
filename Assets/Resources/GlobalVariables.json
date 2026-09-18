@@ -1,4 +1,8 @@
 {
+  "marketSettings": {
+    "smoothingBasisPoints": 3000,
+    "maxWeeklyPriceChangeBasisPoints": 2500
+  },
   "buffs": [
     {
       "id": 1,

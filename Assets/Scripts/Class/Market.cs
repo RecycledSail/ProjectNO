@@ -111,12 +111,47 @@ public class ProductState
     public int LastSupply;   // 최근 턴 생산량(가격 계산용)
     public float Elasticity = 1.0f; // α: 수요/공급 변화에 대한 민감도
 
+    public int RequestedDemand;
+    public int UnmetDemand;
+    public int LastClearingPrice;
+
     public ProductState(string name, int basePrice)
     {
         ProductName = name;
         Price = Math.Max(1, basePrice);
         LastDemand = 0;
         LastSupply = 0;
+    }
+
+    public void BeginWeek()
+    {
+        LastPrice = Price;
+        LastSupply = 0;
+        LastDemand = 0;
+        RequestedDemand = 0;
+        UnmetDemand = 0;
+        LastClearingPrice = 0;
+    }
+
+    public void CommitClearingStatistics(
+        int requested,
+        int sold,
+        int available,
+        int clearingPrice,
+        MarketPriceSettings settings)
+    {
+        if (sold != LastDemand)
+            throw new ArgumentException("Sold quantity must match actual inventory commits.", nameof(sold));
+        if (requested < sold || clearingPrice < 1)
+            throw new ArgumentOutOfRangeException();
+
+        int nextPrice = MarketPriceCalculator.CalculateNextPrice(
+            Price, requested, available, Elasticity, settings);
+
+        RequestedDemand = requested;
+        UnmetDemand = requested - sold;
+        LastClearingPrice = clearingPrice;
+        Price = nextPrice;
     }
 
     public void AddSupply(MoneyAccount supplier, int amount)
