@@ -1,4 +1,3 @@
-using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -15,14 +14,12 @@ public class MainMenu : MonoBehaviour
     public void OnNewGameClicked()
     {
         GlobalVariables.saveFileName = null;
-        GlobalVariables.LoadData();
         SceneManager.LoadScene("PlayScene");
     }
 
     public void OnLoadClicked()
     {
-        if (!File.Exists(GlobalVariables.saveFileName)) loadPanel.SetActive(true);
-        else Debug.LogWarning("Save file not found at: " + GlobalVariables.saveFileName);
+        loadPanel.SetActive(true);
     }
 
     public void OnSettingsClicked()

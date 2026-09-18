@@ -251,7 +251,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void SaveGame()
     {
-        SaveManager.OnSave();
-        SceneManager.LoadScene("MainMenuScene");
+        if (SaveManager.TrySave(GlobalVariables.saveFileName))
+            SceneManager.LoadScene("MainMenuScene");
     }
 }

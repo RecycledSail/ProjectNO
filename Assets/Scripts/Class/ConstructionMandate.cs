@@ -16,7 +16,7 @@ public interface IBuildingInvestor
     MoneyAccount InvestmentAccount { get; }
 }
 
-public sealed class ConstructionMandate
+public sealed partial class ConstructionMandate
 {
     private static readonly Dictionary<Province, List<ConstructionMandate>> ActiveByProvince = new();
     private readonly ConstructionMaterials _materials;

@@ -2,14 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using System.IO;
 using UnityEngine.Events;
 
 /// <summary>
 /// 게임 전체를 총괄하는 싱글톤 GameManager 클래스입니다.
 /// 날짜 관리, 유저 관리, 하루 단위 게임 이벤트를 처리합니다.
 /// </summary>
-public class GameManager : MonoBehaviour
+public partial class GameManager : MonoBehaviour
 {
     // 싱글톤 인스턴스 (다른 스크립트에서 쉽게 접근 가능)
     private static GameManager _instance;
@@ -26,6 +25,7 @@ public class GameManager : MonoBehaviour
     }
 
     public UnityEvent dayUIEvent;
+    public UnityEvent daySimulationEvent = new UnityEvent();
     // 모든 유저 목록 및 플레이어 본인 정보
     public List<User> users { get; set; }
 
@@ -102,16 +102,20 @@ public class GameManager : MonoBehaviour
     {
         users = new List<User>();
         GlobalVariables.LoadData();
-        if (GlobalVariables.saveFileName != null && File.Exists(Path.Combine(Application.persistentDataPath, GlobalVariables.saveFileName + ".json")))
+        if (GlobalVariables.saveFileName != null)
         {
-            SaveManager.OnLoad();
+            if (!SaveManager.TryLoad(GlobalVariables.saveFileName))
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene");
+                return;
+            }
         }
         else
         {
             // 게임 새로 시작 (기본 국가 코드 "Nation1")
             StartNewGame("Nation1");
+            paused = false;
         }
-        paused = false;
 
         BattleManager.Instance.RefreshRegimentMarkers();
 
@@ -349,6 +353,7 @@ public class GameManager : MonoBehaviour
                     dayoftheWeek = 0;
                     ProcessWeeklyEvents();
                 }
+                daySimulationEvent.Invoke();
                 dayUIEvent.Invoke(); // 매일 실행되는 event invoke
             }
         }

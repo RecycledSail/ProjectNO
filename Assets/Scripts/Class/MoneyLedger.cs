@@ -62,7 +62,7 @@ public sealed class MoneyTransactionRecord
     }
 }
 
-public sealed class MoneyLedger
+public sealed partial class MoneyLedger
 {
     private readonly object _issuanceAuthority;
     private readonly MoneyAccount _treasuryAccount;

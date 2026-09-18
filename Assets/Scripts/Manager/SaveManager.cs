@@ -1,283 +1,239 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
-using static GlobalVariables;
-using static SaveManager.SaveDataFormat;
 
 public static class SaveManager
 {
-    //TODO: Import Ethnic Group
-    //public static List<SpeciesData> ToSpeciesData(List<Species> pops)
-    //{
-    //    List<SpeciesData> savePops = new();
-    //    foreach(Species species in pops)
-    //    {
-    //        savePops.Add(
-    //            new SpeciesData
-    //            {
-    //                type = species.name,
-    //                population = species.population,
-    //                happiness = species.happiness,
-    //                literacy = species.literacy,
-    //                culture = species.culture
-    //            }
-    //        );
-    //    }
-    //    return savePops;
-    //}
+    public const int CurrentVersion = 1;
+    public static string LastError { get; private set; }
 
-    //public static Species FromSpeciesData(SpeciesData data)
-    //{
-    //    return new Species(data.type)
-    //    {
-    //        population = data.population,
-    //        happiness = data.happiness,
-    //        literacy = data.literacy,
-    //        culture = data.culture
-    //    };
-    //}
+    public static string GetSavePath(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name) || name != name.Trim() ||
+            name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+            name.Contains("/") || name.Contains("\\") || name.EndsWith(".") ||
+            name == "." || name == "..")
+            throw new ArgumentException("저장 이름에 사용할 수 없는 문자가 있습니다.");
+        return Path.Combine(Application.persistentDataPath, name + ".json");
+    }
+
+    // Preserve the void entry points for existing UnityEvent/Inspector bindings.
+    public static void OnSave() => TrySave(GlobalVariables.saveFileName);
     public static void OnLoad()
     {
-        GameManager gameManager = GameManager.Instance;
-        if (gameManager == null) return;
-
-        if (saveFileName == null)
-        {
-            Debug.LogError("saveFileName is null.");
-            return;
-        }
-        string jsonPath = Path.Combine(Application.persistentDataPath, GlobalVariables.saveFileName + ".json");
-        if (!File.Exists(jsonPath))
-        {
-            Debug.LogError(saveFileName + ".json not found.");
-        }
-
-        string json = File.ReadAllText(jsonPath);
-        var gameData = JsonUtility.FromJson<SaveDataFormat>(json);
-
-
-        // Load Provinces
-        gameManager.provinces = new();
-        foreach (var p in gameData.provinces)
-        {
-
-            var province = PROVINCES[p.name];
-
-            List<Species> loadPops = new();
-            foreach(var species in p.pops) {
-                if (species.type != "")
-                {
-                    Debug.Log(species.type);
-                    //loadPops.Add(FromSpeciesData(species));
-                }
-            }
-            //province.pops = loadPops;
-
-            //TODO: Crops 고치면 그때 하기
-            //foreach (var productData in p.market.products)
-            //{
-            //    var product = province.market.GetProduct(productData.name);
-            //    if (product != null)
-            //        product.amount = productData.amount;
-            //}
-
-            foreach(var buildingData in p.buildings)
-            {
-            }
-
-            gameManager.provinces[p.name] = province;
-        }
-
-
-        // Load Nations
-        gameManager.nations = new();
-        foreach (var n in gameData.nations)
-        {
-            var nation = NATIONS[n.name];
-            var rnodes = new List<ResearchNode>();
-            foreach (var rname in n.researchNodeNames)
-            {
-                if (RESEARCH_NODE.TryGetValue(rname, out var rnode))
-                    rnodes.Add(rnode);
-            }
-            nation.doneResearches = rnodes;
-            foreach (var pname in n.provinces)
-            {
-                if (gameManager.provinces.TryGetValue(pname, out var province))
-                    nation.AddProvinces(province);
-            }
-            gameManager.nations[n.name] = nation;
-        }
-
-        // DateTime
-        gameManager.year = gameData.dateTime.year;
-        gameManager.month = gameData.dateTime.month;
-        gameManager.day = gameData.dateTime.day;
-
-        //Users and user
-        gameManager.users = new();
-        int playerId = gameData.player.id;
-        foreach (var u in gameData.users)
-        {
-            User user = new(u.id, gameManager.nations[u.nation]);
-            if (user.id == playerId) gameManager.player = user;
-            gameManager.users.Add(user);
-        }
-
-
-        Debug.Log("Load Done!");
-    }
-    public static void OnSave()
-    {
-
-        GameManager gameManager = GameManager.Instance;
-        if (saveFileName == null)
-        {
-            Debug.LogError("saveFileName is null.");
-            return;
-        }
-        string jsonPath = Path.Combine(Application.persistentDataPath, GlobalVariables.saveFileName + ".json");
-
-
-        SaveDataFormat saveData = new SaveDataFormat();
-
-        //// Save Provinces & Color-to-province
-        saveData.provinces = new List<SaveDataFormat.ProvinceData>();
-        foreach (var p in gameManager.provinces.Values)
-        {
-            var provinceData = new SaveDataFormat.ProvinceData
-            {
-                id = p.id,
-                name = p.name,
-                population = (int)p.population,
-                topography = p.topo.ToString(),
-                market = new SaveDataFormat.MarketData
-                {
-                    //TODO: CROPS 고치면 그때 하기
-                    //products = p.market.products.Select(product => new SaveDataFormat.ProductData
-                    //{
-                    //    name = product.name,
-                    //    amount = product.amount
-                    //}).ToList()
-                },
-                //pops = ToSpeciesData(p.pops)
-            };
-            saveData.provinces.Add(provinceData);
-        }
-
-        
-
-
-        // Save Nations
-        saveData.nations = new();
-        foreach (var n in gameManager.nations.Values)
-        {
-            SaveDataFormat.NationData nationData = new();
-            nationData.id = n.id;
-            nationData.name = n.name;
-            List<string> researchNodeNames = new();
-            foreach(ResearchNode node in n.doneResearches)
-            {
-                researchNodeNames.Add(node.name);
-            }
-            nationData.researchNodeNames = researchNodeNames;
-            List<string> provinces = new();
-            foreach(Province province in n.provinces)
-            {
-                provinces.Add(province.name);
-            }
-            nationData.provinces = provinces;
-            saveData.nations.Add(nationData);
-        }
-
-
-        // Save datetime
-        saveData.dateTime = new();
-        saveData.dateTime.year = gameManager.year;
-        saveData.dateTime.month = gameManager.month;
-        saveData.dateTime.day = gameManager.day;
-
-        saveData.users = new();
-        foreach(var u in gameManager.users)
-        {
-            SaveDataFormat.UserData user = new();
-            user.id = u.id;
-            user.nation = u.nation.name;
-            saveData.users.Add(user);
-        }
-
-        saveData.player = new();
-        saveData.player.id = gameManager.player.id;
-        saveData.player.nation = gameManager.player.nation.name;
-
-        Debug.Log(saveData);
-
-        string json = JsonUtility.ToJson(saveData);
-        File.WriteAllText(jsonPath, json);
-        Debug.Log("Save complete at " + jsonPath);
+        if (!TryLoad(GlobalVariables.saveFileName)) return;
+        BattleManager.Instance.RefreshRegimentMarkers();
+        GameManager.Instance.dayUIEvent.Invoke();
     }
 
-    [System.Serializable]
-    public class SaveDataFormat
+    public static bool TrySave(string name)
     {
-        public List<UserData> users;
-        public UserData player;
-        public List<BuffData> buffs;
-        public List<ResearchNodeData> researchNodes;
-        public List<NationData> nations;
-        public List<ProvinceData> provinces;
-        public DateTimeWrapper dateTime;
-
-        [System.Serializable]
-        public sealed class UserData { public int id; public string nation; }
-
-        [System.Serializable]
-        public sealed class BuffData { public int id; public string name; public string kind; public double value; }
-
-        [System.Serializable]
-        public sealed class ResearchNodeData { public int id; public string name; public double cost; public List<string> buffNames; }
-
-        [System.Serializable]
-        public sealed class NationData { public int id; public string name; public List<string> researchNodeNames; public List<string> provinces; }
-
-        [System.Serializable]
-        public sealed class ProvinceData { public int id; public string name; public int population; public string topography; public MarketData market; public List<SpeciesData> pops; public List<BuildingData> buildings; }
-
-        [System.Serializable]
-        public sealed class DateTimeWrapper { public int year; public int month; public int day; }
-
-        [System.Serializable]
-        public sealed class MarketData
+        string temporaryPath = null;
+        try
         {
-            public List<ProductData> products;
+            string path = GetSavePath(name);
+            var manager = GameManager.Instance;
+            if (manager == null || manager.player == null)
+                throw new InvalidOperationException("저장할 게임이 없습니다.");
+            SaveDataFormat data = GameSaveState.Capture(manager, BattleManager.Instance);
+            string json = JsonUtility.ToJson(data, true);
+            // Never replace a usable checkpoint with a file we cannot reconstruct.
+            GameSaveState.Restore(JsonUtility.FromJson<SaveDataFormat>(json));
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            temporaryPath = path + ".tmp";
+            File.WriteAllText(temporaryPath, json);
+            // Only replace the last good save once the entire new file is written.
+            if (File.Exists(path)) File.Replace(temporaryPath, path, path + ".bak");
+            else File.Move(temporaryPath, path);
+            GlobalVariables.saveFileName = name;
+            LastError = null;
+            return true;
         }
-
-        [System.Serializable]
-        public sealed class ProductData
+        catch (Exception exception) { return Fail("저장 실패", exception); }
+        finally
         {
-            public string name;
-            public int amount;
+            if (temporaryPath != null)
+            {
+                try { if (File.Exists(temporaryPath)) File.Delete(temporaryPath); }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
+            }
         }
+    }
 
-        [System.Serializable]
-        public sealed class SpeciesData
+    public static bool TryLoad(string name)
+    {
+        try
         {
-            public string type; // 예: "Human"
-            public int population;
-
-            public int happiness;
-            public int literacy;
-            public int culture;
-
+            var data = Read(name);
+            var manager = GameManager.Instance;
+            if (manager == null) throw new InvalidOperationException("게임 관리자가 없습니다.");
+            // Build and validate a separate world before replacing live references.
+            GameSaveState restored = GameSaveState.Restore(data);
+            restored.Apply(manager, BattleManager.Instance);
+            GlobalVariables.saveFileName = name;
+            LastError = null;
+            return true;
         }
+        catch (Exception exception) { return Fail("불러오기 실패", exception); }
+    }
 
-        [System.Serializable]
-        public sealed class BuildingData
-        {
-            public string BuildingType;
-            public int workers;
-        }
+    public static bool CanLoad(string name)
+    {
+        try { Read(name); LastError = null; return true; }
+        catch (Exception exception) { return Fail("불러오기 실패", exception); }
+    }
+
+    private static SaveDataFormat Read(string name)
+    {
+        string path = GetSavePath(name);
+        if (!File.Exists(path)) throw new FileNotFoundException("저장 파일을 찾을 수 없습니다.", path);
+        var data = JsonUtility.FromJson<SaveDataFormat>(File.ReadAllText(path));
+        if (data == null || data.format != "ProjectNO")
+            throw new InvalidDataException("이전 저장 형식에는 경제·건설 상태가 없어 복원할 수 없습니다. 새 게임에서 저장해 주세요.");
+        if (data.version != CurrentVersion)
+            throw new InvalidDataException($"지원하지 않는 저장 버전입니다: {data.version}");
+        GameSaveState.ValidateHeader(data);
+        return data;
+    }
+
+    private static bool Fail(string operation, Exception exception)
+    {
+        LastError = operation + ": " + exception.Message;
+        Debug.LogError(LastError);
+        SaveErrorDialog.Show(LastError);
+        return false;
+    }
+
+    [Serializable]
+    public sealed class SaveDataFormat
+    {
+        public string format;
+        public int version;
+        public int year, month, day, dayOfWeek, speed, nextRegimentId;
+        public long employmentWeek;
+        public bool paused;
+        public int playerId;
+        public List<UserData> users = new();
+        public List<NationData> nations = new();
+        public List<ProvinceData> provinces = new();
+        public List<AccountData> accounts = new();
+        public List<LedgerData> ledgers = new();
+        public List<DiplomacyData> diplomacies = new();
+        public List<BattleData> battles = new();
+        public List<int> activeRegiments = new();
+    }
+    [Serializable] public sealed class UserData { public int id; public string nation; }
+    [Serializable] public sealed class AmountData { public string key; public long value; }
+    [Serializable] public sealed class AccountData { public string id, ledger; public long balance; }
+    [Serializable] public sealed class TransactionData
+    {
+        public MoneyTransactionKind kind;
+        public List<string> sources, destinations;
+        public long amount;
+        public string reason;
+    }
+    [Serializable] public sealed class LedgerData
+    {
+        public string id, nation, province, treasury;
+        public long supply, weeklyTax;
+        public int taxRate;
+        public List<TransactionData> transactions = new();
+    }
+    [Serializable] public sealed class NationData
+    {
+        public int id;
+        public string name, capital;
+        public Color32 color;
+        public List<string> provinces = new();
+        public List<string> research = new();
+        public List<BuffData> buffs = new();
+        public long gdp, gdpAverage, researchFund;
+        public List<long> gdpHistory = new();
+        public BudgetData budget;
+        public List<ProductData> market;
+        public List<RegimentData> regiments = new();
+        public List<MandateData> mandates = new();
+    }
+    [Serializable] public sealed class BuffData { public BuffKind kind; public double value; }
+    [Serializable] public sealed class BudgetData
+    {
+        public long research, military, realEstate;
+        public List<AmountData> subsidies = new();
+        public float inflation, priceIndex;
+        public List<float> priceHistory = new();
+    }
+    [Serializable] public sealed class ProvinceData
+    {
+        public int id, road, desolation;
+        public string name, nation, ledger, localLedger, localTreasury;
+        public Topography topography;
+        public bool connected;
+        public List<PopData> pops = new();
+        public List<BuildingData> buildings = new();
+        public List<SpecialBuildingData> specialBuildings = new();
+        public List<ProductData> market;
+        public long lastPaidWeek;
+        public string employmentError;
+        public List<EmploymentData> employment = new();
+        public List<string> neighbors = new();
+    }
+    [Serializable] public sealed class PopData
+    {
+        public string species, culture;
+        public long dividend;
+        public double livingStandard;
+        public List<long> ages = new();
+    }
+    [Serializable] public sealed class BuildingData
+    {
+        public string type, owner;
+        public int level, previousGain;
+        public double manhoursLeft;
+        // Free slot positions affect the priority of subsequent projects.
+        public List<CompanySlotData> slots = new();
+    }
+    [Serializable] public sealed class CompanySlotData { public int slot; public string mandate; }
+    [Serializable] public sealed class SpecialBuildingData
+    {
+        public string type;
+        public int level;
+        public long workers;
+        public double manhoursLeft;
+    }
+    [Serializable] public sealed class EmploymentData { public string building, pop; public long workers; }
+    [Serializable] public sealed class ProductData
+    {
+        public string name;
+        public int price, lastPrice, demand, supply;
+        public float elasticity;
+        public List<AmountData> lots = new();
+    }
+    [Serializable] public sealed class MandateData
+    {
+        public string id, investor, type, province, escrow, company;
+        public long capital, fee, paidFee, materialSpending;
+        public int startBasisPoints;
+        public double requiredManhours;
+        public string completedManhours;
+        public ConstructionMandateStatus status;
+        public bool procurementFailed;
+        public List<AmountData> required, acquired, consumed;
+    }
+    [Serializable] public sealed class RegimentData
+    {
+        public int id;
+        public string name, location;
+        public RegimentState state;
+        public List<SquadData> squads = new();
+    }
+    [Serializable] public sealed class SquadData { public string type; public int capacity, population; }
+    [Serializable] public sealed class DiplomacyData { public DiplomacyType type; public List<string> left, right; }
+    [Serializable] public sealed class BattleData
+    {
+        public string province;
+        public List<int> attackers, defenders;
+        public double winProbability;
     }
 }

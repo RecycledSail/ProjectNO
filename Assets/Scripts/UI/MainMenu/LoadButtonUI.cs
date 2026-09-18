@@ -19,6 +19,7 @@ public class LoadButtonUI : MonoBehaviour
     /// </summary>
     public void OnClick()
     {
+        if (!SaveManager.CanLoad(nameText.text)) return;
         GlobalVariables.saveFileName = nameText.text;
         //SaveManager.OnLoad();
         SceneManager.LoadScene("PlayScene");

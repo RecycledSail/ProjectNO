@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 
 /// <summary>One authoritative employment register for a province's ordinary buildings.</summary>
-public sealed class ProvinceEmployment
+public sealed partial class ProvinceEmployment
 {
     private readonly Province province;
     private Dictionary<Building, Dictionary<ProvinceEthnicPop, long>> records = new();

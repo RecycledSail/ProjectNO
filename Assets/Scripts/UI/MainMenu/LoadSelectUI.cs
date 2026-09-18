@@ -37,8 +37,14 @@ public class LoadSelectUI : MonoBehaviour
         }
     }
 
-    private void Start()
+    private void OnEnable()
     {
+        for (int i = content.childCount - 1; i >= 0; i--)
+        {
+            var oldButton = content.GetChild(i).gameObject;
+            oldButton.SetActive(false);
+            Destroy(oldButton);
+        }
         List<string> names = GlobalVariables.GetAllJsonFileNames();
         foreach(string name in names)
         {

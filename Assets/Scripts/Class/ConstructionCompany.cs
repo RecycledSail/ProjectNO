@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public class ConstructionCompanyBuilding : Building
+public partial class ConstructionCompanyBuilding : Building
 {
     private readonly Dictionary<int, ConstructionMandate> _active = new();
 

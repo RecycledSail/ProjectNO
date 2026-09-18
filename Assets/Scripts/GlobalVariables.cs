@@ -139,6 +139,14 @@ public static class GlobalVariables
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void LoadData()
     {
+            ConstructionMandate.ResetTracking(System.Array.Empty<ConstructionMandate>());
+            Regiment.global_id = 0;
+            BUFF.Clear(); RESEARCH_NODE.Clear(); UNIT_TYPE.Clear(); UNIT_TYPES.Clear();
+            SPECIES_SPEC.Clear(); CULTURE.Clear(); JOB_TYPE.Clear();
+            BUILDING_TYPE.Clear(); SPECIAL_BUILDING_TYPE.Clear(); BUILDING_RECIPE.Clear();
+            PRODUCTS.Clear(); PRODUCT_TO_BUILDING.Clear(); CATEGORIES.Clear();
+            PROVINCES.Clear(); NATIONS.Clear(); ADJACENT_PROVINCES.Clear();
+            INITIAL_PROVINCES.Clear(); INITIAL_CAPITALS.Clear();
             LoadBuff();
             LoadResearchNodes();
             LoadUnitTypes();

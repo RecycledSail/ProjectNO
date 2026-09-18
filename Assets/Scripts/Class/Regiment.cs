@@ -8,7 +8,7 @@ public enum RegimentState
     BATTLE
 }
 
-public class Regiment
+public partial class Regiment
 {
     public static int global_id = 0;
     public Nation nation { get; }

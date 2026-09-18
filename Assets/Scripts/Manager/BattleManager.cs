@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-public class BattleManager : MonoBehaviour
+public partial class BattleManager : MonoBehaviour
 {
     private const string EditorRegimentPrefabPath = "Assets/Prefabs/GameObject/Cube.prefab";
     private const double BattleDamageScale = 100.0;
@@ -52,10 +52,16 @@ public class BattleManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        if (GameManager.Instance != null && GameManager.Instance.dayUIEvent != null)
+        if (GameManager.Instance != null)
         {
-            GameManager.Instance.dayUIEvent.AddListener(UpdateBattleEvent);
+            GameManager.Instance.daySimulationEvent.AddListener(UpdateBattleEvent);
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.daySimulationEvent.RemoveListener(UpdateBattleEvent);
     }
 
     // Update is called once per frame

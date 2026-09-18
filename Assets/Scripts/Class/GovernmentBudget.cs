@@ -33,7 +33,7 @@ public class PolicyAllocation
     }
 }
 
-public class GovernmentBudget
+public partial class GovernmentBudget
 {
     public NationMarket market;
     public Nation nation;

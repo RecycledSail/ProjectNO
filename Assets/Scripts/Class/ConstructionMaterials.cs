@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 // Quantities are cumulative: acquired includes material already consumed.
-internal sealed class ConstructionMaterials
+internal sealed partial class ConstructionMaterials
 {
     private readonly Dictionary<string, long> _required = new(StringComparer.Ordinal);
     private Dictionary<string, long> _acquired = new(StringComparer.Ordinal);

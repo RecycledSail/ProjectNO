@@ -19,8 +19,7 @@ public class SaveButtonUI : MonoBehaviour
     /// </summary>
     public void OnClick()
     {
-        GlobalVariables.saveFileName = nameText.text;
-        SaveManager.OnSave();
-        SceneManager.LoadScene("MainMenuScene");
+        if (SaveManager.TrySave(nameText.text))
+            SceneManager.LoadScene("MainMenuScene");
     }
 }

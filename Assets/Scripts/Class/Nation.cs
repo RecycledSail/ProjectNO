@@ -7,7 +7,7 @@ using UnityEngine;
 /// 국가 클래스
 /// ID, 이름, 소유 프로빈스, 재산 정의
 /// </summary>
-public class Nation : IBuildingInvestor
+public partial class Nation : IBuildingInvestor
 {
     public int id;
     public string name { get; }
