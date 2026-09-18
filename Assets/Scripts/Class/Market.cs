@@ -142,6 +142,8 @@ public class ProductState
     {
         if (sold != LastDemand)
             throw new ArgumentException("Sold quantity must match actual inventory commits.", nameof(sold));
+        if (sold < 0 || available < 0 || sold > available)
+            throw new ArgumentOutOfRangeException(nameof(sold));
         if (requested < sold || clearingPrice < 1)
             throw new ArgumentOutOfRangeException();
 

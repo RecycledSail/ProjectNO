@@ -1,4 +1,7 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 
@@ -127,6 +130,28 @@ public class MarketPriceTests
         Assert.That(exception.InnerException, Is.TypeOf<ArgumentException>());
     }
 
+    [Test]
+    public void ProductState_CommitClearingStatistics_RejectsSalesBeyondAvailableStockWithoutMutation()
+    {
+        object product = ReflectionTestHelpers.New("ProductState", "Iron", 100);
+        object supplier = ReflectionTestHelpers.New("MoneyAccount", "supplier:iron", 0L);
+        ReflectionTestHelpers.Call<object>(product, "AddSupply", supplier, 3);
+        ReflectionTestHelpers.Set(product, "LastPrice", 99);
+        ReflectionTestHelpers.Set(product, "LastDemand", 4);
+        ReflectionTestHelpers.Set(product, "RequestedDemand", 5);
+        ReflectionTestHelpers.Set(product, "UnmetDemand", 1);
+        ReflectionTestHelpers.Set(product, "LastClearingPrice", 98);
+        ReflectionTestHelpers.Set(product, "Elasticity", 1.5f);
+        object settings = ReflectionTestHelpers.New("MarketPriceSettings", 3000, 2500);
+        ProductStateSnapshot before = Snapshot(product);
+
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
+            ReflectionTestHelpers.Call<object>(product, "CommitClearingStatistics", 4, 4, 3, 100, settings));
+
+        Assert.That(exception.InnerException, Is.TypeOf<ArgumentOutOfRangeException>());
+        Assert.That(Snapshot(product), Is.EqualTo(before));
+    }
+
     private static int Calculate(
         int previousPrice,
         int requestedDemand,
@@ -152,5 +177,104 @@ public class MarketPriceTests
         Assert.That(exception.InnerException, Is.TypeOf<ArgumentOutOfRangeException>());
         Assert.That(((ArgumentOutOfRangeException)exception.InnerException).ParamName,
             Is.EqualTo(parameterName));
+    }
+
+    private static ProductStateSnapshot Snapshot(object product) => new(
+        (string)ReflectionTestHelpers.Get(product, "ProductName"),
+        (int)ReflectionTestHelpers.Get(product, "Stock"),
+        (int)ReflectionTestHelpers.Get(product, "Price"),
+        (int)ReflectionTestHelpers.Get(product, "LastPrice"),
+        (int)ReflectionTestHelpers.Get(product, "LastDemand"),
+        (int)ReflectionTestHelpers.Get(product, "LastSupply"),
+        (int)ReflectionTestHelpers.Get(product, "RequestedDemand"),
+        (int)ReflectionTestHelpers.Get(product, "UnmetDemand"),
+        (int)ReflectionTestHelpers.Get(product, "LastClearingPrice"),
+        (float)ReflectionTestHelpers.Get(product, "Elasticity"),
+        InventoryLots(product));
+
+    private static IReadOnlyList<InventoryLotSnapshot> InventoryLots(object product) =>
+        ((IEnumerable)ReflectionTestHelpers.Get(
+                ReflectionTestHelpers.Get(product, "Inventory"), "Lots"))
+            .Cast<object>()
+            .Select(entry => new InventoryLotSnapshot(
+                ReflectionTestHelpers.Get(entry, "Key"),
+                (int)ReflectionTestHelpers.Get(entry, "Value")))
+            .OrderBy(lot => (string)ReflectionTestHelpers.Get(lot.supplier, "Id"))
+            .ToArray();
+
+    private sealed class ProductStateSnapshot
+    {
+        private readonly string productName;
+        private readonly int stock;
+        private readonly int price;
+        private readonly int lastPrice;
+        private readonly int lastDemand;
+        private readonly int lastSupply;
+        private readonly int requestedDemand;
+        private readonly int unmetDemand;
+        private readonly int lastClearingPrice;
+        private readonly float elasticity;
+        private readonly IReadOnlyList<InventoryLotSnapshot> inventoryLots;
+
+        public ProductStateSnapshot(
+            string productName,
+            int stock,
+            int price,
+            int lastPrice,
+            int lastDemand,
+            int lastSupply,
+            int requestedDemand,
+            int unmetDemand,
+            int lastClearingPrice,
+            float elasticity,
+            IReadOnlyList<InventoryLotSnapshot> inventoryLots)
+        {
+            this.productName = productName;
+            this.stock = stock;
+            this.price = price;
+            this.lastPrice = lastPrice;
+            this.lastDemand = lastDemand;
+            this.lastSupply = lastSupply;
+            this.requestedDemand = requestedDemand;
+            this.unmetDemand = unmetDemand;
+            this.lastClearingPrice = lastClearingPrice;
+            this.elasticity = elasticity;
+            this.inventoryLots = inventoryLots;
+        }
+
+        public override bool Equals(object other) =>
+            other is ProductStateSnapshot snapshot &&
+            productName == snapshot.productName &&
+            stock == snapshot.stock &&
+            price == snapshot.price &&
+            lastPrice == snapshot.lastPrice &&
+            lastDemand == snapshot.lastDemand &&
+            lastSupply == snapshot.lastSupply &&
+            requestedDemand == snapshot.requestedDemand &&
+            unmetDemand == snapshot.unmetDemand &&
+            lastClearingPrice == snapshot.lastClearingPrice &&
+            elasticity.Equals(snapshot.elasticity) &&
+            inventoryLots.SequenceEqual(snapshot.inventoryLots);
+
+        public override int GetHashCode() => 0;
+    }
+
+    private sealed class InventoryLotSnapshot
+    {
+        public readonly object supplier;
+        private readonly int quantity;
+
+        public InventoryLotSnapshot(object supplier, int quantity)
+        {
+            this.supplier = supplier;
+            this.quantity = quantity;
+        }
+
+        public override bool Equals(object other) =>
+            other is InventoryLotSnapshot snapshot &&
+            ReferenceEquals(supplier, snapshot.supplier) &&
+            quantity == snapshot.quantity;
+
+        public override int GetHashCode() => 0;
     }
 }
