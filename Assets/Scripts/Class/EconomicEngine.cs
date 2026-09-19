@@ -342,8 +342,8 @@ public partial class EconomicEngine : MonoBehaviour
             public void Commit()
             {
                 PopulationFoodRecipient current = recipient;
-                recipient = null;
                 current?.Commit(token, purchased);
+                recipient = null;
             }
         }
     }
