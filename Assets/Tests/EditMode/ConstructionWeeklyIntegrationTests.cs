@@ -28,7 +28,7 @@ public class ConstructionWeeklyIntegrationTests
     }
 
     [Test]
-    public void WeeklyPhase_SharedMarketBuysBeforePaidWorkAndConservesEveryCashFlow()
+    public void ProductionThenAuctionThenPaidWork_ConservesEveryCashFlow()
     {
         Context c = new();
         object a = c.Place(0), b = c.Place(1);
@@ -36,7 +36,8 @@ public class ConstructionWeeklyIntegrationTests
         c.Supply(10);
         c.Payroll(1);
         Assert.That(Get(c.Populations[0], "property"), Is.EqualTo(10L));
-        c.Run(10d);
+        c.Procure();
+        c.Progress(10d);
         foreach (object project in new[] { a, b })
         {
             Assert.That(c.Amount(project), Is.EqualTo(5));
@@ -45,13 +46,15 @@ public class ConstructionWeeklyIntegrationTests
         }
         Assert.That(Get(c.Product, "Stock"), Is.Zero);
         Assert.That(Get(c.Product, "LastDemand"), Is.EqualTo(10));
-        Assert.That(Get(c.Seller, "Balance"), Is.EqualTo(90L));
-        Assert.That(Get(c.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(10L));
+        Assert.That(Get(c.Seller, "Balance"), Is.EqualTo(117L));
+        Assert.That(Get(c.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(13L));
         c.Audit();
-        c.Supply(10); // Production after construction only becomes available to the next call.
+        c.BeginWeek();
+        c.Supply(10); // Production before the auction is available to construction this week.
         Assert.That(c.Amount(a), Is.EqualTo(5));
         c.Payroll(2);
-        c.Run(10d);
+        c.Procure();
+        c.Progress(10d);
         foreach (object project in new[] { a, b })
         {
             Assert.That(Get(project, "Status").ToString(), Is.EqualTo("Completed"));
@@ -64,6 +67,23 @@ public class ConstructionWeeklyIntegrationTests
     }
 
     [Test]
+    public void ActiveProjects_DeduplicatesSourcesAndOnlyPaidCompaniesProgress()
+    {
+        Context c = new();
+        object a = c.Place(0), b = c.Place(1);
+        Assert.That(c.ActiveProjects(), Is.EquivalentTo(new[] { a, b }));
+        c.Supply(20);
+        c.Procure();
+        c.Paid.Add(c.Provinces[0]);
+
+        c.Progress(10d);
+
+        Assert.That(Get(a, "Status").ToString(), Is.EqualTo("Completed"));
+        Assert.That(Get(b, "Status").ToString(), Is.EqualTo("Assigned"));
+        Assert.That(Get(b, "RemainingManhours"), Is.EqualTo(10d));
+    }
+
+    [Test]
     public void FailedPayroll_DoesNotUseLegacyOrRetainedWorkersEvenAfterProcurement()
     {
         Context c = new();
@@ -71,13 +91,14 @@ public class ConstructionWeeklyIntegrationTests
         c.Supply(10);
         Set(Get(c.Companies[0], "buildingType"), "weeklyWage", 0L);
         c.Payroll(1);
-        c.Run(10d);
+        c.Procure();
+        c.Progress(10d);
         Assert.That(c.Amount(project), Is.EqualTo(10));
         Assert.That(Get(project, "RemainingManhours"), Is.EqualTo(10d));
         Assert.That(Get(project, "PaidConstructionFee"), Is.Zero);
         Set(c.Provinces[0], "Employment", null);
         c.Paid.Clear();
-        c.Run(10d);
+        c.Progress(10d);
         Assert.That(Get(project, "RemainingManhours"), Is.EqualTo(10d));
         c.Audit();
     }
@@ -88,18 +109,20 @@ public class ConstructionWeeklyIntegrationTests
         Context c = new();
         object project = c.Place(0);
         c.Supply(5);
-        c.Run(0d);
+        c.Procure();
+        c.Progress(0d);
         c.Supply(5);
         Set(c.Product, "LastDemand", int.MaxValue);
         c.Payroll(1);
         LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("Construction procurement failed"));
-        c.Run(10d);
+        c.Procure();
+        c.Progress(10d);
         Assert.That(c.Amount(project), Is.EqualTo(5));
-        Assert.That(Get(project, "MaterialSpending"), Is.EqualTo(50L));
+        Assert.That(Get(project, "MaterialSpending"), Is.EqualTo(65L));
         Assert.That(Get(project, "RemainingManhours"), Is.EqualTo(5d));
         Assert.That(c.Text(project), Does.Contain("Procurement failed"));
         Set(c.Product, "LastDemand", 0);
-        c.Run(0d);
+        c.Procure();
         Assert.That(c.Text(project), Does.Not.Contain("Procurement failed"));
         c.Audit();
     }
@@ -116,14 +139,14 @@ public class ConstructionWeeklyIntegrationTests
         Call<object>(local, "AddSupply", c.Seller, 10);
         ((IDictionary)Get(Get(c.Provinces[1], "market"), "Products"))["Iron"] = local;
         c.Supply(10);
-        c.Run(0d);
+        c.Procure();
         Assert.That(c.Amount(a), Is.EqualTo(10));
         Assert.That(Get(a, "MaterialSpending"), Is.EqualTo(100L));
         Assert.That(Get(b, "MaterialSpending"), Is.EqualTo(200L));
         Set(c.Companies[0], "level", 1);
         Call<object>(c.Nation, "SimulateWeeklyTurn");
         c.Payroll(1);
-        c.Run(10d);
+        c.Progress(10d);
         Assert.That(Get(a, "Status").ToString(), Is.EqualTo("Completed"));
         c.Audit();
     }
@@ -137,7 +160,7 @@ public class ConstructionWeeklyIntegrationTests
         Set(c.Provinces[0], "isConnectedToCapital", false);
         Set(c.Provinces[0], "market", null);
         c.Payroll(1);
-        c.Run(10d);
+        c.Progress(10d);
         Assert.That(Get(project, "Status").ToString(), Is.EqualTo("Completed"));
         c.Audit();
     }
@@ -192,7 +215,7 @@ public class ConstructionWeeklyIntegrationTests
             AssertSummaryFits(queue, count, project, rect);
             Set(project, "ProcurementFailed", false);
             c.Supply(10);
-            c.Run(0d);
+            c.Procure();
             foreach (string status in new[] { "Assigned", "Requested", "InProgress", "Completed", "Cancelled" })
             {
                 Set(project, "Status", Enum.Parse(Find("ConstructionMandateStatus"), status));
@@ -271,6 +294,7 @@ public class ConstructionWeeklyIntegrationTests
             Audit();
         }
         public object Place(int index) { object project = Call<object>(Nation, "PlaceConstructionMandate", targetType, Provinces[index]); Assert.That(project, Is.Not.Null); Audit(); return project; }
+        public void BeginWeek() => Call<object>(Product, "BeginWeek");
         public void Supply(int quantity) => Call<object>(Product, "AddSupply", Seller, quantity);
         public long Amount(object project) => ((IReadOnlyDictionary<string, long>)Get(project, "AcquiredMaterials"))["Iron"];
         public string Text(object project) => (string)Find("ConstructionStatusText").GetMethod("Format").Invoke(null, new[] { project });
@@ -280,10 +304,39 @@ public class ConstructionWeeklyIntegrationTests
             foreach (object province in Provinces) if (Call<bool>(Get(province, "Employment"), "TryProcessWeek", week)) Paid.Add(province);
             Audit();
         }
-        public void Run(double hours)
+        public object[] ActiveProjects()
         {
-            Find("ConstructionWeeklySimulation").GetMethod("Process").Invoke(null, new[] {
-                TestEconomyFactory.ListOf("Nation", Nation, Nation), TestEconomyFactory.ListOf("Province", Provinces.Concat(Provinces).ToArray()), Paid, (object)hours });
+            MethodInfo active = Find("ConstructionWeeklySimulation").GetMethod("ActiveProjects");
+            Assert.That(active, Is.Not.Null, "Missing ConstructionWeeklySimulation.ActiveProjects");
+            return ((IEnumerable)active.Invoke(null, new[] {
+                TestEconomyFactory.ListOf("Nation", Nation, Nation),
+                TestEconomyFactory.ListOf("Province", Provinces.Concat(Provinces).ToArray())
+            })).Cast<object>().ToArray();
+        }
+        public void Procure()
+        {
+            object[] projects = ActiveProjects();
+            foreach (object project in projects) Set(project, "ProcurementFailed", false);
+            MethodInfo accessible = Find("ConstructionMandate").GetMethod("GetAccessibleProducts",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            foreach (IGrouping<object, object> market in projects.GroupBy(project => accessible.Invoke(project, null)))
+            {
+                object[] batch = market.ToArray();
+                object ledger = Get(Get(batch[0], "TargetProvince"), "ActiveLedger");
+                bool success = (bool)Find("ConstructionProcurement").GetMethod("TryProcessMarket").Invoke(null,
+                    new[] { TestEconomyFactory.ListOf("ConstructionMandate", batch), market.Key, ledger });
+                if (success) continue;
+                foreach (object project in batch) Set(project, "ProcurementFailed", true);
+                Debug.LogError($"Construction procurement failed; projects: {string.Join(", ", batch.Select(project => Get(project, "Id")))}");
+            }
+            Audit();
+        }
+        public void Progress(double hours)
+        {
+            MethodInfo progress = Find("ConstructionWeeklySimulation").GetMethod("ProgressPaidCompanies");
+            Assert.That(progress, Is.Not.Null, "Missing ConstructionWeeklySimulation.ProgressPaidCompanies");
+            progress.Invoke(null, new[] {
+                TestEconomyFactory.ListOf("Province", Provinces.Concat(Provinces).ToArray()), Paid, (object)hours });
             Audit();
         }
         public void Audit()
