@@ -198,17 +198,17 @@ public class Province
 
             try
             {
-                double scale = building.ProduceItem();
-                if (scale <= 0.0)
-                    continue;
-
+                double scale;
                 Building.PreparedInputConsumption inputConsumption = null;
                 if (building.HasInputRecipe)
                 {
-                    if (double.IsNaN(scale) || double.IsInfinity(scale) || scale < 1.0 ||
-                        scale > long.MaxValue ||
+                    if (building.buildingType.workerNeeded <= 0)
+                        continue;
+
+                    long workerUnits = building.currentWorkers / building.buildingType.workerNeeded;
+                    if (workerUnits <= 0 ||
                         !building.TryPrepareInputConsumption(
-                            checked((long)Math.Floor(scale)),
+                            workerUnits,
                             out long completeUnits,
                             out inputConsumption) ||
                         completeUnits <= 0)
@@ -217,6 +217,12 @@ public class Province
                     }
 
                     scale = completeUnits;
+                }
+                else
+                {
+                    scale = building.ProduceItem();
+                    if (scale <= 0.0)
+                        continue;
                 }
 
                 if (!TryPrepareBuildingOutputs(building, scale, out List<BuildingOutputPlan> outputs) ||

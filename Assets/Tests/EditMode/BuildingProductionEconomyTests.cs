@@ -142,6 +142,29 @@ public class BuildingProductionEconomyTests
         Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
     }
 
+    [Test]
+    public void ProduceGoodsWeekly_InputRecipeUsesExactIntegerLaborCapacityAtLongBoundary()
+    {
+        ProductionContext context = CreateContext(
+            new Dictionary<string, int> { [Input] = 1 },
+            new Dictionary<string, int> { [Output] = 1 },
+            currentWorkers: 7_999_999_999_999_999_999L,
+            workerNeeded: 4_000_000_000L);
+        RestoreInputs(context.Building, new Dictionary<string, long>
+        {
+            [Input] = 2_000_000_000L,
+        });
+
+        Call(context.Province, "ProduceGoodsWeekly");
+
+        object output = Products(context)[Output];
+        Assert.That(GetInt(output, "Stock"), Is.EqualTo(1_999_999_999));
+        Assert.That(InputQuantities(context.Building), Is.EqualTo(new Dictionary<string, long>
+        {
+            [Input] = 1L,
+        }));
+    }
+
     private static ProductionContext CreateContext(
         Dictionary<string, int> requiredItems,
         Dictionary<string, int> producedItems,
