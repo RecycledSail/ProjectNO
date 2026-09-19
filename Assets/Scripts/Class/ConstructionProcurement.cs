@@ -250,7 +250,7 @@ public static class ConstructionProcurement
         {
             if (_mandate == null)
                 return;
-            _mandate.CommitMaterialAcquisition(_acquisition);
+            _mandate.TryCommitMaterialAcquisition(_acquisition);
             _mandate = null;
             _acquisition = null;
         }

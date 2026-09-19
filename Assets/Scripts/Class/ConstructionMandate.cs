@@ -194,6 +194,9 @@ public sealed partial class ConstructionMandate
         _materials.CommitAcquisition(acquisition);
     }
 
+    internal bool TryCommitMaterialAcquisition(ConstructionMaterials.Acquisition acquisition) =>
+        IsActive && _materials.TryCommitAcquisition(acquisition);
+
     public bool Cancel()
     {
         if (!IsActive)

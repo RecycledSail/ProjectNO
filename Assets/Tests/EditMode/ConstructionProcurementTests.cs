@@ -68,6 +68,50 @@ public class ConstructionProcurementTests
         Assert.That(Get(project, "MaterialSpending"), Is.EqualTo(49L));
     }
 
+    [Test]
+    public void Recipient_SupersededReceiptsCommitWithoutThrowingAndOnlyCurrentReceiptApplies()
+    {
+        Context c = new(1000);
+        c.Product("Iron", 10, 100);
+        object project = c.Project("project", ("Iron", 3));
+        c.Seal();
+        object order = c.Collect(out _, project).Single();
+        object recipient = Get(order, "Recipient");
+
+        object superseded = PrepareReceipt(recipient, TestEconomyFactory.ListOf("MarketOrderFill",
+            ReflectionTestHelpers.New("MarketOrderFill", order, 1, 12)));
+        object current = PrepareReceipt(recipient, TestEconomyFactory.ListOf("MarketOrderFill",
+            ReflectionTestHelpers.New("MarketOrderFill", order, 2, 13)));
+
+        Assert.DoesNotThrow(() => CommitReceipt(superseded));
+        Assert.That(Amount(project, "Iron"), Is.Zero);
+        Assert.That(Get(project, "MaterialSpending"), Is.Zero);
+
+        Assert.DoesNotThrow(() => CommitReceipt(current));
+        Assert.DoesNotThrow(() => CommitReceipt(current));
+        Assert.DoesNotThrow(() => CommitReceipt(superseded));
+        Assert.That(Amount(project, "Iron"), Is.EqualTo(2L));
+        Assert.That(Get(project, "MaterialSpending"), Is.EqualTo(26L));
+    }
+
+    [Test]
+    public void Recipient_InvalidatedContractReceiptCommitDoesNotThrowOrApplyMaterials()
+    {
+        Context c = new(1000);
+        c.Product("Iron", 10, 100);
+        object project = c.Project("project", ("Iron", 2));
+        c.Seal();
+        object order = c.Collect(out _, project).Single();
+        object receipt = PrepareReceipt(Get(order, "Recipient"), TestEconomyFactory.ListOf("MarketOrderFill",
+            ReflectionTestHelpers.New("MarketOrderFill", order, 2, 12)));
+
+        Assert.That(ReflectionTestHelpers.Call<bool>(project, "Cancel"), Is.True);
+        Assert.DoesNotThrow(() => CommitReceipt(receipt));
+        Assert.DoesNotThrow(() => CommitReceipt(receipt));
+        Assert.That(Amount(project, "Iron"), Is.Zero);
+        Assert.That(Get(project, "MaterialSpending"), Is.Zero);
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public void SharedNationalStock_IsSplitAcrossProvincesIndependentOfInputOrder(bool reverse)
@@ -322,6 +366,17 @@ public class ConstructionProcurementTests
     private static long Amount(object project, string item) => ((IReadOnlyDictionary<string, long>)Get(project, "AcquiredMaterials"))[item];
     private static string OrderSummary(object order) =>
         $"{Get(order, "Id")}:{Get(order, "Quantity")}:{Get(order, "MaximumUnitPrice")}:{Get(order, "ReservedBudget")}";
+    private static object PrepareReceipt(object recipient, object fills)
+    {
+        object[] prepare = { fills, null };
+        Assert.That((bool)recipient.GetType().GetMethod("TryPrepareReceipt").Invoke(recipient, prepare), Is.True);
+        Assert.That(prepare[1], Is.Not.Null);
+        return prepare[1];
+    }
+
+    private static void CommitReceipt(object receipt) =>
+        receipt.GetType().GetMethod("Commit").Invoke(receipt, null);
+
     private static void Acquire(object project, long spending, params (string Name, long Amount)[] items)
     {
         object[] args = { items.ToDictionary(i => i.Name, i => i.Amount), spending, null };
