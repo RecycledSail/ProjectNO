@@ -101,6 +101,68 @@ public class FactoryMarketOrderTests
         Assert.That(InputQuantities(building), Is.EqualTo(new Dictionary<string, long> { [Iron] = 2L }));
     }
 
+    [Test]
+    public void Recipient_ZeroFillPreflightSupersedesAnEarlierReceiptWithoutChangingInventory()
+    {
+        Context context = new(100L, recipeNames);
+        object building = context.AddFactory("zero-supersedes", 2L, 1L,
+            new Dictionary<string, int> { [Iron] = 2 });
+        context.AddProduct(Iron, 10);
+        context.Initialize();
+        object order = Collect(context, true).Single();
+        object recipient = Get(order, "Recipient");
+        object fill = ReflectionTestHelpers.New("MarketOrderFill", order, 1, 10);
+
+        Assert.That(TryPrepare(recipient, TestEconomyFactory.ListOf("MarketOrderFill", fill), out object stale), Is.True);
+        Assert.That(TryPrepare(recipient, TestEconomyFactory.ListOf("MarketOrderFill"), out object current), Is.True);
+        Commit(stale);
+        Commit(current);
+
+        Assert.That(InputQuantities(building), Is.Empty);
+    }
+
+    [Test]
+    public void Recipient_RejectsForeignAndUnemittedOrdersWithoutPreparingInput()
+    {
+        Context context = new(100L, recipeNames);
+        object building = context.AddFactory("recipient-ownership", 1L, 1L,
+            new Dictionary<string, int> { [Iron] = 1 });
+        context.AddProduct(Iron, 10);
+        context.Initialize();
+        object order = Collect(context, true).Single();
+        object recipient = Get(order, "Recipient");
+        object product = Get(order, "Product");
+        object foreignBuyer = ReflectionTestHelpers.New("MoneyAccount", "factory-order-test-foreign", 0L);
+        object foreignOrder = ReflectionTestHelpers.New("MarketOrder", "foreign", foreignBuyer,
+            product, 1, 10, 10L, 1, recipient);
+        object unemittedOrder = ReflectionTestHelpers.New("MarketOrder", "unemitted", Get(order, "Buyer"),
+            product, 1, 10, 10L, 1, recipient);
+
+        Assert.That(TryPrepare(recipient, TestEconomyFactory.ListOf("MarketOrderFill",
+            ReflectionTestHelpers.New("MarketOrderFill", foreignOrder, 1, 10)), out object foreignReceipt), Is.False);
+        Assert.That(foreignReceipt, Is.Null);
+        Assert.That(TryPrepare(recipient, TestEconomyFactory.ListOf("MarketOrderFill",
+            ReflectionTestHelpers.New("MarketOrderFill", unemittedOrder, 1, 10)), out object unemittedReceipt), Is.False);
+        Assert.That(unemittedReceipt, Is.Null);
+        Assert.That(InputQuantities(building), Is.Empty);
+    }
+
+    [Test]
+    public void Collect_DuplicateEligibleBuildingLeavesBudgetsAndBuildingsUnchanged()
+    {
+        Context context = new(100L, recipeNames);
+        object building = context.AddFactory("duplicate", 1L, 1L,
+            new Dictionary<string, int> { [Iron] = 1 });
+        context.AddProduct(Iron, 10);
+        context.Initialize();
+        long budgetBefore = (long)context.Budgets[Get(building, "Account")];
+        context.DuplicateParticipant(building);
+
+        Assert.That(Collect(context, true), Is.Empty);
+        Assert.That(context.Budgets[Get(building, "Account")], Is.EqualTo(budgetBefore));
+        Assert.That(InputQuantities(building), Is.Empty);
+    }
+
     private static IReadOnlyList<object> Collect(Context context, bool payrollPaid)
     {
         Type type = AppDomain.CurrentDomain.GetAssemblies().Select(assembly => assembly.GetType("FactoryMarketOrders"))
@@ -187,6 +249,12 @@ public class FactoryMarketOrderTests
             object product = ReflectionTestHelpers.New("ProductState", name, price);
             products.Add(name, product);
             return product;
+        }
+
+        public void DuplicateParticipant(object building)
+        {
+            object duplicateType = ReflectionTestHelpers.New("BuildingType", "FactoryOrderDuplicateKey");
+            ((IDictionary)Get(Province, "buildings")).Add(duplicateType, building);
         }
 
         public void Initialize()

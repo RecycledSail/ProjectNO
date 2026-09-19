@@ -20,13 +20,20 @@ public static class FactoryMarketOrders
         if (!payrollPaid || province.buildings == null || !ReferenceEquals(province.ActiveLedger, access.Ledger))
             return Array.Empty<MarketOrder>();
 
-        List<MarketOrder> orders = new();
-        foreach (Building building in province.buildings.Values
-                     .Where(candidate => candidate != null)
-                     .OrderBy(candidate => candidate.Account?.Id, StringComparer.Ordinal))
+        List<Building> participants = province.buildings.Values
+            .Where(candidate => candidate != null && CanSubmit(candidate, province, access.Ledger))
+            .OrderBy(candidate => candidate.Account.Id, StringComparer.Ordinal)
+            .ToList();
+        if (!HasUniqueParticipants(participants))
+            return Array.Empty<MarketOrder>();
+
+        List<OrderDraft> drafts = new();
+        Dictionary<MoneyAccount, long> nextBudgets = new();
+        HashSet<string> orderIds = new(StringComparer.Ordinal);
+        HashSet<string> recipientIds = new(StringComparer.Ordinal);
+        foreach (Building building in participants)
         {
-            if (!CanSubmit(building, province, access.Ledger) ||
-                !remainingBudgets.TryGetValue(building.Account, out long availableBudget) ||
+            if (!remainingBudgets.TryGetValue(building.Account, out long availableBudget) ||
                 availableBudget < 0 || availableBudget > building.Account.Balance)
             {
                 continue;
@@ -43,6 +50,7 @@ public static class FactoryMarketOrders
 
             FactoryRecipient recipient = new(building);
             long reserved = 0;
+            int draftCount = drafts.Count;
             foreach (InputPlan input in inputs.OrderBy(item => item.Product.ProductName, StringComparer.Ordinal))
             {
                 long allocation = FloorShare(availableBudget, input.ReferenceCost, totalWeight);
@@ -54,22 +62,46 @@ public static class FactoryMarketOrders
                 int priceCap = PriceCap(input.Product.Price);
                 int maximumUnitPrice = checked((int)Math.Min(allocation / quantity, priceCap));
                 long orderBudget = checked(quantity * maximumUnitPrice);
-                orders.Add(new MarketOrder(
-                    OrderId(building.Account.Id, input.Product.ProductName),
-                    building.Account,
-                    input.Product,
-                    checked((int)quantity),
-                    maximumUnitPrice,
-                    orderBudget,
-                    1,
-                    recipient));
+                string orderId = OrderId(building.Account.Id, input.Product.ProductName);
+                if (!orderIds.Add(orderId))
+                    return Array.Empty<MarketOrder>();
+                drafts.Add(new OrderDraft(orderId, building.Account, input.Product,
+                    checked((int)quantity), maximumUnitPrice, orderBudget, recipient));
                 reserved = checked(reserved + orderBudget);
             }
-
-            remainingBudgets[building.Account] = checked(availableBudget - reserved);
+            if (drafts.Count > draftCount && !recipientIds.Add(recipient.Id))
+                return Array.Empty<MarketOrder>();
+            nextBudgets.Add(building.Account, checked(availableBudget - reserved));
         }
 
+        List<MarketOrder> orders = new();
+        foreach (OrderDraft draft in drafts)
+        {
+            MarketOrder order = new(draft.Id, draft.Buyer, draft.Product, draft.Quantity,
+                draft.MaximumUnitPrice, draft.ReservedBudget, 1, draft.Recipient);
+            draft.Recipient.AddOrder(order);
+            orders.Add(order);
+        }
+        foreach (KeyValuePair<MoneyAccount, long> budget in nextBudgets)
+            remainingBudgets[budget.Key] = budget.Value;
         return orders.AsReadOnly();
+    }
+
+    private static bool HasUniqueParticipants(IReadOnlyList<Building> participants)
+    {
+        HashSet<Building> buildings = new();
+        HashSet<MoneyAccount> accounts = new();
+        HashSet<string> accountIds = new(StringComparer.Ordinal);
+        foreach (Building participant in participants)
+        {
+            if (!buildings.Add(participant) || participant.Account == null ||
+                string.IsNullOrWhiteSpace(participant.Account.Id) ||
+                !accounts.Add(participant.Account) || !accountIds.Add(participant.Account.Id))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static bool CanSubmit(Building building, Province province, MoneyLedger ledger)
@@ -161,9 +193,33 @@ public static class FactoryMarketOrders
         }
     }
 
+    private sealed class OrderDraft
+    {
+        public string Id { get; }
+        public MoneyAccount Buyer { get; }
+        public ProductState Product { get; }
+        public int Quantity { get; }
+        public int MaximumUnitPrice { get; }
+        public long ReservedBudget { get; }
+        public FactoryRecipient Recipient { get; }
+
+        public OrderDraft(string id, MoneyAccount buyer, ProductState product, int quantity,
+            int maximumUnitPrice, long reservedBudget, FactoryRecipient recipient)
+        {
+            Id = id;
+            Buyer = buyer;
+            Product = product;
+            Quantity = quantity;
+            MaximumUnitPrice = maximumUnitPrice;
+            ReservedBudget = reservedBudget;
+            Recipient = recipient;
+        }
+    }
+
     private sealed class FactoryRecipient : IMarketOrderRecipient
     {
         private readonly Building building;
+        private readonly HashSet<MarketOrder> orders = new();
         public string Id { get; }
 
         public FactoryRecipient(Building building)
@@ -171,6 +227,8 @@ public static class FactoryMarketOrders
             this.building = building;
             Id = "factory-recipient:" + Escape(building.Account.Id);
         }
+
+        internal void AddOrder(MarketOrder order) => orders.Add(order);
 
         public bool TryPrepareReceipt(IReadOnlyList<MarketOrderFill> fills,
             out IPreparedMarketReceipt receipt)
@@ -181,16 +239,11 @@ public static class FactoryMarketOrders
 
             try
             {
-                if (fills.Count == 0)
-                {
-                    receipt = NoOpReceipt.Instance;
-                    return true;
-                }
-
                 Dictionary<string, long> quantities = new(StringComparer.Ordinal);
                 foreach (MarketOrderFill fill in fills)
                 {
                     if (fill == null || !ReferenceEquals(fill.Order.Recipient, this) ||
+                        !ReferenceEquals(fill.Order.Buyer, building.Account) || !orders.Contains(fill.Order) ||
                         fill.Order.Product == null || string.IsNullOrWhiteSpace(fill.Order.Product.ProductName))
                     {
                         return false;
@@ -209,11 +262,5 @@ public static class FactoryMarketOrders
                 return false;
             }
         }
-    }
-
-    private sealed class NoOpReceipt : IPreparedMarketReceipt
-    {
-        public static readonly NoOpReceipt Instance = new();
-        public void Commit() { }
     }
 }
