@@ -40,7 +40,7 @@ public sealed class MarketClearingPlan
         _recipients = recipients.ToList().AsReadOnly();
         Settings = settings;
         Purchases = Fills.Select(fill => new MarketBuyerRequest(
-            fill.Order.Id, fill.Order.Buyer, fill.Order.Product, fill.Quantity)).ToList().AsReadOnly();
+            fill.Order.Id, fill.Order.Buyer, fill.Order.Product, fill.Quantity, fill.UnitPrice)).ToList().AsReadOnly();
     }
 
     public bool PrepareReceipts(IEnumerable<IMarketOrderRecipient> additionalRecipients,
@@ -69,6 +69,36 @@ public sealed class MarketClearingPlan
         }
         receipts = prepared.AsReadOnly();
         return true;
+    }
+
+    public bool TrySettle(MoneyLedger ledger,
+        IEnumerable<IMarketOrderRecipient> additionalRecipients, out string error)
+    {
+        error = null;
+        if (ledger == null)
+            return Fail("A ledger is required for market settlement.", out error);
+        if (!PrepareReceipts(additionalRecipients, out IReadOnlyList<IPreparedMarketReceipt> receipts))
+            return Fail("Market receipt preparation failed.", out error);
+        if (Purchases.Count > 0 && !MarketSettlement.TryPurchaseBatch(Purchases, ledger))
+            return Fail("Market purchase settlement failed.", out error);
+
+        foreach (IPreparedMarketReceipt receipt in receipts)
+            receipt.Commit();
+
+        foreach (MarketProductClearingResult result in ProductResults)
+            result.Product.CommitClearingStatistics(
+                result.RequestedDemand,
+                result.SoldQuantity,
+                result.AvailableStock,
+                result.ClearingPrice,
+                Settings);
+        return true;
+    }
+
+    private static bool Fail(string message, out string error)
+    {
+        error = message;
+        return false;
     }
 }
 

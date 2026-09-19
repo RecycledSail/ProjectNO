@@ -87,6 +87,7 @@ public static class MarketSettlement
         {
             HashSet<string> requestIds = new(StringComparer.Ordinal);
             Dictionary<ProductState, int> quantities = new();
+            Dictionary<ProductState, int> unitPrices = new();
             Dictionary<MoneyAccount, long> buyerGrossAmounts = new();
             Dictionary<MoneyAccount, long> deltas = new();
             List<PlannedBatchPurchase> plans = new();
@@ -96,7 +97,7 @@ public static class MarketSettlement
             {
                 if (request == null || string.IsNullOrWhiteSpace(request.RequestId) ||
                     request.Buyer == null || request.Product == null || request.Quantity <= 0 ||
-                    request.Product.Price <= 0 || !ledger.OwnsAccount(request.Buyer) ||
+                    request.UnitPrice <= 0 || !ledger.OwnsAccount(request.Buyer) ||
                     !requestIds.Add(request.RequestId))
                 {
                     return false;
@@ -104,7 +105,13 @@ public static class MarketSettlement
 
                 quantities.TryGetValue(request.Product, out int currentQuantity);
                 quantities[request.Product] = checked(currentQuantity + request.Quantity);
-                long requestGross = checked((long)request.Quantity * request.Product.Price);
+                if (unitPrices.TryGetValue(request.Product, out int productUnitPrice) &&
+                    productUnitPrice != request.UnitPrice)
+                {
+                    return false;
+                }
+                unitPrices[request.Product] = request.UnitPrice;
+                long requestGross = checked((long)request.Quantity * request.UnitPrice);
                 AddDelta(buyerGrossAmounts, request.Buyer, requestGross);
             }
 
@@ -122,6 +129,7 @@ public static class MarketSettlement
                 if (!TryPlanProductSale(
                         product,
                         quantity,
+                        unitPrices[product],
                         ledger,
                         out IReadOnlyList<SupplierSale> sale,
                         out _,
@@ -234,6 +242,7 @@ public static class MarketSettlement
                 if (!TryPlanProductSale(
                         request.Product,
                         quantity,
+                        request.Product.Price,
                         ledger,
                         out IReadOnlyList<SupplierSale> sale,
                         out long gross,
@@ -316,6 +325,7 @@ public static class MarketSettlement
     private static bool TryPlanProductSale(
         ProductState product,
         int quantity,
+        int unitPrice,
         MoneyLedger ledger,
         out IReadOnlyList<SupplierSale> sale,
         out long gross,
@@ -326,10 +336,10 @@ public static class MarketSettlement
         gross = 0;
         tax = 0;
         sellerCredits = null;
-        if (product == null || quantity <= 0 || product.Price <= 0 || ledger == null)
+        if (product == null || quantity <= 0 || unitPrice <= 0 || ledger == null)
             return false;
 
-        gross = checked((long)quantity * product.Price);
+        gross = checked((long)quantity * unitPrice);
         tax = checked(gross * ledger.SalesTaxBasisPoints / 10_000L);
         long sellerNet = checked(gross - tax);
         sale = product.PlanSale(quantity);

@@ -275,6 +275,49 @@ public class MarketClearingTests
         Assert.That(((MarketClearingRecipientProxy)accepted).Prepared.Commits, Is.Zero);
     }
 
+    [Test]
+    public void TrySettle_UsesClearingPriceThenCommitsReceiptsBeforeStatistics()
+    {
+        Supply(1);
+        ReflectionTestHelpers.Set(ledger, "SalesTaxBasisPoints", 1000);
+        object recipient = Recipient("recipient");
+        ((MarketClearingRecipientProxy)recipient).ObservedProduct = product;
+        object plan = Plan(new[] { Order("A", 1, 12, recipient: recipient), Order("B", 1, 12, recipient: recipient) });
+        ReflectionTestHelpers.Call<object>(ledger, "SealInitialization");
+        object[] args = { ledger, TestEconomyFactory.ListOf("IMarketOrderRecipient"), null };
+
+        Assert.That((bool)plan.GetType().GetMethod("TrySettle").Invoke(plan, args), Is.True, args[2] as string);
+
+        var receipt = ((MarketClearingRecipientProxy)recipient).Prepared;
+        Assert.That(Balance(buyer), Is.EqualTo(988L));
+        Assert.That(Balance(seller), Is.EqualTo(11L));
+        Assert.That(Balance(treasury), Is.EqualTo(1L));
+        Assert.That(receipt.Commits, Is.EqualTo(1));
+        Assert.That(receipt.StockWhenCommitted, Is.Zero);
+        Assert.That(receipt.PriceWhenCommitted, Is.EqualTo(10));
+        Assert.That(receipt.RequestedDemandWhenCommitted, Is.Zero);
+        Assert.That(Number(product, "RequestedDemand"), Is.EqualTo(2));
+        Assert.That(Number(product, "UnmetDemand"), Is.EqualTo(1));
+        Assert.That(Number(product, "LastClearingPrice"), Is.EqualTo(12));
+        Assert.That(Number(product, "Price"), Is.EqualTo(Number(Result(plan, product), "NextPrice")));
+    }
+
+    [Test]
+    public void TrySettle_ReceiptPreparationFailureLeavesSettlementAndStatisticsUntouched()
+    {
+        Supply(1);
+        object recipient = Recipient("reject");
+        ((MarketClearingRecipientProxy)recipient).Reject = true;
+        object plan = Plan(new[] { Order("A", 1, 12, recipient: recipient) });
+        ReflectionTestHelpers.Call<object>(ledger, "SealInitialization");
+        string before = Snapshot();
+        object[] args = { ledger, TestEconomyFactory.ListOf("IMarketOrderRecipient"), null };
+
+        Assert.That((bool)plan.GetType().GetMethod("TrySettle").Invoke(plan, args), Is.False);
+        Assert.That(args[2], Is.Not.Empty);
+        Assert.That(Snapshot(), Is.EqualTo(before));
+    }
+
     private object Order(string id, int quantity, int price, int minimum = 1, long? budget = null, object account = null, object item = null, object recipient = null) =>
         ReflectionTestHelpers.New("MarketOrder", id, account ?? buyer, item ?? product, quantity, price, budget ?? (long)quantity * price, minimum, recipient ?? Recipient(id));
     private static object Account(string id, long balance) => ReflectionTestHelpers.New("MoneyAccount", id, balance);
@@ -299,6 +342,7 @@ public class MarketClearingTests
     }
     private static IEnumerable<object> Items(object plan, string property) => ((IEnumerable)ReflectionTestHelpers.Get(plan, property)).Cast<object>();
     private static int Number(object obj, string name) => (int)ReflectionTestHelpers.Get(obj, name);
+    private static long Balance(object account) => (long)ReflectionTestHelpers.Get(account, "Balance");
     private static string[] FillSummary(object plan) => Items(plan, "Fills").Select(f => $"{ReflectionTestHelpers.Get(ReflectionTestHelpers.Get(f, "Order"), "Id")}:{Number(f, "Quantity")}:{Number(f, "UnitPrice")}").ToArray();
     private static object Result(object plan, object item) => Items(plan, "ProductResults").Single(r => ReferenceEquals(ReflectionTestHelpers.Get(r, "Product"), item));
     private static void AssertResult(object result, int requested, int sold, int available, int price, int next)
@@ -329,15 +373,28 @@ public class MarketClearingRecipientProxy : DispatchProxy
     public IList Fills;
     public MarketClearingRecipientProxy Prepared;
     public bool Reject, NullReceipt;
+    public object ObservedProduct;
+    public int StockWhenCommitted, PriceWhenCommitted, RequestedDemandWhenCommitted;
     protected override object Invoke(MethodInfo method, object[] args)
     {
         if (method.Name == "get_Id") return Id;
-        if (method.Name == "Commit") { Commits++; return null; }
+        if (method.Name == "Commit")
+        {
+            Commits++;
+            if (ObservedProduct != null)
+            {
+                StockWhenCommitted = (int)ReflectionTestHelpers.Get(ObservedProduct, "Stock");
+                PriceWhenCommitted = (int)ReflectionTestHelpers.Get(ObservedProduct, "Price");
+                RequestedDemandWhenCommitted = (int)ReflectionTestHelpers.Get(ObservedProduct, "RequestedDemand");
+            }
+            return null;
+        }
         Calls++;
         Fills = (IList)args[0];
         args[1] = NullReceipt || Reject ? null : typeof(DispatchProxy).GetMethod("Create").MakeGenericMethod(
             ReflectionTestHelpers.Find("IPreparedMarketReceipt"), typeof(MarketClearingRecipientProxy)).Invoke(null, null);
         Prepared = (MarketClearingRecipientProxy)args[1];
+        if (Prepared != null) Prepared.ObservedProduct = ObservedProduct;
         return !Reject;
     }
 }
