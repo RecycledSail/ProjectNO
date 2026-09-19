@@ -64,17 +64,30 @@ public class MoneyConservationIntegrationTests
     public void RepresentativeDomesticWeek_ConservesRegisteredSupplyAcrossEveryFlow()
     {
         RepresentativeContext context = CreateRepresentativeContext();
+        RestoreInputInventory(context.Producer, new Dictionary<string, long>
+        {
+            [Input] = 2L,
+        });
         long capturedSupply = GetLong(context.Ledger, "MoneySupply");
         long startingTreasury = Balance(context.Treasury);
+        int transactionsBeforeProduction = Transactions(context.Ledger).Count;
 
         Call(context.Province, "ProduceGoodsWeekly");
-        Assert.That(Balance(context.Producer), Is.EqualTo(480L));
-        Assert.That(Balance(context.InputSupplier), Is.EqualTo(18L));
+        Assert.That(Balance(context.Producer), Is.EqualTo(500L));
+        Assert.That(Balance(context.InputSupplier), Is.Zero);
+        Assert.That(Balance(context.Treasury), Is.EqualTo(startingTreasury));
+        Assert.That(GetInt(Product(context.ProvinceMarket, Input), "Stock"), Is.EqualTo(10));
+        Assert.That(GetInt(Product(context.ProvinceMarket, Input), "LastDemand"), Is.Zero);
+        Assert.That(GetInt(Product(context.ProvinceMarket, Output), "Stock"), Is.EqualTo(4));
+        Assert.That(((IEnumerable)ReflectionTestHelpers.Get(
+            context.Producer, "InputInventory")).Cast<object>(), Is.Empty);
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
+        Assert.That(Transactions(context.Ledger), Has.Count.EqualTo(transactionsBeforeProduction));
 
         TransferProvinceProductionToNationMarket(context.Nation);
         InvokeEconomicEngine("ConsumeFoodsWeekly", context.Province, true);
 
-        const long actualSettlementTax = 22L;
+        const long actualSettlementTax = 20L;
         Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"),
             Is.EqualTo(actualSettlementTax));
         Assert.That(GetLong(context.Budget, "WeeklyTaxRevenue"),
@@ -108,7 +121,7 @@ public class MoneyConservationIntegrationTests
         Assert.That(ReflectionTestHelpers.Get(purchase, "GrossAmount"), Is.EqualTo(25L));
         mandate.GetType().GetMethod("CommitMaterialAcquisition",
             BindingFlags.Instance | BindingFlags.NonPublic).Invoke(mandate, new[] { acquisitionArguments[2] });
-        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(24L));
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(22L));
 
         Call(context.ConstructionCompany, "ProgressWeekly", 10d);
 
@@ -138,13 +151,13 @@ public class MoneyConservationIntegrationTests
         InvokeEconomicEngine("UpdateGDPWeekly",
             TestEconomyFactory.ListOf("Nation", context.Nation));
 
-        Assert.That(GetLong(context.Nation, "GDP"), Is.EqualTo(1_180L));
-        Assert.That(GetLong(context.Nation, "GDPAverage"), Is.EqualTo(1_180L));
+        Assert.That(GetLong(context.Nation, "GDP"), Is.EqualTo(1_200L));
+        Assert.That(GetLong(context.Nation, "GDPAverage"), Is.EqualTo(1_200L));
         Assert.That(((ICollection)ReflectionTestHelpers.Get(
             context.Nation, "GDPHistory")).Count, Is.EqualTo(gdpHistoryBefore + 1));
         Assert.That(((IEnumerable)ReflectionTestHelpers.Get(context.Nation, "GDPHistory"))
             .Cast<object>().Select(value => Convert.ToInt64(value)),
-            Is.EqualTo(new[] { 1_180L }));
+            Is.EqualTo(new[] { 1_200L }));
         Assert.That(Balance(context.Treasury), Is.EqualTo(treasuryBeforeGdp));
         Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"),
             Is.EqualTo(weeklyTaxBeforeGdp));
@@ -161,7 +174,7 @@ public class MoneyConservationIntegrationTests
         Assert.That(Transactions(context.Ledger), Has.Count.EqualTo(transactionsBeforeGdp));
         AssertAudit(context.Ledger, supplyBeforeGdp);
         Assert.That(GetInt(Product(context.NationMarket, Food), "Stock"), Is.EqualTo(80));
-        Assert.That(GetInt(Product(context.NationMarket, Input), "Stock"), Is.EqualTo(8));
+        Assert.That(GetInt(Product(context.NationMarket, Input), "Stock"), Is.EqualTo(10));
         Assert.That(GetInt(Product(context.NationMarket, Output), "Stock"), Is.EqualTo(3));
         Assert.That(GetInt(Product(context.ProvinceMarket, Food), "Stock"), Is.Zero);
         Assert.That(GetInt(Product(context.ProvinceMarket, Input), "Stock"), Is.Zero);
@@ -171,12 +184,12 @@ public class MoneyConservationIntegrationTests
         Assert.That(OwnedQuantity(Product(context.NationMarket, Food),
             AccountId(context.SecondPopulation)), Is.EqualTo(40));
         Assert.That(OwnedQuantity(Product(context.NationMarket, Input),
-            AccountId(context.InputSupplier)), Is.EqualTo(8));
+            AccountId(context.InputSupplier)), Is.EqualTo(10));
         Assert.That(OwnedQuantity(Product(context.NationMarket, Output),
             AccountId(context.Producer)), Is.EqualTo(3));
         AssertEveryStockEqualsRegisteredOwnedStock(context);
 
-        Assert.That(Balance(context.InputSupplier), Is.EqualTo(18L));
+        Assert.That(Balance(context.InputSupplier), Is.Zero);
         Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(capturedSupply));
         Assert.That(GetLong(context.Budget, "MoneySupply"), Is.EqualTo(capturedSupply));
         Assert.That(Transactions(context.Ledger).Count(record =>
@@ -364,6 +377,17 @@ public class MoneyConservationIntegrationTests
 
     private static void AddProduct(object market, string name, int price) =>
         Call(market, "AddProduct", name, price);
+
+    private static void RestoreInputInventory(
+        object building,
+        IReadOnlyDictionary<string, long> quantities)
+    {
+        MethodInfo method = building.GetType().GetMethod(
+            "RestoreInputInventory",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(method, Is.Not.Null, "Missing Building.RestoreInputInventory");
+        method.Invoke(building, new object[] { quantities });
+    }
 
     private static object Product(object market, string name) =>
         ((IDictionary)ReflectionTestHelpers.Get(market, "Products"))[name];

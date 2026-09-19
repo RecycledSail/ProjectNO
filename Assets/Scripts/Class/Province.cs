@@ -202,13 +202,31 @@ public class Province
                 if (scale <= 0.0)
                     continue;
 
-                scale = GetAffordableProductionScale(building, scale);
-                if (scale <= 0.0 ||
-                    !TryPrepareBuildingOutputs(building, scale, out List<BuildingOutputPlan> outputs) ||
-                    !TryPurchaseBuildingInputs(building, scale))
+                Building.PreparedInputConsumption inputConsumption = null;
+                if (building.HasInputRecipe)
+                {
+                    if (double.IsNaN(scale) || double.IsInfinity(scale) || scale < 1.0 ||
+                        scale > long.MaxValue ||
+                        !building.TryPrepareInputConsumption(
+                            checked((long)Math.Floor(scale)),
+                            out long completeUnits,
+                            out inputConsumption) ||
+                        completeUnits <= 0)
+                    {
+                        continue;
+                    }
+
+                    scale = completeUnits;
+                }
+
+                if (!TryPrepareBuildingOutputs(building, scale, out List<BuildingOutputPlan> outputs) ||
+                    outputs.Count == 0)
                 {
                     continue;
                 }
+
+                if (inputConsumption != null && !inputConsumption.Commit())
+                    continue;
 
                 AddBuildingOutputs(outputs);
             }
@@ -217,72 +235,6 @@ public class Province
                 // Invalid recipe arithmetic must not escape a void production cycle.
             }
         }
-    }
-
-    private double GetAffordableProductionScale(Building building, double requestedScale)
-    {
-        if (building?.Account == null || building.buildingType?.requireItems == null ||
-            requestedScale <= 0.0 || double.IsNaN(requestedScale))
-        {
-            return 0.0;
-        }
-
-        double availableScale = requestedScale;
-        long oneScaleCost = 0L;
-        bool requiresDiscreteQuantum = false;
-        foreach (var requiredItem in building.buildingType.requireItems)
-        {
-            if (requiredItem.Value <= 0)
-                continue;
-
-            requiresDiscreteQuantum = true;
-
-            if (string.IsNullOrEmpty(requiredItem.Key) ||
-                !market.Products.TryGetValue(requiredItem.Key, out ProductState product) ||
-                product.Price <= 0)
-            {
-                return 0.0;
-            }
-
-            availableScale = Math.Min(availableScale, (double)product.Stock / requiredItem.Value);
-            oneScaleCost = checked(oneScaleCost + checked((long)requiredItem.Value * product.Price));
-        }
-
-        if (oneScaleCost > 0L)
-            availableScale = Math.Min(availableScale, (double)building.Account.Balance / oneScaleCost);
-
-        return requiresDiscreteQuantum ? Math.Floor(availableScale) : availableScale;
-    }
-
-    private bool TryPurchaseBuildingInputs(Building building, double scale)
-    {
-        if (building?.Account == null || ActiveLedger == null ||
-            building.buildingType?.requireItems == null)
-        {
-            return false;
-        }
-
-        List<PurchaseRequest> requests = new();
-        foreach (var requiredItem in building.buildingType.requireItems)
-        {
-            int amount = checked((int)Math.Floor(requiredItem.Value * scale));
-            if (amount <= 0)
-                continue;
-
-            if (string.IsNullOrEmpty(requiredItem.Key) ||
-                !market.Products.TryGetValue(requiredItem.Key, out ProductState product))
-            {
-                return false;
-            }
-
-            requests.Add(new PurchaseRequest(product, amount));
-        }
-
-        return requests.Count == 0 || MarketSettlement.TryPurchaseBasket(
-            requests,
-            building.Account,
-            ActiveLedger,
-            requireFullQuantity: true).Success;
     }
 
     private bool TryPrepareBuildingOutputs(
