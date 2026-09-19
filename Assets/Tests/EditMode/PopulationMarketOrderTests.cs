@@ -144,6 +144,44 @@ public class PopulationMarketOrderTests
         Assert.That(receipt, Is.Null);
     }
 
+    [Test]
+    public void FoodRecipient_CommitsPositiveAndZeroReceiptsExactlyOnceAndIgnoresStaleReceipt()
+    {
+        using Context positiveContext = new();
+        object positivePopulation = positiveContext.AddPopulation("positive-once", 1_000, 20L, 2.0);
+        positiveContext.Initialize();
+        object positiveProduct = positiveContext.AddProduct(FoodA, 10, 10);
+        positiveContext.SetFoods(FoodA);
+        object positiveOrder = Items(Collect(positiveContext), "Orders").Single();
+        object positiveRecipient = Get(positiveOrder, "Recipient");
+        object positiveFill = ReflectionTestHelpers.New("MarketOrderFill", positiveOrder, 1, 10);
+
+        Assert.That(TryPrepare(positiveRecipient,
+            TestEconomyFactory.ListOf("MarketOrderFill", positiveFill), out object positiveReceipt), Is.True);
+        Commit(positiveReceipt);
+        Commit(positiveReceipt);
+        Assert.That(Get(positivePopulation, "livingStandard"), Is.EqualTo(2.01).Within(0.000001));
+
+        using Context zeroContext = new();
+        object zeroPopulation = zeroContext.AddPopulation("zero-once", 1_000, 20L, 2.0);
+        zeroContext.Initialize();
+        zeroContext.AddProduct(FoodA, 10, 10);
+        zeroContext.SetFoods(FoodA);
+        object zeroOrder = Items(Collect(zeroContext), "Orders").Single();
+        object zeroRecipient = Get(zeroOrder, "Recipient");
+        object staleFill = ReflectionTestHelpers.New("MarketOrderFill", zeroOrder, 1, 10);
+
+        Assert.That(TryPrepare(zeroRecipient,
+            TestEconomyFactory.ListOf("MarketOrderFill", staleFill), out object staleReceipt), Is.True);
+        Assert.That(TryPrepare(zeroRecipient, TestEconomyFactory.ListOf("MarketOrderFill"),
+            out object zeroReceipt), Is.True);
+        Commit(staleReceipt);
+        Commit(zeroReceipt);
+        Commit(zeroReceipt);
+        Assert.That(Get(zeroPopulation, "livingStandard"), Is.EqualTo(1.95).Within(0.000001));
+        Assert.That(Get(positiveProduct, "Stock"), Is.EqualTo(10));
+    }
+
     private static object Collect(Context context, object access = null)
     {
         GameObject gameObject = new("PopulationMarketOrderTests");

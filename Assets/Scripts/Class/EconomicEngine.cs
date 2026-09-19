@@ -320,15 +320,8 @@ public partial class EconomicEngine : MonoBehaviour
         {
             if (token != preparationToken)
                 return;
+            population.BuyFood(purchased);
             preparationToken = NextToken(preparationToken);
-            try
-            {
-                population.BuyFood(purchased);
-            }
-            catch (Exception)
-            {
-                // A prepared receipt must never make settlement throw.
-            }
         }
 
         private static long NextToken(long token) => token == long.MaxValue ? 1L : token + 1L;
