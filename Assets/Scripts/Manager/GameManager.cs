@@ -390,23 +390,8 @@ public partial class GameManager : MonoBehaviour
         }
         BeginLedgerWeeks();
 
-        // 0. 모든 마켓의 LastSupply와 LastDemand 초기화 (새 주 시작)
-        foreach (Nation nation in nations.Values)
-        {
-            foreach (ProductState ps in nation.market.Products.Values)
-            {
-                ps.LastSupply = 0;
-                ps.LastDemand = 0;
-            }
-        }
-        foreach (Province province in provinces.Values)
-        {
-            foreach (ProductState ps in province.market.Products.Values)
-            {
-                ps.LastSupply = 0;
-                ps.LastDemand = 0;
-            }
-        }
+        // Reset each existing market product once before production starts.
+        BeginProductWeeks();
 
         // 1. 캐시가 유효하지 않은 국가의 연결 상태 재계산
         foreach (Nation nation in nations.Values)
@@ -424,10 +409,6 @@ public partial class GameManager : MonoBehaviour
             nation.SimulateWeeklyTurn();
         }
 
-        // 2-1. 공유 시장별 자재 조달 후, 임금 지급에 성공한 회사만 주 1회 시공한다.
-        ConstructionWeeklySimulation.Process(nations.Values, provinces.Values, paidProvinces,
-            GlobalVariables.minimumConstructionCompanyManHour);
-
         // 3. Province 생산 단계 (생산만 수행)
         foreach (Province province in provinces.Values)
         {
@@ -440,11 +421,24 @@ public partial class GameManager : MonoBehaviour
             TransferProvinceProductionToNationMarket(nation);
         }
 
-        // 5. Province 소비 단계 (nation market 우선, 실패 시 local market)
-        foreach (Province province in provinces.Values)
+        // 5. Reserve every buyer globally, then clear each exact market once.
+        WeeklyMarketReport marketReport = WeeklyMarketSimulation.Process(
+            nations.Values,
+            provinces.Values,
+            paidProvinces,
+            economicEngine,
+            GlobalVariables.MARKET_PRICE_SETTINGS);
+        if (marketReport.FailedMarketIds.Count > 0)
         {
-            economicEngine.ConsumeFoodsWeekly(province, province.isConnectedToCapital);
+            Debug.LogError(
+                $"Weekly market clearing failed without retry for: " +
+                $"{string.Join(", ", marketReport.FailedMarketIds)}");
         }
+
+        ConstructionWeeklySimulation.ProgressPaidCompanies(
+            provinces.Values,
+            paidProvinces,
+            GlobalVariables.minimumConstructionCompanyManHour);
 
         // 6. 내 nation market(player의 nation의 market)의 재고 debug로 출력
         Debug.Log($"--- Nation Market Stock for {player.nation.name} ---");
@@ -475,6 +469,28 @@ public partial class GameManager : MonoBehaviour
     {
         foreach (MoneyLedger ledger in EnumerateEconomyLedgers())
             ledger.BeginWeek();
+    }
+
+    private void BeginProductWeeks()
+    {
+        HashSet<ProductState> products = new();
+        foreach (Nation nation in nations.Values)
+        {
+            if (nation?.market?.Products == null)
+                continue;
+            foreach (ProductState product in nation.market.Products.Values)
+                if (product != null && products.Add(product))
+                    product.BeginWeek();
+        }
+
+        foreach (Province province in provinces.Values)
+        {
+            if (province?.market?.Products == null)
+                continue;
+            foreach (ProductState product in province.market.Products.Values)
+                if (product != null && products.Add(product))
+                    product.BeginWeek();
+        }
     }
 
     private IEnumerable<MoneyLedger> EnumerateEconomyLedgers()
@@ -604,6 +620,7 @@ public partial class GameManager : MonoBehaviour
                         if (GlobalVariables.PRODUCTS.TryGetValue(productName, out var prod))
                             basePrice = prod.InitialPrice;
                         nation.market.AddProduct(productName, basePrice);
+                        nation.market.Products[productName].BeginWeek();
                     }
 
                     // move stock

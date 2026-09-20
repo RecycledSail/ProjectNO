@@ -85,43 +85,31 @@ public class MoneyConservationIntegrationTests
         Assert.That(Transactions(context.Ledger), Has.Count.EqualTo(transactionsBeforeProduction));
 
         TransferProvinceProductionToNationMarket(context.Nation);
-        InvokeEconomicEngine("ConsumeFoodsWeekly", context.Province, true);
-
-        const long actualSettlementTax = 20L;
-        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"),
-            Is.EqualTo(actualSettlementTax));
-        Assert.That(GetLong(context.Budget, "WeeklyTaxRevenue"),
-            Is.EqualTo(actualSettlementTax));
-        Assert.That(Balance(context.Treasury) - startingTreasury,
-            Is.EqualTo(actualSettlementTax));
-        Assert.That(Balance(context.FirstPopulation), Is.EqualTo(190L));
-        Assert.That(Balance(context.SecondPopulation), Is.EqualTo(190L));
-        Assert.That(Balance(context.FirstPopulation) + Balance(context.SecondPopulation),
-            Is.EqualTo(380L));
-
         object mandate = Call(context.Nation,
             "PlaceConstructionMandate", context.ConstructionBuildingType, context.Province);
         Assert.That(mandate, Is.Not.Null);
         object escrow = ReflectionTestHelpers.Get(mandate, "EscrowAccount");
         Assert.That(Balance(escrow), Is.EqualTo(300L));
 
-        // Prepare the project ledger before the real market settlement, as the
-        // procurement phase does; only the successfully bought unit is acquired.
-        object[] acquisitionArguments =
-        {
-            new Dictionary<string, long> { [Output] = 1L }, 25L, null
-        };
-        Assert.That((bool)mandate.GetType().GetMethod("TryPrepareMaterialAcquisition",
-            BindingFlags.Instance | BindingFlags.NonPublic).Invoke(mandate, acquisitionArguments), Is.True);
-        object purchase = ReflectionTestHelpers.Find("MarketSettlement").GetMethod("TryPurchase")
-            .Invoke(null, new[] { Product(context.NationMarket, Output), context.Treasury,
-                (object)1, context.Ledger });
-        Assert.That(ReflectionTestHelpers.Get(purchase, "Success"), Is.True);
-        Assert.That(ReflectionTestHelpers.Get(purchase, "PurchasedQuantity"), Is.EqualTo(1));
-        Assert.That(ReflectionTestHelpers.Get(purchase, "GrossAmount"), Is.EqualTo(25L));
-        mandate.GetType().GetMethod("CommitMaterialAcquisition",
-            BindingFlags.Instance | BindingFlags.NonPublic).Invoke(mandate, new[] { acquisitionArguments[2] });
-        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(22L));
+        object report = ProcessWeeklyMarket(context);
+
+        const long actualSettlementTax = 24L;
+        Assert.That(((IEnumerable)ReflectionTestHelpers.Get(
+            report, "FailedMarketIds")).Cast<object>(), Is.Empty);
+        Assert.That(GetInt(report, "OrderCount"), Is.EqualTo(4));
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"),
+            Is.EqualTo(actualSettlementTax));
+        Assert.That(GetLong(context.Budget, "WeeklyTaxRevenue"),
+            Is.EqualTo(actualSettlementTax));
+        Assert.That(Balance(context.FirstPopulation), Is.EqualTo(190L));
+        Assert.That(Balance(context.SecondPopulation), Is.EqualTo(190L));
+        Assert.That(Balance(context.FirstPopulation) + Balance(context.SecondPopulation),
+            Is.EqualTo(380L));
+        Assert.That(((IReadOnlyDictionary<string, long>)ReflectionTestHelpers.Get(
+            context.Producer, "InputInventory"))[Input], Is.EqualTo(2L));
+        Assert.That(((IReadOnlyDictionary<string, long>)ReflectionTestHelpers.Get(
+            mandate, "AcquiredMaterials"))[Output], Is.EqualTo(1L));
+        Assert.That(Balance(context.Treasury) - startingTreasury, Is.EqualTo(-301L));
 
         Call(context.ConstructionCompany, "ProgressWeekly", 10d);
 
@@ -133,7 +121,7 @@ public class MoneyConservationIntegrationTests
         Assert.That(Balance(escrow), Is.Zero);
         Assert.That(ReflectionTestHelpers.Get(escrow, "Ledger"), Is.Null);
         Assert.That(Balance(context.Treasury),
-            Is.EqualTo(startingTreasury + actualSettlementTax - 300L - 25L + 2L));
+            Is.EqualTo(startingTreasury + actualSettlementTax - 300L - 25L));
 
         long treasuryBeforeGdp = Balance(context.Treasury);
         long weeklyTaxBeforeGdp = GetLong(context.Ledger, "WeeklyTaxRevenue");
@@ -151,13 +139,13 @@ public class MoneyConservationIntegrationTests
         InvokeEconomicEngine("UpdateGDPWeekly",
             TestEconomyFactory.ListOf("Nation", context.Nation));
 
-        Assert.That(GetLong(context.Nation, "GDP"), Is.EqualTo(1_200L));
-        Assert.That(GetLong(context.Nation, "GDPAverage"), Is.EqualTo(1_200L));
+        Assert.That(GetLong(context.Nation, "GDP"), Is.EqualTo(964L));
+        Assert.That(GetLong(context.Nation, "GDPAverage"), Is.EqualTo(964L));
         Assert.That(((ICollection)ReflectionTestHelpers.Get(
             context.Nation, "GDPHistory")).Count, Is.EqualTo(gdpHistoryBefore + 1));
         Assert.That(((IEnumerable)ReflectionTestHelpers.Get(context.Nation, "GDPHistory"))
             .Cast<object>().Select(value => Convert.ToInt64(value)),
-            Is.EqualTo(new[] { 1_200L }));
+            Is.EqualTo(new[] { 964L }));
         Assert.That(Balance(context.Treasury), Is.EqualTo(treasuryBeforeGdp));
         Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"),
             Is.EqualTo(weeklyTaxBeforeGdp));
@@ -174,7 +162,7 @@ public class MoneyConservationIntegrationTests
         Assert.That(Transactions(context.Ledger), Has.Count.EqualTo(transactionsBeforeGdp));
         AssertAudit(context.Ledger, supplyBeforeGdp);
         Assert.That(GetInt(Product(context.NationMarket, Food), "Stock"), Is.EqualTo(80));
-        Assert.That(GetInt(Product(context.NationMarket, Input), "Stock"), Is.EqualTo(10));
+        Assert.That(GetInt(Product(context.NationMarket, Input), "Stock"), Is.EqualTo(8));
         Assert.That(GetInt(Product(context.NationMarket, Output), "Stock"), Is.EqualTo(3));
         Assert.That(GetInt(Product(context.ProvinceMarket, Food), "Stock"), Is.Zero);
         Assert.That(GetInt(Product(context.ProvinceMarket, Input), "Stock"), Is.Zero);
@@ -184,12 +172,12 @@ public class MoneyConservationIntegrationTests
         Assert.That(OwnedQuantity(Product(context.NationMarket, Food),
             AccountId(context.SecondPopulation)), Is.EqualTo(40));
         Assert.That(OwnedQuantity(Product(context.NationMarket, Input),
-            AccountId(context.InputSupplier)), Is.EqualTo(10));
+            AccountId(context.InputSupplier)), Is.EqualTo(8));
         Assert.That(OwnedQuantity(Product(context.NationMarket, Output),
             AccountId(context.Producer)), Is.EqualTo(3));
         AssertEveryStockEqualsRegisteredOwnedStock(context);
 
-        Assert.That(Balance(context.InputSupplier), Is.Zero);
+        Assert.That(Balance(context.InputSupplier), Is.EqualTo(18L));
         Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(capturedSupply));
         Assert.That(GetLong(context.Budget, "MoneySupply"), Is.EqualTo(capturedSupply));
         Assert.That(Transactions(context.Ledger).Count(record =>
@@ -412,6 +400,33 @@ public class MoneyConservationIntegrationTests
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(transfer, Is.Not.Null);
             transfer.Invoke(manager, new[] { nation });
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(gameObject);
+        }
+    }
+
+    private static object ProcessWeeklyMarket(RepresentativeContext context)
+    {
+        GameObject gameObject = new("MoneyConservationWeeklyMarket");
+        try
+        {
+            object engine = gameObject.AddComponent(ReflectionTestHelpers.Find("EconomicEngine"));
+            Type provinceType = ReflectionTestHelpers.Find("Province");
+            object paid = Activator.CreateInstance(
+                typeof(HashSet<>).MakeGenericType(provinceType),
+                new[] { TestEconomyFactory.ListOf("Province", context.Province) });
+            return ReflectionTestHelpers.Find("WeeklyMarketSimulation")
+                .GetMethod("Process", BindingFlags.Public | BindingFlags.Static)
+                .Invoke(null, new[]
+                {
+                    TestEconomyFactory.ListOf("Nation", context.Nation),
+                    TestEconomyFactory.ListOf("Province", context.Province),
+                    paid,
+                    engine,
+                    ReflectionTestHelpers.New("MarketPriceSettings", 3000, 2500)
+                });
         }
         finally
         {

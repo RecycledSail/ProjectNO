@@ -166,6 +166,24 @@ public class ConstructionWeeklyIntegrationTests
     }
 
     [Test]
+    public void SharedCoordinator_ProcuresBeforePaidCompanyProgress()
+    {
+        Context c = new();
+        object a = c.Place(0), b = c.Place(1);
+        c.Supply(20);
+        c.Payroll(1);
+
+        object report = c.ProcessMarket();
+        c.Progress(10d);
+
+        Assert.That(Get(report, "OrderCount"), Is.EqualTo(2));
+        Assert.That(((IEnumerable)Get(report, "FailedMarketIds")).Cast<object>(), Is.Empty);
+        Assert.That(Get(a, "Status").ToString(), Is.EqualTo("Completed"));
+        Assert.That(Get(b, "Status").ToString(), Is.EqualTo("Completed"));
+        c.Audit();
+    }
+
+    [Test]
     public void StatusText_SeparatesContractEconomicsAndUnknownPricesFromZero()
     {
         Context c = new();
@@ -330,6 +348,30 @@ public class ConstructionWeeklyIntegrationTests
                 Debug.LogError($"Construction procurement failed; projects: {string.Join(", ", batch.Select(project => Get(project, "Id")))}");
             }
             Audit();
+        }
+        public object ProcessMarket()
+        {
+            GameObject gameObject = new("ConstructionWeeklyMarketCoordinator");
+            try
+            {
+                object engine = gameObject.AddComponent(Find("EconomicEngine"));
+                Type provinceType = Find("Province");
+                object paid = Activator.CreateInstance(
+                    typeof(HashSet<>).MakeGenericType(provinceType),
+                    new[] { TestEconomyFactory.ListOf("Province", Paid.Cast<object>().ToArray()) });
+                return Find("WeeklyMarketSimulation").GetMethod("Process").Invoke(null, new[]
+                {
+                    TestEconomyFactory.ListOf("Nation", Nation),
+                    TestEconomyFactory.ListOf("Province", Provinces),
+                    paid,
+                    engine,
+                    New("MarketPriceSettings", 3000, 2500)
+                });
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(gameObject);
+            }
         }
         public void Progress(double hours)
         {
