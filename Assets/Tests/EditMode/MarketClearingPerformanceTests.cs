@@ -8,74 +8,58 @@ using NUnit.Framework;
 
 public class MarketClearingPerformanceTests
 {
+    private const int ProvinceCount = 200;
+    private const int FactoryCountPerProvince = 25;
     private const int ProductCount = 18;
-    private const int BuyerCount = 100;
-    private const int OrderCount = 5_000;
+    private const int OrderCount = ProvinceCount * FactoryCountPerProvince;
 
     [Test]
-    public void FiveThousandOrders_ReportPlannerAndSettlementMeasurementsWithoutTimeThreshold()
+    public void TwoHundredProvinces_ReportCollectionPlanningAndSettlementForFiveThousandOrders()
     {
-        object treasury = Account("performance-treasury", 0L);
-        object ledger = ReflectionTestHelpers.New(
-            "MoneyLedger", "performance-coin", new object(), treasury);
-        Assert.That(RegisterInitial(ledger, treasury), Is.True);
+        using RepresentativeWorld world = new();
+        Assert.That(world.Provinces, Has.Count.EqualTo(ProvinceCount));
+        Assert.That(world.Factories, Has.Count.EqualTo(OrderCount));
+        Assert.That(world.Products, Has.Length.EqualTo(ProductCount));
+        AssertAudit(world.Ledger, world.InitialMoneySupply);
 
-        object[] suppliers = Enumerable.Range(0, ProductCount)
-            .Select(index => Account($"performance-supplier-{index:D2}", 0L))
-            .ToArray();
-        object[] buyers = Enumerable.Range(0, BuyerCount)
-            .Select(index => Account($"performance-buyer-{index:D3}", 100_000L))
-            .ToArray();
-        foreach (object account in suppliers.Concat(buyers))
-            Assert.That(RegisterInitial(ledger, account), Is.True);
+        MethodInfo accessMethod = ReflectionTestHelpers.Find("MarketAccess")
+            .GetMethod("TryResolve", BindingFlags.Public | BindingFlags.Static);
+        MethodInfo collectMethod = ReflectionTestHelpers.Find("FactoryMarketOrders")
+            .GetMethod("Collect", BindingFlags.Public | BindingFlags.Static);
+        Assert.That(accessMethod, Is.Not.Null);
+        Assert.That(collectMethod, Is.Not.Null);
 
-        object[] products = new object[ProductCount];
-        int expectedFillCount = 0;
-        for (int index = 0; index < ProductCount; index++)
-        {
-            int price = 10 + index % 3;
-            int stock = 100 + index;
-            object product = ReflectionTestHelpers.New(
-                "ProductState", $"performance-product-{index:D2}", price);
-            ReflectionTestHelpers.Call<object>(product, "AddSupply", suppliers[index], stock);
-            products[index] = product;
-            expectedFillCount += stock;
-        }
-
-        object[] recipients = buyers.Select((_, index) =>
-            Recipient($"performance-recipient-{index:D3}")).ToArray();
+        Stopwatch collection = Stopwatch.StartNew();
+        IDictionary remainingBudgets = world.CreateStartingBudgets();
         IList orders = (IList)TestEconomyFactory.ListOf("MarketOrder");
-        for (int index = 0; index < OrderCount; index++)
+        foreach (object province in world.Provinces)
         {
-            int productIndex = index % ProductCount;
-            int buyerIndex = index % BuyerCount;
-            object product = products[productIndex];
-            int maximumUnitPrice = (int)ReflectionTestHelpers.Get(product, "Price") + 1 + index % 5;
-            orders.Add(ReflectionTestHelpers.New(
-                "MarketOrder",
-                $"performance-order-{index:D4}",
-                buyers[buyerIndex],
-                product,
-                1,
-                maximumUnitPrice,
-                (long)maximumUnitPrice,
-                1,
-                recipients[buyerIndex]));
+            object[] accessArguments = { province, null };
+            if (!(bool)accessMethod.Invoke(null, accessArguments))
+                throw new InvalidOperationException("The representative province has no market access.");
+
+            object collected = collectMethod.Invoke(
+                null,
+                new[] { province, accessArguments[1], (object)true, remainingBudgets });
+            foreach (object order in (IEnumerable)collected)
+                orders.Add(order);
         }
+        collection.Stop();
 
         Assert.That(orders, Has.Count.EqualTo(OrderCount));
-        int sortedOrderCount = CountOrdersInShortageBooks(orders, products);
+        Assert.That(orders.Cast<object>().Select(order =>
+                (string)ReflectionTestHelpers.Get(order, "Id")),
+            Is.Unique);
+        int sortedOrderCount = CountOrdersInShortageBooks(orders, world.Products);
         Assert.That(sortedOrderCount, Is.EqualTo(OrderCount));
-        ReflectionTestHelpers.Call<object>(ledger, "SealInitialization");
-        long initialMoneySupply = (long)ReflectionTestHelpers.Get(ledger, "MoneySupply");
-        AssertAudit(ledger, initialMoneySupply);
+        Assert.That(remainingBudgets.Values.Cast<long>().All(balance => balance >= 0L), Is.True);
 
         object settings = ReflectionTestHelpers.New("MarketPriceSettings", 3000, 2500);
         object[] planArguments =
         {
             orders,
-            TestEconomyFactory.ListOf("ProductState", products),
-            ledger,
+            TestEconomyFactory.ListOf("ProductState", world.Products),
+            world.Ledger,
             settings,
             null,
             null
@@ -93,10 +77,10 @@ public class MarketClearingPerformanceTests
         IList purchases = (IList)ReflectionTestHelpers.Get(plan, "Purchases");
         IList results = (IList)ReflectionTestHelpers.Get(plan, "ProductResults");
         Assert.That(results, Has.Count.EqualTo(ProductCount));
-        Assert.That(fills, Has.Count.EqualTo(expectedFillCount));
-        Assert.That(purchases, Has.Count.EqualTo(expectedFillCount));
+        Assert.That(fills, Has.Count.EqualTo(world.ExpectedFillCount));
+        Assert.That(purchases, Has.Count.EqualTo(world.ExpectedFillCount));
         Assert.That(fills.Cast<object>().Sum(fill =>
-            (int)ReflectionTestHelpers.Get(fill, "Quantity")), Is.EqualTo(expectedFillCount));
+            (int)ReflectionTestHelpers.Get(fill, "Quantity")), Is.EqualTo(world.ExpectedFillCount));
         string[] fillIds = fills.Cast<object>()
             .Select(fill => (string)ReflectionTestHelpers.Get(
                 ReflectionTestHelpers.Get(fill, "Order"), "Id"))
@@ -104,11 +88,11 @@ public class MarketClearingPerformanceTests
         Assert.That(fillIds,
             Is.EqualTo(fillIds.OrderBy(id => id, StringComparer.Ordinal).ToArray()));
         AssertUniformPrices(fills);
-        AssertPlannedProductTotals(results, products);
+        AssertPlannedProductTotals(results, world.Products);
 
         object[] settlementArguments =
         {
-            ledger,
+            world.Ledger,
             TestEconomyFactory.ListOf("IMarketOrderRecipient"),
             null
         };
@@ -119,22 +103,25 @@ public class MarketClearingPerformanceTests
         settlement.Stop();
 
         Assert.That(settled, Is.True, settlementArguments[2] as string);
-        Assert.That(products.All(product => (int)ReflectionTestHelpers.Get(product, "Stock") == 0),
-            Is.True);
-        Assert.That(products.Sum(product =>
-            (int)ReflectionTestHelpers.Get(product, "LastDemand")), Is.EqualTo(expectedFillCount));
-        Assert.That(buyers.All(buyer => (long)ReflectionTestHelpers.Get(buyer, "Balance") >= 0L),
-            Is.True);
-        Assert.That(recipients.Cast<MarketClearingRecipientProxy>().All(recipient =>
-            recipient.Calls == 1 && recipient.Prepared != null && recipient.Prepared.Commits == 1),
-            Is.True);
-        AssertAudit(ledger, initialMoneySupply);
+        Assert.That(world.Products.All(product =>
+            (int)ReflectionTestHelpers.Get(product, "Stock") == 0), Is.True);
+        Assert.That(world.Products.Sum(product =>
+            (int)ReflectionTestHelpers.Get(product, "LastDemand")),
+            Is.EqualTo(world.ExpectedFillCount));
+        Assert.That(world.TotalFactoryInputInventory(), Is.EqualTo(world.ExpectedFillCount));
+        Assert.That(world.Factories.All(factory =>
+            (long)ReflectionTestHelpers.Get(
+                ReflectionTestHelpers.Get(factory, "Account"), "Balance") >= 0L), Is.True);
+        AssertAudit(world.Ledger, world.InitialMoneySupply);
 
         double totalMillisecondsPerOrder =
-            (planner.Elapsed.TotalMilliseconds + settlement.Elapsed.TotalMilliseconds) / OrderCount;
+            (collection.Elapsed.TotalMilliseconds + planner.Elapsed.TotalMilliseconds +
+             settlement.Elapsed.TotalMilliseconds) / OrderCount;
         TestContext.WriteLine(
-            $"Market clearing performance: orders={OrderCount}, sortedOrders={sortedOrderCount}, " +
-            $"fills={expectedFillCount}, planMs={planner.Elapsed.TotalMilliseconds:F3}, " +
+            $"Market clearing performance: provinces={ProvinceCount}, factories={world.Factories.Count}, " +
+            $"orders={orders.Count}, products={ProductCount}, sortedOrders={sortedOrderCount}, " +
+            $"fills={world.ExpectedFillCount}, collectionMs={collection.Elapsed.TotalMilliseconds:F3}, " +
+            $"planMs={planner.Elapsed.TotalMilliseconds:F3}, " +
             $"settlementMs={settlement.Elapsed.TotalMilliseconds:F3}, " +
             $"totalMsPerOrder={totalMillisecondsPerOrder:F6}");
     }
@@ -176,8 +163,9 @@ public class MarketClearingPerformanceTests
         {
             object result = results.Cast<object>().Single(candidate => ReferenceEquals(
                 ReflectionTestHelpers.Get(candidate, "Product"), products[index]));
-            int expectedDemand = OrderCount / ProductCount +
-                                 (index < OrderCount % ProductCount ? 1 : 0);
+            int factoriesPerProduct = FactoryCountPerProvince / ProductCount +
+                                      (index < FactoryCountPerProvince % ProductCount ? 1 : 0);
+            int expectedDemand = ProvinceCount * factoriesPerProduct;
             int expectedStock = 100 + index;
             Assert.That(ReflectionTestHelpers.Get(result, "RequestedDemand"),
                 Is.EqualTo(expectedDemand));
@@ -195,18 +183,173 @@ public class MarketClearingPerformanceTests
         Assert.That(audit[0], Is.EqualTo(expectedMoneySupply));
     }
 
-    private static bool RegisterInitial(object ledger, object account) =>
-        ReflectionTestHelpers.Call<bool>(ledger, "RegisterInitialAccount", account);
-
-    private static object Account(string id, long balance) =>
-        ReflectionTestHelpers.New("MoneyAccount", id, balance);
-
-    private static object Recipient(string id)
+    private sealed class RepresentativeWorld : IDisposable
     {
-        object proxy = typeof(DispatchProxy).GetMethod("Create").MakeGenericMethod(
-            ReflectionTestHelpers.Find("IMarketOrderRecipient"),
-            typeof(MarketClearingRecipientProxy)).Invoke(null, null);
-        ((MarketClearingRecipientProxy)proxy).Id = id;
-        return proxy;
+        private const string FactoryTypePrefix = "Task11PerformanceFactory";
+        private const string InputProductPrefix = "performance-product-";
+        private const string OutputProduct = "performance-output";
+
+        private readonly Dictionary<string, object> previousRecipes = new();
+        private readonly HashSet<string> existingRecipes = new(StringComparer.Ordinal);
+        private bool disposed;
+
+        public List<object> Provinces { get; } = new();
+        public List<object> Factories { get; } = new();
+        public object[] Products { get; private set; }
+        public object Ledger { get; private set; }
+        public long InitialMoneySupply { get; private set; }
+        public int ExpectedFillCount { get; private set; }
+
+        public RepresentativeWorld()
+        {
+            try
+            {
+                object[] factoryTypes = CreateFactoryTypes();
+                object nation = TestEconomyFactory.NewNation(
+                    "Task11PerformanceNation", 2_000_000L);
+
+                for (int provinceIndex = 0; provinceIndex < ProvinceCount; provinceIndex++)
+                {
+                    string provinceName = $"Task11PerformanceProvince{provinceIndex:D3}";
+                    object province = TestEconomyFactory.NewProvince(120_000 + provinceIndex,
+                        provinceName);
+                    Assert.That(ReflectionTestHelpers.Call<bool>(nation, "AddProvinces", province),
+                        Is.True);
+                    ReflectionTestHelpers.Set(province, "market",
+                        ReflectionTestHelpers.New("ProvinceMarket", provinceName));
+                    ReflectionTestHelpers.Set(province, "isConnectedToCapital", true);
+                    Provinces.Add(province);
+
+                    IDictionary buildings = (IDictionary)ReflectionTestHelpers.Get(
+                        province, "buildings");
+                    foreach (object factoryType in factoryTypes)
+                    {
+                        object factory = ReflectionTestHelpers.New(
+                            "Building", factoryType, province);
+                        ReflectionTestHelpers.Set(factory, "level", 1);
+                        ReflectionTestHelpers.Set(factory, "currentWorkers", 1L);
+                        buildings.Add(factoryType, factory);
+                        Factories.Add(factory);
+                    }
+                }
+
+                ReflectionTestHelpers.Set(nation, "capital", Provinces[0]);
+                ReflectionTestHelpers.Find("EconomicInitializer").GetMethod("Initialize").Invoke(
+                    null,
+                    new[]
+                    {
+                        TestEconomyFactory.ListOf("Nation", nation),
+                        TestEconomyFactory.ListOf("Province", Provinces.ToArray())
+                    });
+
+                Ledger = ReflectionTestHelpers.Get(nation, "Ledger");
+                ReflectionTestHelpers.Set(Ledger, "SalesTaxBasisPoints", 1000);
+                Products = CreateProducts(nation);
+                InitialMoneySupply = (long)ReflectionTestHelpers.Get(Ledger, "MoneySupply");
+            }
+            catch
+            {
+                RestoreRecipes();
+                throw;
+            }
+        }
+
+        public IDictionary CreateStartingBudgets()
+        {
+            Type accountType = ReflectionTestHelpers.Find("MoneyAccount");
+            IDictionary budgets = (IDictionary)Activator.CreateInstance(
+                typeof(Dictionary<,>).MakeGenericType(accountType, typeof(long)));
+            foreach (object factory in Factories)
+            {
+                object account = ReflectionTestHelpers.Get(factory, "Account");
+                budgets.Add(account, (long)ReflectionTestHelpers.Get(account, "Balance"));
+            }
+            return budgets;
+        }
+
+        public int TotalFactoryInputInventory() => Factories.Sum(factory =>
+            ((IEnumerable)ReflectionTestHelpers.Get(factory, "InputInventory"))
+            .Cast<object>()
+            .Sum(pair => checked((int)(long)ReflectionTestHelpers.Get(pair, "Value"))));
+
+        public void Dispose()
+        {
+            if (disposed)
+                return;
+
+            disposed = true;
+            RestoreRecipes();
+        }
+
+        private object[] CreateFactoryTypes()
+        {
+            IDictionary recipes = StaticDictionary("BUILDING_RECIPE");
+            object[] types = new object[FactoryCountPerProvince];
+            for (int index = 0; index < types.Length; index++)
+            {
+                string name = $"{FactoryTypePrefix}{index:D2}";
+                if (recipes.Contains(name))
+                {
+                    existingRecipes.Add(name);
+                    previousRecipes[name] = recipes[name];
+                }
+
+                string inputName = $"{InputProductPrefix}{index % ProductCount:D2}";
+                var inputs = new Dictionary<string, int> { [inputName] = 1 };
+                object type = ReflectionTestHelpers.New("BuildingType", name);
+                ReflectionTestHelpers.Set(type, "workerNeeded", 1L);
+                ReflectionTestHelpers.Set(type, "weeklyWage", 1L);
+                ReflectionTestHelpers.Set(type, "requireItems", inputs);
+                ReflectionTestHelpers.Set(type, "produceItems",
+                    new Dictionary<string, int> { [OutputProduct] = 1 });
+                types[index] = type;
+
+                object recipe = ReflectionTestHelpers.New("BuildingRecipe", name);
+                ReflectionTestHelpers.Set(recipe, "requireItems",
+                    new Dictionary<string, int>(inputs, StringComparer.Ordinal));
+                ReflectionTestHelpers.Set(recipe, "TimeToBuild", 1);
+                ReflectionTestHelpers.Set(recipe, "InitialCapital", 100L);
+                ReflectionTestHelpers.Set(recipe, "ConstructionFee", 0L);
+                recipes[name] = recipe;
+            }
+            return types;
+        }
+
+        private object[] CreateProducts(object nation)
+        {
+            IDictionary products = (IDictionary)ReflectionTestHelpers.Get(
+                ReflectionTestHelpers.Get(nation, "market"), "Products");
+            object[] result = new object[ProductCount];
+            for (int index = 0; index < result.Length; index++)
+            {
+                string productName = $"{InputProductPrefix}{index:D2}";
+                object product = ReflectionTestHelpers.New(
+                    "ProductState", productName, 10 + index % 3);
+                int stock = 100 + index;
+                object supplier = ReflectionTestHelpers.Get(Factories[index], "Account");
+                ReflectionTestHelpers.Call<object>(product, "AddSupply", supplier, stock);
+                products.Add(productName, product);
+                result[index] = product;
+                ExpectedFillCount += stock;
+            }
+            return result;
+        }
+
+        private void RestoreRecipes()
+        {
+            IDictionary recipes = StaticDictionary("BUILDING_RECIPE");
+            for (int index = 0; index < FactoryCountPerProvince; index++)
+            {
+                string name = $"{FactoryTypePrefix}{index:D2}";
+                if (existingRecipes.Contains(name))
+                    recipes[name] = previousRecipes[name];
+                else
+                    recipes.Remove(name);
+            }
+        }
+
+        private static IDictionary StaticDictionary(string name) =>
+            (IDictionary)ReflectionTestHelpers.Find("GlobalVariables").GetField(
+                name, BindingFlags.Public | BindingFlags.Static).GetValue(null);
     }
 }
