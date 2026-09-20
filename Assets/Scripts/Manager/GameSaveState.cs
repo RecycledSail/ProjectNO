@@ -138,6 +138,7 @@ public sealed class GameSaveState
                 {
                     type = b.buildingType.name, owner = b.Owner?.InvestmentAccount.Id,
                     level = b.level, previousGain = b.previousGain, manhoursLeft = b.manhoursLeft,
+                    inputInventory = b.CaptureInputInventory(),
                     slots = b is ConstructionCompanyBuilding company ? company.CaptureSlots() : new List<CompanySlotData>()
                 }).ToList(),
                 specialBuildings = province.specialBuildings.Values.Select(b => new SpecialBuildingData
@@ -159,7 +160,8 @@ public sealed class GameSaveState
         new ProductData
         {
             name = p.ProductName, price = p.Price, lastPrice = p.LastPrice, demand = p.LastDemand,
-            supply = p.LastSupply, elasticity = p.Elasticity,
+            supply = p.LastSupply, requestedDemand = p.RequestedDemand, unmetDemand = p.UnmetDemand,
+            lastClearingPrice = p.LastClearingPrice, elasticity = p.Elasticity,
             lots = p.Inventory.Lots.Select(l => new AmountData { key = l.Key.Id, value = l.Value }).ToList()
         }).ToList();
 
@@ -243,6 +245,7 @@ public sealed class GameSaveState
                 var building = BuildingFactory.Create(type, province, b.level);
                 building.previousGain = b.previousGain;
                 building.manhoursLeft = b.manhoursLeft;
+                RestoreInputInventory(building, b.inputInventory);
                 province.buildings.Add(type, building);
                 buildings.Add(building.Account.Id, building);
                 Bind(building.Account);
@@ -333,9 +336,14 @@ public sealed class GameSaveState
         foreach (var p in products)
         {
             Require(PRODUCTS.ContainsKey(p.name) && p.price > 0 && p.lastPrice >= 0 && p.demand >= 0 && p.supply >= 0 &&
-                Finite(p.elasticity), "Invalid market product: " + p.name);
+                p.requestedDemand >= 0 && p.unmetDemand >= 0 && p.unmetDemand <= p.requestedDemand &&
+                p.lastClearingPrice >= 0 && Finite(p.elasticity), "Invalid market product: " + p.name);
             var product = new ProductState(p.name, p.price)
-            { LastPrice = p.lastPrice, LastDemand = p.demand, LastSupply = p.supply, Elasticity = p.elasticity };
+            {
+                LastPrice = p.lastPrice, LastDemand = p.demand, LastSupply = p.supply,
+                RequestedDemand = p.requestedDemand, UnmetDemand = p.unmetDemand,
+                LastClearingPrice = p.lastClearingPrice, Elasticity = p.elasticity
+            };
             foreach (var lot in AmountMap(p.lots))
             {
                 var supplier = accounts[lot.Key];
@@ -345,6 +353,25 @@ public sealed class GameSaveState
             result.Add(p.name, product);
         }
         return result;
+    }
+
+    private static void RestoreInputInventory(Building building, List<AmountData> savedInventory)
+    {
+        Require(savedInventory != null, "Missing building input inventory.");
+        Dictionary<string, long> inventory = AmountMap(savedInventory);
+        Require(inventory.Values.All(quantity => quantity >= 0), "Invalid building input inventory.");
+        try
+        {
+            building.RestoreInputInventory(inventory);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new InvalidDataException("Invalid building input inventory.", exception);
+        }
+        catch (OverflowException exception)
+        {
+            throw new InvalidDataException("Invalid building input inventory.", exception);
+        }
     }
 
     private void BuildConstruction()

@@ -19,6 +19,14 @@ public sealed class MarketPriceSettings
 
 public static class MarketPriceCalculator
 {
+    public static int ObservedPrice(ProductState product)
+    {
+        if (product == null) throw new ArgumentNullException(nameof(product));
+        return product.LastClearingPrice > 0
+            ? product.LastClearingPrice
+            : Math.Max(1, product.LastPrice);
+    }
+
     public static int CalculateNextPrice(
         int previousPrice,
         int requestedDemand,

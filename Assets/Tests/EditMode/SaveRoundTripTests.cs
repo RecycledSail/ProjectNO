@@ -26,6 +26,8 @@ public class SaveRoundTripTests
         .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(target);
     private object Nation => ((IDictionary)Get(game, "nations"))["Nation1"];
     private object Province => ((IDictionary)Get(game, "provinces"))["Bebino"];
+    private object ProvinceProduct(string name) =>
+        ((IDictionary)Get(Get(Province, "market"), "Products"))[name];
     private object Capture() => Static("GameSaveState", "Capture", game, battle);
     private static object Clone(object data) => JsonUtility.FromJson(JsonUtility.ToJson(data), data.GetType());
     private void Apply(object data) => Call<object>(Static("GameSaveState", "Restore", Clone(data)), "Apply", game, battle);
@@ -83,6 +85,123 @@ public class SaveRoundTripTests
         Assert.That(Get(Get(game, "player"), "nation"), Is.SameAs(Nation));
         Assert.That(Get(game, "paused"), Is.True);
         Assert.That(Get(game, "dayoftheWeek"), Is.EqualTo(6));
+    }
+
+    [Test]
+    public void MarketAndFactoryState_RoundTripsExactStatisticsAndSparseInputs()
+    {
+        object factory = AddTwoInputFactory();
+        RestoreInputInventory(factory, new Dictionary<string, long>
+        {
+            ["Iron"] = 37L,
+            ["Wood"] = 11L,
+        });
+        object product = ProvinceProduct("Iron");
+        Set(product, "Price", 45);
+        Set(product, "LastPrice", 40);
+        Set(product, "LastDemand", 12);
+        Set(product, "LastSupply", 9);
+        Set(product, "RequestedDemand", 17);
+        Set(product, "UnmetDemand", 5);
+        Set(product, "LastClearingPrice", 42);
+
+        Apply(Capture());
+
+        object restoredProduct = ProvinceProduct("Iron");
+        Assert.That(Get(restoredProduct, "Price"), Is.EqualTo(45));
+        Assert.That(Get(restoredProduct, "LastPrice"), Is.EqualTo(40));
+        Assert.That(Get(restoredProduct, "LastDemand"), Is.EqualTo(12));
+        Assert.That(Get(restoredProduct, "LastSupply"), Is.EqualTo(9));
+        Assert.That(Get(restoredProduct, "RequestedDemand"), Is.EqualTo(17));
+        Assert.That(Get(restoredProduct, "UnmetDemand"), Is.EqualTo(5));
+        Assert.That(Get(restoredProduct, "LastClearingPrice"), Is.EqualTo(42));
+        Assert.That(InputInventory(Building("SwordSmith")), Is.EqualTo(
+            new Dictionary<string, long> { ["Iron"] = 37L, ["Wood"] = 11L }));
+    }
+
+    [Test]
+    public void Version1Fixture_MigratesMarketDefaultsAndEmptyFactoryInputs()
+    {
+        object factory = AddTwoInputFactory();
+        RestoreInputInventory(factory, new Dictionary<string, long>
+        {
+            ["Iron"] = 29L,
+            ["Wood"] = 7L,
+        });
+        object product = ProvinceProduct("Iron");
+        Set(product, "Price", 23);
+        Set(product, "LastPrice", 19);
+        Set(product, "LastDemand", 7);
+        Set(product, "LastSupply", 8);
+        Set(product, "RequestedDemand", 11);
+        Set(product, "UnmetDemand", 4);
+        Set(product, "LastClearingPrice", 21);
+
+        string json = Version1Fixture(JsonUtility.ToJson(Capture()));
+        Assert.That(json, Does.Contain("\"version\":1"));
+        Assert.That(json, Does.Not.Contain("\"requestedDemand\""));
+        Assert.That(json, Does.Not.Contain("\"unmetDemand\""));
+        Assert.That(json, Does.Not.Contain("\"lastClearingPrice\""));
+        Assert.That(json, Does.Not.Contain("\"inputInventory\""));
+        string slot = NewSlot();
+        File.WriteAllText(files.Last(), json);
+        object oldProvince = Province;
+
+        Assert.That(Static("SaveManager", "TryLoad", slot), Is.True);
+
+        Assert.That(Province, Is.Not.SameAs(oldProvince));
+        object restoredProduct = ProvinceProduct("Iron");
+        Assert.That(Get(restoredProduct, "RequestedDemand"), Is.EqualTo(7));
+        Assert.That(Get(restoredProduct, "UnmetDemand"), Is.Zero);
+        Assert.That(Get(restoredProduct, "LastClearingPrice"), Is.EqualTo(23));
+        Assert.That(InputInventory(Building("SwordSmith")), Is.Empty);
+    }
+
+    [TestCase("requestedDemand", -1, 0)]
+    [TestCase("unmetDemand", -1, 0)]
+    [TestCase("unmetDemand", 2, 1)]
+    [TestCase("lastClearingPrice", -1, 0)]
+    public void InvalidVersion2MarketStatistics_DoNotReplaceLiveWorld(
+        string field,
+        int value,
+        int requestedDemand)
+    {
+        object before = Province;
+        object snapshot = Capture();
+        object savedProduct = SavedProduct(snapshot, "Iron");
+        Set(savedProduct, "requestedDemand", requestedDemand);
+        Set(savedProduct, field, value);
+
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
+            () => Static("GameSaveState", "Restore", snapshot));
+
+        Assert.That(exception.InnerException, Is.TypeOf<InvalidDataException>());
+        Assert.That(Province, Is.SameAs(before));
+        Assert.That(Global("PROVINCES")["Bebino"], Is.SameAs(before));
+    }
+
+    [TestCase("missing-product", 1L)]
+    [TestCase("Iron", -1L)]
+    public void InvalidFactoryInputInventory_DoesNotReplaceLiveWorld(
+        string productName,
+        long quantity)
+    {
+        AddTwoInputFactory();
+        object before = Province;
+        object snapshot = Capture();
+        object savedBuilding = SavedBuilding(snapshot, "Bebino", "SwordSmith");
+        IList inputs = (IList)Get(savedBuilding, "inputInventory");
+        object amount = Activator.CreateInstance(Find("SaveManager+AmountData"));
+        Set(amount, "key", productName);
+        Set(amount, "value", quantity);
+        inputs.Add(amount);
+
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
+            () => Static("GameSaveState", "Restore", snapshot));
+
+        Assert.That(exception.InnerException, Is.TypeOf<InvalidDataException>());
+        Assert.That(Province, Is.SameAs(before));
+        Assert.That(Global("PROVINCES")["Bebino"], Is.SameAs(before));
     }
 
     [Test]
@@ -200,6 +319,61 @@ public class SaveRoundTripTests
         string name = "save-test-" + Guid.NewGuid().ToString("N");
         files.Add((string)Static("SaveManager", "GetSavePath", name));
         return name;
+    }
+
+    private object AddTwoInputFactory()
+    {
+        MethodInfo create = Find("BuildingFactory").GetMethod("TryCreateAndRegister");
+        object[] arguments = { Global("BUILDING_TYPE")["SwordSmith"], Province, null };
+        Assert.That((bool)create.Invoke(null, arguments), Is.True);
+        return arguments[2];
+    }
+
+    private object Building(string typeName) =>
+        ((IDictionary)Get(Province, "buildings")).Values.Cast<object>().Single(building =>
+            (string)Get(Get(building, "buildingType"), "name") == typeName);
+
+    private static void RestoreInputInventory(
+        object building,
+        IReadOnlyDictionary<string, long> inventory)
+    {
+        MethodInfo restore = building.GetType().GetMethod(
+            "RestoreInputInventory", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(restore, Is.Not.Null);
+        restore.Invoke(building, new object[] { inventory });
+    }
+
+    private static Dictionary<string, long> InputInventory(object building) =>
+        ((IEnumerable)Get(building, "InputInventory")).Cast<object>().ToDictionary(
+            entry => (string)Get(entry, "Key"),
+            entry => (long)Get(entry, "Value"));
+
+    private static object SavedProduct(object snapshot, string productName)
+    {
+        object province = ((IEnumerable)Get(snapshot, "provinces")).Cast<object>().Single(item =>
+            (string)Get(item, "name") == "Bebino");
+        return ((IEnumerable)Get(province, "market")).Cast<object>().Single(item =>
+            (string)Get(item, "name") == productName);
+    }
+
+    private static object SavedBuilding(
+        object snapshot,
+        string provinceName,
+        string buildingType)
+    {
+        object province = ((IEnumerable)Get(snapshot, "provinces")).Cast<object>().Single(item =>
+            (string)Get(item, "name") == provinceName);
+        return ((IEnumerable)Get(province, "buildings")).Cast<object>().Single(item =>
+            (string)Get(item, "type") == buildingType);
+    }
+
+    private static string Version1Fixture(string json)
+    {
+        string fixture = Regex.Replace(json, ",\"inputInventory\":\\[[^\\]]*\\]", string.Empty);
+        fixture = Regex.Replace(fixture,
+            ",\"(requestedDemand|unmetDemand|lastClearingPrice)\":-?[0-9]+", string.Empty);
+        return new Regex("\"version\":[0-9]+").Replace(
+            fixture, "\"version\":1", 1);
     }
 
     [Test]

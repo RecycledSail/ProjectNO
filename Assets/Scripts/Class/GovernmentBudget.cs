@@ -428,7 +428,7 @@ public partial class GovernmentBudget
             int weight = product.LastSupply + product.LastDemand;
             if (weight <= 0) continue;
 
-            weightedSum += product.Price * weight;
+            weightedSum += MarketPriceCalculator.ObservedPrice(product) * weight;
             totalWeight += weight;
         }
 

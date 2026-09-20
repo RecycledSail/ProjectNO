@@ -139,13 +139,13 @@ public class MoneyConservationIntegrationTests
         InvokeEconomicEngine("UpdateGDPWeekly",
             TestEconomyFactory.ListOf("Nation", context.Nation));
 
-        Assert.That(GetLong(context.Nation, "GDP"), Is.EqualTo(964L));
-        Assert.That(GetLong(context.Nation, "GDPAverage"), Is.EqualTo(964L));
+        Assert.That(GetLong(context.Nation, "GDP"), Is.EqualTo(1200L));
+        Assert.That(GetLong(context.Nation, "GDPAverage"), Is.EqualTo(1200L));
         Assert.That(((ICollection)ReflectionTestHelpers.Get(
             context.Nation, "GDPHistory")).Count, Is.EqualTo(gdpHistoryBefore + 1));
         Assert.That(((IEnumerable)ReflectionTestHelpers.Get(context.Nation, "GDPHistory"))
             .Cast<object>().Select(value => Convert.ToInt64(value)),
-            Is.EqualTo(new[] { 964L }));
+            Is.EqualTo(new[] { 1200L }));
         Assert.That(Balance(context.Treasury), Is.EqualTo(treasuryBeforeGdp));
         Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"),
             Is.EqualTo(weeklyTaxBeforeGdp));

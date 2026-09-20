@@ -5,7 +5,7 @@ using UnityEngine;
 
 public static class SaveManager
 {
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
     public static string LastError { get; private set; }
 
     public static string GetSavePath(string name)
@@ -92,10 +92,37 @@ public static class SaveManager
         var data = JsonUtility.FromJson<SaveDataFormat>(File.ReadAllText(path));
         if (data == null || data.format != "ProjectNO")
             throw new InvalidDataException("이전 저장 형식에는 경제·건설 상태가 없어 복원할 수 없습니다. 새 게임에서 저장해 주세요.");
+        if (data.version == 1) MigrateVersion1To2(data);
         if (data.version != CurrentVersion)
             throw new InvalidDataException($"지원하지 않는 저장 버전입니다: {data.version}");
         GameSaveState.ValidateHeader(data);
         return data;
+    }
+
+    private static void MigrateVersion1To2(SaveDataFormat data)
+    {
+        void MigrateMarket(List<ProductData> market)
+        {
+            if (market == null) return;
+            foreach (ProductData product in market)
+            {
+                if (product == null) continue;
+                product.requestedDemand = product.demand;
+                product.unmetDemand = 0;
+                product.lastClearingPrice = product.price;
+            }
+        }
+
+        foreach (NationData nation in data.nations ?? new List<NationData>())
+            if (nation != null) MigrateMarket(nation.market);
+        foreach (ProvinceData province in data.provinces ?? new List<ProvinceData>())
+        {
+            if (province == null) continue;
+            MigrateMarket(province.market);
+            foreach (BuildingData building in province.buildings ?? new List<BuildingData>())
+                if (building != null) building.inputInventory ??= new List<AmountData>();
+        }
+        data.version = CurrentVersion;
     }
 
     private static bool Fail(string operation, Exception exception)
@@ -191,6 +218,7 @@ public static class SaveManager
         public string type, owner;
         public int level, previousGain;
         public double manhoursLeft;
+        public List<AmountData> inputInventory = new();
         // Free slot positions affect the priority of subsequent projects.
         public List<CompanySlotData> slots = new();
     }
@@ -206,7 +234,7 @@ public static class SaveManager
     [Serializable] public sealed class ProductData
     {
         public string name;
-        public int price, lastPrice, demand, supply;
+        public int price, lastPrice, demand, supply, requestedDemand, unmetDemand, lastClearingPrice;
         public float elasticity;
         public List<AmountData> lots = new();
     }
