@@ -204,6 +204,95 @@ public class SaveRoundTripTests
         Assert.That(Global("PROVINCES")["Bebino"], Is.SameAs(before));
     }
 
+    [TestCase("duplicate")]
+    [TestCase("null")]
+    [TestCase("blank-key")]
+    [TestCase("overflow")]
+    [TestCase("zero")]
+    [TestCase("negative")]
+    public void InvalidProductLots_DoNotReplaceLiveWorld(string defect)
+    {
+        object before = Province;
+        object snapshot = Capture();
+        IList lots = (IList)Get(SavedProduct(snapshot, "Iron"), "lots");
+        string accountId = SavedAccountId(snapshot);
+        switch (defect)
+        {
+            case "duplicate":
+                lots.Add(Amount(accountId, 1L));
+                lots.Add(Amount(accountId, 2L));
+                break;
+            case "null": lots.Add(null); break;
+            case "blank-key": lots.Add(Amount("", 1L)); break;
+            case "overflow": lots.Add(Amount(accountId, (long)int.MaxValue + 1L)); break;
+            case "zero": lots.Add(Amount(accountId, 0L)); break;
+            case "negative": lots.Add(Amount(accountId, -1L)); break;
+        }
+
+        AssertRestoreRejectsWithoutPublishing(snapshot, before);
+    }
+
+    [TestCase("duplicate")]
+    [TestCase("null")]
+    public void MalformedFactoryInputAmounts_DoNotReplaceLiveWorld(string defect)
+    {
+        AddTwoInputFactory();
+        object before = Province;
+        object snapshot = Capture();
+        IList inputs = (IList)Get(SavedBuilding(snapshot, "Bebino", "SwordSmith"), "inputInventory");
+        if (defect == "duplicate")
+        {
+            inputs.Add(Amount("Iron", 1L));
+            inputs.Add(Amount("Iron", 2L));
+        }
+        else inputs.Add(null);
+
+        AssertRestoreRejectsWithoutPublishing(snapshot, before);
+    }
+
+    [TestCase("nation-market")]
+    [TestCase("province-market")]
+    [TestCase("product-lots")]
+    [TestCase("province-buildings")]
+    [TestCase("building-inputs")]
+    public void NullRequiredNestedCollections_DoNotReplaceLiveWorld(string collection)
+    {
+        AddTwoInputFactory();
+        object before = Province;
+        object snapshot = Capture();
+        object province = SavedProvince(snapshot, "Bebino");
+        switch (collection)
+        {
+            case "nation-market": Set(SavedNation(snapshot, "Nation1"), "market", null); break;
+            case "province-market": Set(province, "market", null); break;
+            case "product-lots": Set(SavedProduct(snapshot, "Iron"), "lots", null); break;
+            case "province-buildings": Set(province, "buildings", null); break;
+            case "building-inputs": Set(SavedBuilding(snapshot, "Bebino", "SwordSmith"), "inputInventory", null); break;
+        }
+
+        AssertRestoreRejectsWithoutPublishing(snapshot, before);
+    }
+
+    [TestCase("market")]
+    [TestCase("buildings")]
+    public void Version1Migration_RejectsMissingRequiredLegacyCollections(string collection)
+    {
+        object before = Province;
+        object snapshot = Capture();
+        Set(snapshot, "version", 1);
+        object province = SavedProvince(snapshot, "Bebino");
+        Set(province, collection, null);
+
+        MethodInfo migrate = Find("SaveManager").GetMethod(
+            "MigrateVersion1To2", BindingFlags.Static | BindingFlags.NonPublic);
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
+            () => migrate.Invoke(null, new object[] { snapshot }));
+
+        Assert.That(exception.InnerException, Is.TypeOf<InvalidDataException>());
+        Assert.That(Province, Is.SameAs(before));
+        Assert.That(Global("PROVINCES")["Bebino"], Is.SameAs(before));
+    }
+
     [Test]
     public void NationalProvinceOrder_IsPreservedForSubsequentSimulation()
     {
@@ -348,10 +437,37 @@ public class SaveRoundTripTests
             entry => (string)Get(entry, "Key"),
             entry => (long)Get(entry, "Value"));
 
+    private void AssertRestoreRejectsWithoutPublishing(object snapshot, object before)
+    {
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
+            () => Static("GameSaveState", "Restore", snapshot));
+        Assert.That(exception.InnerException, Is.TypeOf<InvalidDataException>());
+        Assert.That(Province, Is.SameAs(before));
+        Assert.That(Global("PROVINCES")["Bebino"], Is.SameAs(before));
+    }
+
+    private static object Amount(string key, long value)
+    {
+        object amount = Activator.CreateInstance(Find("SaveManager+AmountData"));
+        Set(amount, "key", key);
+        Set(amount, "value", value);
+        return amount;
+    }
+
+    private static string SavedAccountId(object snapshot) =>
+        (string)Get(((IList)Get(snapshot, "accounts"))[0], "id");
+
+    private static object SavedNation(object snapshot, string nationName) =>
+        ((IEnumerable)Get(snapshot, "nations")).Cast<object>().Single(item =>
+            (string)Get(item, "name") == nationName);
+
+    private static object SavedProvince(object snapshot, string provinceName) =>
+        ((IEnumerable)Get(snapshot, "provinces")).Cast<object>().Single(item =>
+            (string)Get(item, "name") == provinceName);
+
     private static object SavedProduct(object snapshot, string productName)
     {
-        object province = ((IEnumerable)Get(snapshot, "provinces")).Cast<object>().Single(item =>
-            (string)Get(item, "name") == "Bebino");
+        object province = SavedProvince(snapshot, "Bebino");
         return ((IEnumerable)Get(province, "market")).Cast<object>().Single(item =>
             (string)Get(item, "name") == productName);
     }
@@ -361,8 +477,7 @@ public class SaveRoundTripTests
         string provinceName,
         string buildingType)
     {
-        object province = ((IEnumerable)Get(snapshot, "provinces")).Cast<object>().Single(item =>
-            (string)Get(item, "name") == provinceName);
+        object province = SavedProvince(snapshot, provinceName);
         return ((IEnumerable)Get(province, "buildings")).Cast<object>().Single(item =>
             (string)Get(item, "type") == buildingType);
     }

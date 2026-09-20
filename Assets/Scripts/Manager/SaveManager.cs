@@ -103,24 +103,32 @@ public static class SaveManager
     {
         void MigrateMarket(List<ProductData> market)
         {
-            if (market == null) return;
+            GameSaveState.Require(market != null, "Missing required legacy market.");
             foreach (ProductData product in market)
             {
-                if (product == null) continue;
+                GameSaveState.Require(product != null, "Invalid legacy market product.");
                 product.requestedDemand = product.demand;
                 product.unmetDemand = 0;
                 product.lastClearingPrice = product.price;
             }
         }
 
-        foreach (NationData nation in data.nations ?? new List<NationData>())
-            if (nation != null) MigrateMarket(nation.market);
-        foreach (ProvinceData province in data.provinces ?? new List<ProvinceData>())
+        GameSaveState.Require(data.nations != null && data.provinces != null,
+            "Missing required legacy world collection.");
+        foreach (NationData nation in data.nations)
         {
-            if (province == null) continue;
+            GameSaveState.Require(nation != null, "Invalid legacy nation.");
+            MigrateMarket(nation.market);
+        }
+        foreach (ProvinceData province in data.provinces)
+        {
+            GameSaveState.Require(province != null && province.buildings != null, "Invalid legacy province.");
             MigrateMarket(province.market);
-            foreach (BuildingData building in province.buildings ?? new List<BuildingData>())
-                if (building != null) building.inputInventory ??= new List<AmountData>();
+            foreach (BuildingData building in province.buildings)
+            {
+                GameSaveState.Require(building != null, "Invalid legacy building.");
+                building.inputInventory ??= new List<AmountData>();
+            }
         }
         data.version = CurrentVersion;
     }
