@@ -40,6 +40,25 @@ public class ConstructionProcurementTests
     }
 
     [Test]
+    public void CollectOrders_UsesCapturedAccessAfterProvinceAccessDrifts()
+    {
+        Context c = new(100);
+        object cachedIron = c.Product("Iron", 10, 10);
+        object project = c.Project("project", ("Iron", 1));
+        object capturedAccess = c.CaptureAccess();
+        object province = Get(project, "TargetProvince");
+        Set(province, "isConnectedToCapital", false);
+        Set(province, "market", null);
+        c.Seal();
+
+        IReadOnlyList<object> orders = c.CollectWithAccess(capturedAccess, out IDictionary budgets, project);
+
+        Assert.That(orders, Has.Count.EqualTo(1));
+        Assert.That(Get(orders[0], "Product"), Is.SameAs(cachedIron));
+        Assert.That(budgets[c.Buyer], Is.EqualTo(87L));
+    }
+
+    [Test]
     public void Recipient_OnePreparedReceiptCommitsAllProjectMaterialsAndSpending()
     {
         Context c = new(1000);
@@ -464,11 +483,17 @@ public class ConstructionProcurementTests
         }
 
         public IReadOnlyList<object> Collect(out IDictionary budgets, params object[] projects)
+            => CollectWithAccess(CaptureAccess(), out budgets, projects);
+
+        public object CaptureAccess() =>
+            ReflectionTestHelpers.New("MarketAccessContext", "test", Products, ArgumentLedger);
+
+        public IReadOnlyList<object> CollectWithAccess(object access, out IDictionary budgets,
+            params object[] projects)
         {
             Type account = ReflectionTestHelpers.Find("MoneyAccount");
             budgets = (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(account, typeof(long)));
             budgets.Add(Buyer, Get(Buyer, "Balance"));
-            object access = ReflectionTestHelpers.New("MarketAccessContext", "test", Products, ArgumentLedger);
             MethodInfo collect = ReflectionTestHelpers.Find("ConstructionProcurement").GetMethod("CollectOrders");
             Assert.That(collect, Is.Not.Null, "Missing ConstructionProcurement.CollectOrders");
             object result = collect.Invoke(null, new[]

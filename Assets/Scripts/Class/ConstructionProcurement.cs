@@ -20,8 +20,7 @@ public static class ConstructionProcurement
         foreach (ConstructionMandate mandate in mandates)
         {
             if (mandate == null || !mandate.IsActive || string.IsNullOrWhiteSpace(mandate.Id) ||
-                !ids.Add(mandate.Id) || !ReferenceEquals(mandate.TargetProvince.ActiveLedger, access.Ledger) ||
-                !ReferenceEquals(mandate.GetAccessibleProducts(), access.Products) ||
+                !ids.Add(mandate.Id) ||
                 !access.Ledger.OwnsAccount(mandate.Investor?.InvestmentAccount) ||
                 (mandate.EscrowAccount != null && !access.Ledger.OwnsAccount(mandate.EscrowAccount)))
                 throw new ArgumentException("Every mandate must be an active, unique participant in the supplied market.", nameof(mandates));
@@ -106,6 +105,12 @@ public static class ConstructionProcurement
             Dictionary<MoneyAccount, long> remainingBudgets = new();
             foreach (ConstructionMandate mandate in mandates)
             {
+                if (mandate == null ||
+                    !MarketAccess.TryResolve(mandate.TargetProvince, out MarketAccessContext resolved) ||
+                    !ReferenceEquals(resolved.Products, products) ||
+                    !ReferenceEquals(resolved.Ledger, ledger))
+                    return false;
+
                 MoneyAccount account = mandate?.Investor?.InvestmentAccount;
                 if (account != null && !remainingBudgets.ContainsKey(account))
                     remainingBudgets.Add(account, account.Balance);
