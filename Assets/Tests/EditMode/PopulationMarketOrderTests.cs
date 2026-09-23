@@ -13,6 +13,23 @@ public class PopulationMarketOrderTests
     private const string FoodC = "population-order-food-c";
 
     [Test]
+    public void CollectFoodOrders_ConfiguredTenPercentCapLimitsBidAndReservation()
+    {
+        using Context context = new();
+        object population = context.AddPopulation("configured-cap", 1_000, 1000L, 2.0);
+        context.Initialize();
+        context.AddProduct(FoodA, 100, 1);
+        context.SetFoods(FoodA);
+
+        object order = Items(Collect(context, settings:
+            ReflectionTestHelpers.New("MarketPriceSettings", 3000, 1000)), "Orders").Single();
+
+        Assert.That(Get(order, "MaximumUnitPrice"), Is.EqualTo(110));
+        Assert.That(Get(order, "ReservedBudget"), Is.EqualTo(110L));
+        Assert.That(context.Budgets[Get(population, "Account")], Is.EqualTo(890L));
+    }
+
+    [Test]
     public void CollectFoodOrders_ChoosesLowestPriceThenHighestStockThenNameWithoutMutation()
     {
         using Context context = new();
@@ -182,15 +199,19 @@ public class PopulationMarketOrderTests
         Assert.That(Get(positiveProduct, "Stock"), Is.EqualTo(10));
     }
 
-    private static object Collect(Context context, object access = null)
+    private static object Collect(Context context, object access = null, object settings = null)
     {
         GameObject gameObject = new("PopulationMarketOrderTests");
         try
         {
             object engine = gameObject.AddComponent(ReflectionTestHelpers.Find("EconomicEngine"));
-            MethodInfo method = engine.GetType().GetMethod("CollectFoodOrders", BindingFlags.Instance | BindingFlags.Public);
+            object[] arguments = settings == null
+                ? new[] { context.Province, access ?? context.LocalAccess, context.Budgets }
+                : new[] { context.Province, access ?? context.LocalAccess, context.Budgets, settings };
+            MethodInfo method = engine.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .SingleOrDefault(candidate => candidate.Name == "CollectFoodOrders" && candidate.GetParameters().Length == arguments.Length);
             Assert.That(method, Is.Not.Null, "Missing EconomicEngine.CollectFoodOrders.");
-            return method.Invoke(engine, new[] { context.Province, access ?? context.LocalAccess, context.Budgets });
+            return method.Invoke(engine, arguments);
         }
         finally
         {

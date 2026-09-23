@@ -21,6 +21,23 @@ public class FactoryMarketOrderTests
     }
 
     [Test]
+    public void Collect_ConfiguredTenPercentCapLimitsBidAndReservation()
+    {
+        Context context = new(1000L, recipeNames);
+        object building = context.AddFactory("configured-cap", 1L, 1L,
+            new Dictionary<string, int> { [Iron] = 1 });
+        context.AddProduct(Iron, 100);
+        context.Initialize();
+
+        object order = Collect(context, true,
+            ReflectionTestHelpers.New("MarketPriceSettings", 3000, 1000)).Single();
+
+        Assert.That(Get(order, "MaximumUnitPrice"), Is.EqualTo(110));
+        Assert.That(Get(order, "ReservedBudget"), Is.EqualTo(110L));
+        Assert.That(context.Budgets[Get(building, "Account")], Is.EqualTo(890L));
+    }
+
+    [Test]
     public void Collect_MultiInputFactoryRequestsOnlyNextWeekShortfall()
     {
         Context context = new(1_000L, recipeNames);
@@ -163,15 +180,18 @@ public class FactoryMarketOrderTests
         Assert.That(InputQuantities(building), Is.Empty);
     }
 
-    private static IReadOnlyList<object> Collect(Context context, bool payrollPaid)
+    private static IReadOnlyList<object> Collect(Context context, bool payrollPaid, object settings = null)
     {
         Type type = AppDomain.CurrentDomain.GetAssemblies().Select(assembly => assembly.GetType("FactoryMarketOrders"))
             .FirstOrDefault(candidate => candidate != null);
         Assert.That(type, Is.Not.Null, "Missing FactoryMarketOrders collector.");
-        MethodInfo method = type.GetMethod("Collect", BindingFlags.Public | BindingFlags.Static);
+        object[] arguments = settings == null
+            ? new[] { context.Province, context.Access, (object)payrollPaid, context.Budgets }
+            : new[] { context.Province, context.Access, (object)payrollPaid, context.Budgets, settings };
+        MethodInfo method = type.GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .SingleOrDefault(candidate => candidate.Name == "Collect" && candidate.GetParameters().Length == arguments.Length);
         Assert.That(method, Is.Not.Null, "Missing FactoryMarketOrders.Collect.");
-        return ((IEnumerable)method.Invoke(null,
-            new[] { context.Province, context.Access, (object)payrollPaid, context.Budgets }))
+        return ((IEnumerable)method.Invoke(null, arguments))
             .Cast<object>().ToList().AsReadOnly();
     }
 

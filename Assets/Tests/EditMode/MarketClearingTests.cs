@@ -99,6 +99,7 @@ public class MarketClearingTests
         object plan = Plan(new[] { Order("A", 4, 12, minimum: 4), Order("B", 4, 12, minimum: 4) });
         Assert.That(Items(plan, "Fills"), Is.Empty);
         Assert.That(Number(Result(plan, product), "SoldQuantity"), Is.Zero);
+        Assert.That(Number(Result(plan, product), "ClearingPrice"), Is.EqualTo(10));
     }
 
     [Test]
@@ -259,6 +260,35 @@ public class MarketClearingTests
         Assert.That(((IEnumerable)args[1]).Cast<MarketClearingRecipientProxy>().Sum(receipt => receipt.Commits), Is.Zero);
     }
 
+    [Test]
+    public void PrepareReceipts_EnumeratesFillsOnceWhenGroupingRecipients()
+    {
+        Supply(10);
+        object first = Recipient("first");
+        object second = Recipient("second");
+        object plan = Plan(new[]
+        {
+            Order("A", 2, 12, recipient: first),
+            Order("B", 2, 12, recipient: second)
+        });
+        FieldInfo fillsField = plan.GetType().GetField(
+            "<Fills>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(fillsField, Is.Not.Null);
+        var original = (IList)fillsField.GetValue(plan);
+        object singleEnumerationFills = typeof(DispatchProxy).GetMethod("Create")
+            .MakeGenericMethod(fillsField.FieldType, typeof(SingleEnumerationListProxy))
+            .Invoke(null, null);
+        var proxy = (SingleEnumerationListProxy)singleEnumerationFills;
+        proxy.Items = original;
+        fillsField.SetValue(plan, singleEnumerationFills);
+
+        object[] args = { TestEconomyFactory.ListOf("IMarketOrderRecipient"), null };
+        Assert.That((bool)plan.GetType().GetMethod("PrepareReceipts").Invoke(plan, args), Is.True);
+        Assert.That(proxy.EnumerationCount, Is.EqualTo(1));
+        Assert.That(((MarketClearingRecipientProxy)first).Fills.Count, Is.EqualTo(1));
+        Assert.That(((MarketClearingRecipientProxy)second).Fills.Count, Is.EqualTo(1));
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public void PrepareReceipts_RejectsFailedOrNullPreparationWithoutCommitting(bool nullReceipt)
@@ -318,6 +348,65 @@ public class MarketClearingTests
         Assert.That(Snapshot(), Is.EqualTo(before));
     }
 
+    [Test]
+    public void TrySettle_PriorLegacyPurchaseRejectsBeforeAnySettlementMutation()
+    {
+        Supply(10);
+        ReflectionTestHelpers.Set(ledger, "SalesTaxBasisPoints", 1000);
+        ReflectionTestHelpers.Call<object>(ledger, "SealInitialization");
+        object purchase = ReflectionTestHelpers.Find("MarketSettlement").GetMethod("TryPurchase")
+            .Invoke(null, new[] { product, buyer, (object)1, ledger });
+        Assert.That(ReflectionTestHelpers.Get(purchase, "Success"), Is.True);
+        var recipient = (MarketClearingRecipientProxy)Recipient("prior-sale");
+        string before = Snapshot();
+        object plan = Plan(new[] { Order("A", 1, 12, recipient: recipient) });
+        AssertRejectedWithoutMutation(plan, recipient, before);
+    }
+
+    [TestCase("Price")]
+    [TestCase("LastPrice")]
+    [TestCase("LastDemand")]
+    [TestCase("LastSupply")]
+    [TestCase("RequestedDemand")]
+    [TestCase("UnmetDemand")]
+    [TestCase("LastClearingPrice")]
+    [TestCase("Elasticity")]
+    [TestCase("ProductName")]
+    [TestCase("inventory-roundtrip")]
+    [TestCase("week-reset")]
+    public void TrySettle_StaleProductPlanRejectsBeforeAnySettlementMutation(string change)
+    {
+        Supply(10);
+        ReflectionTestHelpers.Call<object>(product, "BeginWeek");
+        var recipient = (MarketClearingRecipientProxy)Recipient("stale");
+        object plan = Plan(new[] { Order("A", 1, 12, recipient: recipient) });
+        ReflectionTestHelpers.Call<object>(ledger, "SealInitialization");
+        if (change == "inventory-roundtrip")
+        {
+            object sale = ReflectionTestHelpers.Call<object>(product, "PlanSale", 1);
+            ReflectionTestHelpers.Call<object>(product, "CommitSale", sale);
+            Supply(1);
+            ReflectionTestHelpers.Set(product, "LastSupply", 0);
+        }
+        else if (change == "week-reset") ReflectionTestHelpers.Call<object>(product, "BeginWeek");
+        else if (change == "Elasticity") ReflectionTestHelpers.Set(product, change, float.MaxValue);
+        else if (change == "ProductName") ReflectionTestHelpers.Set(product, change, "Renamed");
+        else ReflectionTestHelpers.Set(product, change, Number(product, change) + 1);
+        AssertRejectedWithoutMutation(plan, recipient, Snapshot());
+    }
+
+    private void AssertRejectedWithoutMutation(object plan, MarketClearingRecipientProxy recipient, string before)
+    {
+        object[] args = { ledger, TestEconomyFactory.ListOf("IMarketOrderRecipient"), null };
+        bool settled = true;
+        Assert.DoesNotThrow(() => settled = (bool)plan.GetType().GetMethod("TrySettle").Invoke(plan, args));
+        Assert.That(settled, Is.False);
+        Assert.That(args[2], Is.Not.Empty);
+        Assert.That(Snapshot(), Is.EqualTo(before));
+        Assert.That(recipient.Commits, Is.Zero);
+        Assert.That(recipient.Prepared?.Commits ?? 0, Is.Zero);
+    }
+
     private object Order(string id, int quantity, int price, int minimum = 1, long? budget = null, object account = null, object item = null, object recipient = null) =>
         ReflectionTestHelpers.New("MarketOrder", id, account ?? buyer, item ?? product, quantity, price, budget ?? (long)quantity * price, minimum, recipient ?? Recipient(id));
     private static object Account(string id, long balance) => ReflectionTestHelpers.New("MoneyAccount", id, balance);
@@ -358,7 +447,7 @@ public class MarketClearingTests
         foreach (var pair in new Dictionary<string, int> { ["LastPrice"] = 8, ["LastDemand"] = 2, ["RequestedDemand"] = 3, ["UnmetDemand"] = 1, ["LastClearingPrice"] = 9 })
             ReflectionTestHelpers.Set(product, pair.Key, pair.Value);
     }
-    private string Snapshot() => string.Join("|", new[] { "Price", "LastPrice", "Stock", "LastDemand", "LastSupply", "RequestedDemand", "UnmetDemand", "LastClearingPrice", "Elasticity" }.Select(n => ReflectionTestHelpers.Get(product, n)))
+    private string Snapshot() => string.Join("|", new[] { "ProductName", "Price", "LastPrice", "Stock", "LastDemand", "LastSupply", "RequestedDemand", "UnmetDemand", "LastClearingPrice", "Elasticity" }.Select(n => ReflectionTestHelpers.Get(product, n)))
         + ";" + string.Join("|", new[] { treasury, seller, buyer }.Select(a => ReflectionTestHelpers.Get(a, "Balance")))
         + ";" + ReflectionTestHelpers.Get(ledger, "MoneySupply") + ";" + ReflectionTestHelpers.Get(ledger, "WeeklyTaxRevenue")
         + ";" + ((ICollection)ReflectionTestHelpers.Get(ledger, "Transactions")).Count
@@ -396,5 +485,25 @@ public class MarketClearingRecipientProxy : DispatchProxy
         Prepared = (MarketClearingRecipientProxy)args[1];
         if (Prepared != null) Prepared.ObservedProduct = ObservedProduct;
         return !Reject;
+    }
+}
+
+public class SingleEnumerationListProxy : DispatchProxy
+{
+    public IList Items;
+    public int EnumerationCount;
+
+    protected override object Invoke(MethodInfo method, object[] args)
+    {
+        if (method.Name == "get_Count") return Items.Count;
+        if (method.Name == "get_Item") return Items[(int)args[0]];
+        if (method.Name == "GetEnumerator")
+        {
+            EnumerationCount++;
+            if (EnumerationCount > 1)
+                throw new InvalidOperationException("The fill collection was enumerated more than once.");
+            return Items.GetEnumerator();
+        }
+        throw new MissingMethodException(method.Name);
     }
 }

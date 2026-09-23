@@ -10,6 +10,7 @@ public sealed class MarketProductClearingResult
     public int AvailableStock { get; }
     public int ClearingPrice { get; }
     public int NextPrice { get; }
+    internal ProductState.PreparedClearingStatistics Statistics { get; }
 
     internal MarketProductClearingResult(ProductState product, int requestedDemand, int soldQuantity,
         int availableStock, int clearingPrice, int nextPrice)
@@ -20,6 +21,8 @@ public sealed class MarketProductClearingResult
         AvailableStock = availableStock;
         ClearingPrice = clearingPrice;
         NextPrice = nextPrice;
+        Statistics = new ProductState.PreparedClearingStatistics(product, requestedDemand,
+            soldQuantity, availableStock, clearingPrice, nextPrice);
     }
 }
 
@@ -27,18 +30,20 @@ public sealed class MarketClearingPlan
 {
     private readonly IReadOnlyList<IMarketOrderRecipient> _recipients;
     internal MarketPriceSettings Settings { get; }
+    internal int SortedOrderCount { get; }
     public IReadOnlyList<MarketBuyerRequest> Purchases { get; }
     public IReadOnlyList<MarketOrderFill> Fills { get; }
     public IReadOnlyList<MarketProductClearingResult> ProductResults { get; }
 
     internal MarketClearingPlan(IEnumerable<MarketOrderFill> fills,
         IEnumerable<MarketProductClearingResult> productResults,
-        IEnumerable<IMarketOrderRecipient> recipients, MarketPriceSettings settings)
+        IEnumerable<IMarketOrderRecipient> recipients, MarketPriceSettings settings, int sortedOrderCount)
     {
         Fills = fills.ToList().AsReadOnly();
         ProductResults = productResults.ToList().AsReadOnly();
         _recipients = recipients.ToList().AsReadOnly();
         Settings = settings;
+        SortedOrderCount = sortedOrderCount;
         Purchases = Fills.Select(fill => new MarketBuyerRequest(
             fill.Order.Id, fill.Order.Buyer, fill.Order.Product, fill.Quantity, fill.UnitPrice)).ToList().AsReadOnly();
     }
@@ -58,11 +63,22 @@ public sealed class MarketClearingPlan
             recipients[recipient.Id] = recipient;
         }
 
+        var fillsByRecipient = new Dictionary<IMarketOrderRecipient, List<MarketOrderFill>>(
+            RecipientReferenceComparer.Instance);
+        foreach (IMarketOrderRecipient recipient in recipients.Values)
+            fillsByRecipient.Add(recipient, new List<MarketOrderFill>());
+        foreach (MarketOrderFill fill in Fills)
+        {
+            if (!fillsByRecipient.TryGetValue(fill.Order.Recipient,
+                    out List<MarketOrderFill> recipientFills))
+                return false;
+            recipientFills.Add(fill);
+        }
+
         List<IPreparedMarketReceipt> prepared = new();
         foreach (IMarketOrderRecipient recipient in recipients.Values.OrderBy(r => r.Id, StringComparer.Ordinal))
         {
-            IReadOnlyList<MarketOrderFill> fills = Fills
-                .Where(fill => ReferenceEquals(fill.Order.Recipient, recipient)).ToList().AsReadOnly();
+            IReadOnlyList<MarketOrderFill> fills = fillsByRecipient[recipient].AsReadOnly();
             if (!recipient.TryPrepareReceipt(fills, out IPreparedMarketReceipt receipt) || receipt == null)
                 return false;
             prepared.Add(receipt);
@@ -77,8 +93,12 @@ public sealed class MarketClearingPlan
         error = null;
         if (ledger == null)
             return Fail("A ledger is required for market settlement.", out error);
+        if (ProductResults.Any(result => !result.Statistics.IsCurrent))
+            return Fail("Market statistics require an unchanged plan with no prior sales.", out error);
         if (!PrepareReceipts(additionalRecipients, out IReadOnlyList<IPreparedMarketReceipt> receipts))
             return Fail("Market receipt preparation failed.", out error);
+        if (ProductResults.Any(result => !result.Statistics.IsCurrent))
+            return Fail("Market state changed during receipt preparation.", out error);
         if (Purchases.Count > 0 && !MarketSettlement.TryPurchaseBatch(Purchases, ledger))
             return Fail("Market purchase settlement failed.", out error);
 
@@ -86,12 +106,7 @@ public sealed class MarketClearingPlan
             receipt.Commit();
 
         foreach (MarketProductClearingResult result in ProductResults)
-            result.Product.CommitClearingStatistics(
-                result.RequestedDemand,
-                result.SoldQuantity,
-                result.AvailableStock,
-                result.ClearingPrice,
-                Settings);
+            result.Statistics.Commit();
         return true;
     }
 
@@ -99,6 +114,17 @@ public sealed class MarketClearingPlan
     {
         error = message;
         return false;
+    }
+
+    private sealed class RecipientReferenceComparer : IEqualityComparer<IMarketOrderRecipient>
+    {
+        internal static RecipientReferenceComparer Instance { get; } = new();
+
+        public bool Equals(IMarketOrderRecipient left, IMarketOrderRecipient right) =>
+            ReferenceEquals(left, right);
+
+        public int GetHashCode(IMarketOrderRecipient recipient) =>
+            System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(recipient);
     }
 }
 
@@ -164,6 +190,7 @@ public static class MarketClearingEngine
 
             List<MarketOrderFill> fills = new();
             List<MarketProductClearingResult> results = new();
+            int sortedOrderCount = 0;
             foreach (ProductState product in eligible.Keys.OrderBy(p => p.ProductName, StringComparer.Ordinal))
             {
                 List<MarketOrder> productOrders = eligible[product];
@@ -177,6 +204,7 @@ public static class MarketClearingEngine
                 }
                 else if (available > 0)
                 {
+                    sortedOrderCount = checked(sortedOrderCount + productOrders.Count);
                     productOrders.Sort((left, right) =>
                     {
                         int price = right.MaximumUnitPrice.CompareTo(left.MaximumUnitPrice);
@@ -211,6 +239,7 @@ public static class MarketClearingEngine
                     fills.Add(new MarketOrderFill(quantity.Key, quantity.Value, clearingPrice));
                     sold = checked(sold + quantity.Value);
                 }
+                if (sold == 0) clearingPrice = product.Price;
                 int nextPrice = MarketPriceCalculator.CalculateNextPrice(
                     product.Price, demand[product], available, product.Elasticity, settings);
                 results.Add(new MarketProductClearingResult(product, demand[product], sold,
@@ -220,7 +249,7 @@ public static class MarketClearingEngine
             // Canonical presentation order is separate from bid priority sorting.
             fills.Sort((left, right) => string.CompareOrdinal(left.Order.Id, right.Order.Id));
             plan = new MarketClearingPlan(fills, results,
-                recipients.Values.OrderBy(r => r.Id, StringComparer.Ordinal), settings);
+                recipients.Values.OrderBy(r => r.Id, StringComparer.Ordinal), settings, sortedOrderCount);
             return true;
         }
         catch (OverflowException)

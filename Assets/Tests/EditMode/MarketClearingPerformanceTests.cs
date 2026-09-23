@@ -25,7 +25,8 @@ public class MarketClearingPerformanceTests
         MethodInfo accessMethod = ReflectionTestHelpers.Find("MarketAccess")
             .GetMethod("TryResolve", BindingFlags.Public | BindingFlags.Static);
         MethodInfo collectMethod = ReflectionTestHelpers.Find("FactoryMarketOrders")
-            .GetMethod("Collect", BindingFlags.Public | BindingFlags.Static);
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(method => method.Name == "Collect" && method.GetParameters().Length == 4);
         Assert.That(accessMethod, Is.Not.Null);
         Assert.That(collectMethod, Is.Not.Null);
 

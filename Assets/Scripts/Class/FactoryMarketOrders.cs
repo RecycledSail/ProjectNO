@@ -10,7 +10,13 @@ public static class FactoryMarketOrders
         MarketAccessContext access,
         bool payrollPaid,
         IDictionary<MoneyAccount, long> remainingBudgets)
+        => Collect(province, access, payrollPaid, remainingBudgets, GlobalVariables.MARKET_PRICE_SETTINGS);
+
+    public static IReadOnlyList<MarketOrder> Collect(
+        Province province, MarketAccessContext access, bool payrollPaid,
+        IDictionary<MoneyAccount, long> remainingBudgets, MarketPriceSettings settings)
     {
+        if (settings == null) throw new ArgumentNullException(nameof(settings));
         if (province == null) throw new ArgumentNullException(nameof(province));
         if (access.Products == null || access.Ledger == null)
             throw new ArgumentException("A complete market access context is required.", nameof(access));
@@ -59,8 +65,8 @@ public static class FactoryMarketOrders
                 if (quantity <= 0)
                     continue;
 
-                int priceCap = PriceCap(input.Product.Price);
-                int maximumUnitPrice = checked((int)Math.Min(allocation / quantity, priceCap));
+                int maximumUnitPrice = MarketPriceCalculator.CalculateMaximumBid(
+                    input.Product.Price, (int)quantity, allocation, settings);
                 long orderBudget = checked(quantity * maximumUnitPrice);
                 string orderId = OrderId(building.Account.Id, input.Product.ProductName);
                 if (!orderIds.Add(orderId))
@@ -170,9 +176,6 @@ public static class FactoryMarketOrders
 
     private static long FloorShare(long budget, BigInteger weight, BigInteger totalWeight) =>
         (long)((BigInteger)budget * weight / totalWeight);
-
-    private static int PriceCap(int referencePrice) => checked((int)Math.Min(int.MaxValue,
-        ((long)referencePrice * 5L + 3L) / 4L));
 
     private static string OrderId(string accountId, string productName) =>
         $"factory:{Escape(accountId)}{Escape(productName)}";

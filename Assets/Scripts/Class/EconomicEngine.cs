@@ -7,7 +7,13 @@ public partial class EconomicEngine : MonoBehaviour
 {
     public PopulationMarketOrderBatch CollectFoodOrders(Province province,
         MarketAccessContext access, IDictionary<MoneyAccount, long> remainingBudgets)
+        => CollectFoodOrders(province, access, remainingBudgets, GlobalVariables.MARKET_PRICE_SETTINGS);
+
+    public PopulationMarketOrderBatch CollectFoodOrders(Province province,
+        MarketAccessContext access, IDictionary<MoneyAccount, long> remainingBudgets,
+        MarketPriceSettings settings)
     {
+        if (settings == null) throw new ArgumentNullException(nameof(settings));
         if (province == null) throw new ArgumentNullException(nameof(province));
         if (access.Products == null || access.Ledger == null)
             throw new ArgumentException("A complete market access context is required.", nameof(access));
@@ -60,7 +66,8 @@ public partial class EconomicEngine : MonoBehaviour
                 continue;
             }
 
-            int maximumUnitPrice = MaximumUnitPrice(product.Price, quantity, availableBudget);
+            int maximumUnitPrice = MarketPriceCalculator.CalculateMaximumBid(
+                product.Price, quantity, availableBudget, settings);
             if (maximumUnitPrice < product.Price)
             {
                 nextBudgets.Add(account, availableBudget);
@@ -233,13 +240,6 @@ public partial class EconomicEngine : MonoBehaviour
         long affordable = availableBudget / product.Price;
         long quantity = Math.Min(population.GetNeededFood(), affordable);
         return quantity <= 0 ? 0 : checked((int)Math.Min(quantity, int.MaxValue));
-    }
-
-    private static int MaximumUnitPrice(int referencePrice, int quantity, long availableBudget)
-    {
-        int priceCap = checked((int)Math.Min(int.MaxValue,
-            ((long)referencePrice * 5L + 3L) / 4L));
-        return checked((int)Math.Min(priceCap, availableBudget / quantity));
     }
 
     private static string FoodOrderId(string accessId, string accountId, string productName) =>

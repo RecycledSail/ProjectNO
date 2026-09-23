@@ -56,6 +56,44 @@ public class WeeklyMarketSimulationTests
     }
 
     [Test]
+    public void Process_ConfiguredTenPercentCapReachesEveryCollector()
+    {
+        using TestWorld world = new("Task9CapNation", true);
+        world.AddPopulation(0, "configured-cap", 1_000, 1000L, 2d);
+        world.AddFactory(0, FactoryType, SharedProduct, FactoryOutput, 1, 1000L);
+        world.Initialize();
+        world.PlaceProject(0, ProjectType, 10, (SharedProduct, 1));
+        object product = world.AddNationalProduct(SharedProduct, 100, 1);
+
+        object report = world.Process(false, ReflectionTestHelpers.New("MarketPriceSettings", 3000, 1000));
+
+        Assert.That(ReportIds(report, "FailedMarketIds"), Is.Empty);
+        Assert.That(Get(report, "OrderCount"), Is.EqualTo(3));
+        // One unit for three rich buyers makes any adapter bidding 125 set the clearing price.
+        Assert.That(Get(product, "LastClearingPrice"), Is.EqualTo(110));
+        Assert.That(Get(product, "LastDemand"), Is.EqualTo(1));
+        Assert.That(Get(product, "Price"), Is.EqualTo(110));
+        world.AssertAudit();
+    }
+
+    [Test]
+    public void Process_FailedPlannerDoesNotReportUnperformedBidSorts()
+    {
+        using TestWorld world = new("Task9SortNation", true);
+        world.AddPopulation(0, "first", 1_000, 1000L, 2d);
+        world.AddPopulation(0, "second", 1_000, 1000L, 2d);
+        world.Initialize();
+        world.AddNationalProduct(SharedProduct, 100, 1,
+            ReflectionTestHelpers.New("MoneyAccount", "unregistered-sort-supplier", 0L));
+
+        object report = world.Process(false);
+
+        Assert.That(ReportIds(report, "FailedMarketIds"), Does.Contain("nation:Task9SortNation"));
+        Assert.That(Get(report, "OrderCount"), Is.EqualTo(2));
+        Assert.That(Get(report, "SortedOrderCount"), Is.Zero);
+    }
+
+    [Test]
     public void Process_ResidentsFactoriesAndConstructionClearOneSharedProductWithoutOrderBias()
     {
         SharedOutcome forward = RunSharedWorld(false);
@@ -400,7 +438,7 @@ public class WeeklyMarketSimulationTests
         public void Produce(int provinceIndex) =>
             ReflectionTestHelpers.Call<object>(provinces[provinceIndex], "ProduceGoodsWeekly");
 
-        public object Process(bool reverse)
+        public object Process(bool reverse, object settings = null)
         {
             object[] ordered = reverse ? provinces.Reverse().ToArray() : provinces;
             MethodInfo process = ReflectionTestHelpers.Find("WeeklyMarketSimulation").GetMethod(
@@ -412,7 +450,7 @@ public class WeeklyMarketSimulationTests
                 TestEconomyFactory.ListOf("Province", ordered),
                 paidProvinces,
                 engine,
-                ReflectionTestHelpers.New("MarketPriceSettings", 3000, 2500)
+                settings ?? ReflectionTestHelpers.New("MarketPriceSettings", 3000, 2500)
             });
         }
 

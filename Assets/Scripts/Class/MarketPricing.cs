@@ -19,6 +19,19 @@ public sealed class MarketPriceSettings
 
 public static class MarketPriceCalculator
 {
+    public static int CalculateMaximumBid(int referencePrice, int quantity,
+        long availableBudget, MarketPriceSettings settings)
+    {
+        if (referencePrice < 1 || quantity < 1 || availableBudget < 0)
+            throw new ArgumentOutOfRangeException();
+        if (settings == null) throw new ArgumentNullException(nameof(settings));
+        return (int)Math.Min(UpperPrice(referencePrice, settings), availableBudget / quantity);
+    }
+
+    private static int UpperPrice(int referencePrice, MarketPriceSettings settings) =>
+        (int)Math.Min(int.MaxValue,
+            ((long)referencePrice * (10_000 + settings.MaxWeeklyChangeBasisPoints) + 9_999) / 10_000);
+
     public static int ObservedPrice(ProductState product)
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
@@ -46,10 +59,9 @@ public static class MarketPriceCalculator
         double pressure = previousPrice * Math.Pow(ratio, elasticity);
         double smooth = settings.SmoothingBasisPoints / 10_000d;
         double candidate = previousPrice * (1d - smooth) + pressure * smooth;
-        int lower = Math.Max(1, (int)Math.Floor(previousPrice *
-            (1d - settings.MaxWeeklyChangeBasisPoints / 10_000d)));
-        int upper = Math.Max(1, (int)Math.Ceiling(previousPrice *
-            (1d + settings.MaxWeeklyChangeBasisPoints / 10_000d)));
+        int lower = (int)Math.Max(1,
+            (long)previousPrice * (10_000 - settings.MaxWeeklyChangeBasisPoints) / 10_000);
+        int upper = UpperPrice(previousPrice, settings);
 
         if (double.IsNaN(candidate) || double.IsInfinity(candidate))
             throw new OverflowException();

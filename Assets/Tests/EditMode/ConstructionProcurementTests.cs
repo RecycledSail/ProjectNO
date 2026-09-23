@@ -12,6 +12,22 @@ public class ConstructionProcurementTests
         .GetField("BUILDING_RECIPE").GetValue(null)).Clear();
 
     [Test]
+    public void CollectOrders_ConfiguredTenPercentCapLimitsBidAndReservation()
+    {
+        Context context = new(1000L);
+        context.Product("Iron", 100, 1);
+        object project = context.Project("configured-cap", ("Iron", 1));
+        context.Seal();
+        object order = context.CollectWithSettings(
+            ReflectionTestHelpers.New("MarketPriceSettings", 3000, 1000),
+            out IDictionary budgets, project).Single();
+
+        Assert.That(Get(order, "MaximumUnitPrice"), Is.EqualTo(110));
+        Assert.That(Get(order, "ReservedBudget"), Is.EqualTo(110L));
+        Assert.That(budgets[context.Buyer], Is.EqualTo(890L));
+    }
+
+    [Test]
     public void CollectOrders_ReservesInvestorBudgetAcrossProjectsAndMaterials()
     {
         Context c = new(100);
@@ -490,16 +506,24 @@ public class ConstructionProcurementTests
 
         public IReadOnlyList<object> CollectWithAccess(object access, out IDictionary budgets,
             params object[] projects)
+            => CollectWithSettings(null, out budgets, projects, access);
+
+        public IReadOnlyList<object> CollectWithSettings(object settings, out IDictionary budgets,
+            object project) => CollectWithSettings(settings, out budgets, new[] { project }, CaptureAccess());
+
+        private IReadOnlyList<object> CollectWithSettings(object settings, out IDictionary budgets,
+            object[] projects, object access)
         {
             Type account = ReflectionTestHelpers.Find("MoneyAccount");
             budgets = (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(account, typeof(long)));
             budgets.Add(Buyer, Get(Buyer, "Balance"));
-            MethodInfo collect = ReflectionTestHelpers.Find("ConstructionProcurement").GetMethod("CollectOrders");
+            object[] arguments = settings == null
+                ? new[] { TestEconomyFactory.ListOf("ConstructionMandate", projects), access, budgets }
+                : new[] { TestEconomyFactory.ListOf("ConstructionMandate", projects), access, budgets, settings };
+            MethodInfo collect = ReflectionTestHelpers.Find("ConstructionProcurement").GetMethods()
+                .SingleOrDefault(candidate => candidate.Name == "CollectOrders" && candidate.GetParameters().Length == arguments.Length);
             Assert.That(collect, Is.Not.Null, "Missing ConstructionProcurement.CollectOrders");
-            object result = collect.Invoke(null, new[]
-            {
-                TestEconomyFactory.ListOf("ConstructionMandate", projects), access, budgets
-            });
+            object result = collect.Invoke(null, arguments);
             return ((IEnumerable)result).Cast<object>().ToList().AsReadOnly();
         }
 

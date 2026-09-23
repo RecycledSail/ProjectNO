@@ -8,7 +8,13 @@ public static class ConstructionProcurement
         IReadOnlyList<ConstructionMandate> mandates,
         MarketAccessContext access,
         IDictionary<MoneyAccount, long> remainingBudgets)
+        => CollectOrders(mandates, access, remainingBudgets, GlobalVariables.MARKET_PRICE_SETTINGS);
+
+    public static IReadOnlyList<MarketOrder> CollectOrders(
+        IReadOnlyList<ConstructionMandate> mandates, MarketAccessContext access,
+        IDictionary<MoneyAccount, long> remainingBudgets, MarketPriceSettings settings)
     {
+        if (settings == null) throw new ArgumentNullException(nameof(settings));
         if (mandates == null) throw new ArgumentNullException(nameof(mandates));
         if (access.Products == null || access.Ledger == null)
             throw new ArgumentException("A complete market access context is required.", nameof(access));
@@ -75,9 +81,8 @@ public static class ConstructionProcurement
                     if (quantity == 0)
                         continue;
 
-                    long priceCap = Math.Min(int.MaxValue,
-                        checked((checked((long)item.Product.Price * 5L) + 3L) / 4L));
-                    int maximumUnitPrice = checked((int)Math.Min(weightedBudget / quantity, priceCap));
+                    int maximumUnitPrice = MarketPriceCalculator.CalculateMaximumBid(
+                        item.Product.Price, (int)quantity, weightedBudget, settings);
                     long orderBudget = checked(quantity * maximumUnitPrice);
                     orders.Add(new MarketOrder(OrderId(item.Project.Mandate.Id, item.Product.ProductName),
                         buyer.Account, item.Product, checked((int)quantity), maximumUnitPrice,

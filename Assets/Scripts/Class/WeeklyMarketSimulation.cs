@@ -101,11 +101,11 @@ public static class WeeklyMarketSimulation
         else
         {
             CollectPopulationOrders(provinceList, accessByProvince, markets,
-                remainingBudgets, economicEngine);
+                remainingBudgets, economicEngine, settings);
             CollectFactoryOrders(provinceList, accessByProvince, markets,
-                remainingBudgets, paid);
+                remainingBudgets, paid, settings);
             CollectConstructionOrders(projects, accessByProvince, markets,
-                remainingBudgets, directFailures);
+                remainingBudgets, directFailures, settings);
         }
 
         int orderCount = 0;
@@ -128,16 +128,16 @@ public static class WeeklyMarketSimulation
             List<ProductState> products = market.Products.Values
                 .OrderBy(product => product?.ProductName, StringComparer.Ordinal)
                 .ToList();
-            sortedOrderCount = AddSaturated(sortedOrderCount,
-                CountSortedOrders(orders, products));
-
             bool settled;
             try
             {
-                settled = MarketClearingEngine.TryPlan(
-                              orders, products, market.Ledger, settings,
-                              out MarketClearingPlan plan, out _) &&
-                          plan.TrySettle(market.Ledger, market.AdditionalRecipients, out _);
+                settled = false;
+                if (MarketClearingEngine.TryPlan(orders, products, market.Ledger, settings,
+                        out MarketClearingPlan plan, out _))
+                {
+                    sortedOrderCount = AddSaturated(sortedOrderCount, plan.SortedOrderCount);
+                    settled = plan.TrySettle(market.Ledger, market.AdditionalRecipients, out _);
+                }
             }
             catch (Exception exception) when (IsStructuralFailure(exception))
             {
@@ -168,7 +168,7 @@ public static class WeeklyMarketSimulation
         IReadOnlyDictionary<Province, MarketAccessContext> accessByProvince,
         IReadOnlyDictionary<Dictionary<string, ProductState>, MarketBatch> markets,
         IDictionary<MoneyAccount, long> remainingBudgets,
-        EconomicEngine economicEngine)
+        EconomicEngine economicEngine, MarketPriceSettings settings)
     {
         foreach (Province province in provinces)
         {
@@ -178,7 +178,7 @@ public static class WeeklyMarketSimulation
             try
             {
                 PopulationMarketOrderBatch batch = economicEngine.CollectFoodOrders(
-                    province, access, remainingBudgets);
+                    province, access, remainingBudgets, settings);
                 market.Orders.AddRange(batch.Orders);
                 market.AdditionalRecipients.AddRange(batch.Recipients);
             }
@@ -194,7 +194,7 @@ public static class WeeklyMarketSimulation
         IReadOnlyDictionary<Province, MarketAccessContext> accessByProvince,
         IReadOnlyDictionary<Dictionary<string, ProductState>, MarketBatch> markets,
         IDictionary<MoneyAccount, long> remainingBudgets,
-        ISet<Province> paidProvinces)
+        ISet<Province> paidProvinces, MarketPriceSettings settings)
     {
         foreach (Province province in provinces)
         {
@@ -204,7 +204,7 @@ public static class WeeklyMarketSimulation
             try
             {
                 market.Orders.AddRange(FactoryMarketOrders.Collect(
-                    province, access, paidProvinces.Contains(province), remainingBudgets));
+                    province, access, paidProvinces.Contains(province), remainingBudgets, settings));
             }
             catch (Exception exception) when (IsStructuralFailure(exception))
             {
@@ -218,7 +218,7 @@ public static class WeeklyMarketSimulation
         IReadOnlyDictionary<Province, MarketAccessContext> accessByProvince,
         IReadOnlyDictionary<Dictionary<string, ProductState>, MarketBatch> markets,
         IDictionary<MoneyAccount, long> remainingBudgets,
-        ISet<string> directFailures)
+        ISet<string> directFailures, MarketPriceSettings settings)
     {
         foreach (ConstructionMandate project in projects)
         {
@@ -245,7 +245,7 @@ public static class WeeklyMarketSimulation
                     market.Projects.OrderBy(project => project.Id, StringComparer.Ordinal)
                         .ToList().AsReadOnly(),
                     access,
-                    remainingBudgets));
+                    remainingBudgets, settings));
             }
             catch (Exception exception) when (IsStructuralFailure(exception))
             {
@@ -281,33 +281,6 @@ public static class WeeklyMarketSimulation
     {
         if (account != null && !budgets.ContainsKey(account))
             budgets.Add(account, account.Balance);
-    }
-
-    private static int CountSortedOrders(
-        IReadOnlyList<MarketOrder> orders,
-        IReadOnlyCollection<ProductState> products)
-    {
-        try
-        {
-            int count = 0;
-            foreach (ProductState product in products.Where(product => product != null))
-            {
-                List<MarketOrder> eligible = orders.Where(order =>
-                        ReferenceEquals(order.Product, product) &&
-                        order.MaximumUnitPrice >= product.Price)
-                    .ToList();
-                int demand = 0;
-                foreach (MarketOrder order in eligible)
-                    demand = checked(demand + order.Quantity);
-                if (product.Stock > 0 && product.Stock < demand)
-                    count = AddSaturated(count, eligible.Count);
-            }
-            return count;
-        }
-        catch (OverflowException)
-        {
-            return int.MaxValue;
-        }
     }
 
     private static int AddSaturated(int left, int right) =>

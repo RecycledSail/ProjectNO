@@ -7,6 +7,34 @@ using NUnit.Framework;
 
 public class MarketPriceTests
 {
+    [TestCase(100, 1, 1000L, 110)]
+    [TestCase(101, 1, 1000L, 112)]
+    [TestCase(100, 2, 219L, 109)]
+    [TestCase(2_000_000_000, 1, long.MaxValue, int.MaxValue)]
+    [TestCase(int.MaxValue, int.MaxValue, long.MaxValue, int.MaxValue)]
+    public void CalculateMaximumBid_UsesConfiguredCeilingAndAffordableInt64Budget(
+        int reference, int quantity, long budget, int expected)
+    {
+        MethodInfo method = ReflectionTestHelpers.Find("MarketPriceCalculator").GetMethod("CalculateMaximumBid");
+        Assert.That(method, Is.Not.Null, "Missing shared configurable bid calculation.");
+        Assert.That(method.Invoke(null, new object[] { reference, quantity, budget,
+            ReflectionTestHelpers.New("MarketPriceSettings", 3000, 1000) }), Is.EqualTo(expected));
+    }
+
+    [TestCase(2_000_000_000, 1, 1, 2_000_000_000)]
+    [TestCase(2_000_000_000, 100, 0, int.MaxValue)]
+    [TestCase(1_717_986_917, 100, 0, int.MaxValue)]
+    [TestCase(1_717_986_918, 100, 0, int.MaxValue)]
+    [TestCase(int.MaxValue, 1, 1, int.MaxValue)]
+    [TestCase(int.MaxValue, 100, 0, int.MaxValue)]
+    [TestCase(int.MaxValue, 0, 100, 1_610_612_735)]
+    public void CalculateNextPrice_LargePricesSaturateWithoutWrapping(
+        int previous, int demand, int stock, int expected)
+    {
+        Assert.That(Calculate(previous, demand, stock, 1f,
+            ReflectionTestHelpers.New("MarketPriceSettings", 3000, 2500)), Is.EqualTo(expected));
+    }
+
     [TestCase(100, 0, 0, 100)]
     [TestCase(100, 100, 0, 125)]
     [TestCase(100, 0, 100, 75)]
