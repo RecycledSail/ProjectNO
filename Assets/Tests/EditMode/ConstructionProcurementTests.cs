@@ -11,6 +11,142 @@ public class ConstructionProcurementTests
     public void ClearRecipes() => ((IDictionary)ReflectionTestHelpers.Find("GlobalVariables")
         .GetField("BUILDING_RECIPE").GetValue(null)).Clear();
 
+    [Test]
+    public void CollectOrders_ConfiguredTenPercentCapLimitsBidAndReservation()
+    {
+        Context context = new(1000L);
+        context.Product("Iron", 100, 1);
+        object project = context.Project("configured-cap", ("Iron", 1));
+        context.Seal();
+        object order = context.CollectWithSettings(
+            ReflectionTestHelpers.New("MarketPriceSettings", 3000, 1000),
+            out IDictionary budgets, project).Single();
+
+        Assert.That(Get(order, "MaximumUnitPrice"), Is.EqualTo(110));
+        Assert.That(Get(order, "ReservedBudget"), Is.EqualTo(110L));
+        Assert.That(budgets[context.Buyer], Is.EqualTo(890L));
+    }
+
+    [Test]
+    public void CollectOrders_ReservesInvestorBudgetAcrossProjectsAndMaterials()
+    {
+        Context c = new(100);
+        c.Product("Iron", 10, 100);
+        c.Product("Wood", 10, 100);
+        object a = c.Project("a", ("Iron", 10), ("Wood", 10));
+        object b = c.Project("b", ("Iron", 20));
+        c.Seal();
+        string before = c.Snapshot(a, b);
+
+        IReadOnlyList<object> orders = c.Collect(out IDictionary budgets, a, b);
+
+        Assert.That(orders.Select(OrderSummary), Is.EquivalentTo(new[]
+        {
+            "9:project:a4:Iron:2:12:24",
+            "9:project:a4:Wood:2:12:24",
+            "9:project:b4:Iron:5:10:50"
+        }));
+        Assert.That(orders.Sum(order => (long)Get(order, "ReservedBudget")), Is.EqualTo(98L));
+        Assert.That(budgets[c.Buyer], Is.EqualTo(2L));
+        Assert.That(Get(orders[0], "Buyer"), Is.SameAs(c.Buyer));
+        Assert.That(Get(orders[0], "Product"), Is.SameAs(c.Products["Iron"]));
+        Assert.That(Get(orders[0], "Recipient"), Is.SameAs(Get(orders[1], "Recipient")));
+        Assert.That(Get(orders[0], "Recipient"), Is.Not.SameAs(Get(orders[2], "Recipient")));
+        Assert.That(c.Snapshot(a, b), Is.EqualTo(before));
+    }
+
+    [Test]
+    public void CollectOrders_UsesCapturedAccessAfterProvinceAccessDrifts()
+    {
+        Context c = new(100);
+        object cachedIron = c.Product("Iron", 10, 10);
+        object project = c.Project("project", ("Iron", 1));
+        object capturedAccess = c.CaptureAccess();
+        object province = Get(project, "TargetProvince");
+        Set(province, "isConnectedToCapital", false);
+        Set(province, "market", null);
+        c.Seal();
+
+        IReadOnlyList<object> orders = c.CollectWithAccess(capturedAccess, out IDictionary budgets, project);
+
+        Assert.That(orders, Has.Count.EqualTo(1));
+        Assert.That(Get(orders[0], "Product"), Is.SameAs(cachedIron));
+        Assert.That(budgets[c.Buyer], Is.EqualTo(87L));
+    }
+
+    [Test]
+    public void Recipient_OnePreparedReceiptCommitsAllProjectMaterialsAndSpending()
+    {
+        Context c = new(1000);
+        c.Product("Iron", 10, 100);
+        c.Product("Wood", 20, 100);
+        object project = c.Project("project", ("Iron", 3), ("Wood", 2));
+        c.Seal();
+        IReadOnlyList<object> orders = c.Collect(out _, project);
+        object iron = orders.Single(order => ReferenceEquals(Get(order, "Product"), c.Products["Iron"]));
+        object wood = orders.Single(order => ReferenceEquals(Get(order, "Product"), c.Products["Wood"]));
+        object recipient = Get(iron, "Recipient");
+        Assert.That(Get(wood, "Recipient"), Is.SameAs(recipient));
+        object fills = TestEconomyFactory.ListOf("MarketOrderFill",
+            ReflectionTestHelpers.New("MarketOrderFill", iron, 2, 12),
+            ReflectionTestHelpers.New("MarketOrderFill", wood, 1, 25));
+        string before = c.Snapshot(project);
+        object[] prepare = { fills, null };
+
+        Assert.That((bool)recipient.GetType().GetMethod("TryPrepareReceipt").Invoke(recipient, prepare), Is.True);
+        Assert.That(prepare[1], Is.Not.Null);
+        Assert.That(c.Snapshot(project), Is.EqualTo(before));
+        prepare[1].GetType().GetMethod("Commit").Invoke(prepare[1], null);
+
+        Assert.That(Amount(project, "Iron"), Is.EqualTo(2L));
+        Assert.That(Amount(project, "Wood"), Is.EqualTo(1L));
+        Assert.That(Get(project, "MaterialSpending"), Is.EqualTo(49L));
+    }
+
+    [Test]
+    public void Recipient_SupersededReceiptsCommitWithoutThrowingAndOnlyCurrentReceiptApplies()
+    {
+        Context c = new(1000);
+        c.Product("Iron", 10, 100);
+        object project = c.Project("project", ("Iron", 3));
+        c.Seal();
+        object order = c.Collect(out _, project).Single();
+        object recipient = Get(order, "Recipient");
+
+        object superseded = PrepareReceipt(recipient, TestEconomyFactory.ListOf("MarketOrderFill",
+            ReflectionTestHelpers.New("MarketOrderFill", order, 1, 12)));
+        object current = PrepareReceipt(recipient, TestEconomyFactory.ListOf("MarketOrderFill",
+            ReflectionTestHelpers.New("MarketOrderFill", order, 2, 13)));
+
+        Assert.DoesNotThrow(() => CommitReceipt(superseded));
+        Assert.That(Amount(project, "Iron"), Is.Zero);
+        Assert.That(Get(project, "MaterialSpending"), Is.Zero);
+
+        Assert.DoesNotThrow(() => CommitReceipt(current));
+        Assert.DoesNotThrow(() => CommitReceipt(current));
+        Assert.DoesNotThrow(() => CommitReceipt(superseded));
+        Assert.That(Amount(project, "Iron"), Is.EqualTo(2L));
+        Assert.That(Get(project, "MaterialSpending"), Is.EqualTo(26L));
+    }
+
+    [Test]
+    public void Recipient_InvalidatedContractReceiptCommitDoesNotThrowOrApplyMaterials()
+    {
+        Context c = new(1000);
+        c.Product("Iron", 10, 100);
+        object project = c.Project("project", ("Iron", 2));
+        c.Seal();
+        object order = c.Collect(out _, project).Single();
+        object receipt = PrepareReceipt(Get(order, "Recipient"), TestEconomyFactory.ListOf("MarketOrderFill",
+            ReflectionTestHelpers.New("MarketOrderFill", order, 2, 12)));
+
+        Assert.That(ReflectionTestHelpers.Call<bool>(project, "Cancel"), Is.True);
+        Assert.DoesNotThrow(() => CommitReceipt(receipt));
+        Assert.DoesNotThrow(() => CommitReceipt(receipt));
+        Assert.That(Amount(project, "Iron"), Is.Zero);
+        Assert.That(Get(project, "MaterialSpending"), Is.Zero);
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public void SharedNationalStock_IsSplitAcrossProvincesIndependentOfInputOrder(bool reverse)
@@ -23,12 +159,12 @@ public class ConstructionProcurementTests
         Assert.That(c.Process(reverse ? new[] { b, a } : new[] { a, b }), Is.True);
         Assert.That(Amount(a, "Iron"), Is.EqualTo(5));
         Assert.That(Amount(b, "Iron"), Is.EqualTo(5));
-        Assert.That(Get(a, "MaterialSpending"), Is.EqualTo(50));
-        Assert.That(Get(b, "MaterialSpending"), Is.EqualTo(50));
+        Assert.That(Get(a, "MaterialSpending"), Is.EqualTo(65));
+        Assert.That(Get(b, "MaterialSpending"), Is.EqualTo(65));
         Assert.That(Get(iron, "Stock"), Is.Zero);
         Assert.That(Get(iron, "LastDemand"), Is.EqualTo(10));
-        Assert.That(Get(c.Seller, "Balance"), Is.EqualTo(90));
-        Assert.That(Get(c.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(10));
+        Assert.That(Get(c.Seller, "Balance"), Is.EqualTo(117));
+        Assert.That(Get(c.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(13));
         Assert.That(Get(c.Ledger, "MoneySupply"), Is.EqualTo(1000));
         Assert.That(c.Transactions, Is.EqualTo(c.InitialTransactions + 1));
     }
@@ -263,6 +399,19 @@ public class ConstructionProcurementTests
     private static object Get(object o, string name) => ReflectionTestHelpers.Get(o, name);
     private static void Set(object o, string name, object value) => ReflectionTestHelpers.Set(o, name, value);
     private static long Amount(object project, string item) => ((IReadOnlyDictionary<string, long>)Get(project, "AcquiredMaterials"))[item];
+    private static string OrderSummary(object order) =>
+        $"{Get(order, "Id")}:{Get(order, "Quantity")}:{Get(order, "MaximumUnitPrice")}:{Get(order, "ReservedBudget")}";
+    private static object PrepareReceipt(object recipient, object fills)
+    {
+        object[] prepare = { fills, null };
+        Assert.That((bool)recipient.GetType().GetMethod("TryPrepareReceipt").Invoke(recipient, prepare), Is.True);
+        Assert.That(prepare[1], Is.Not.Null);
+        return prepare[1];
+    }
+
+    private static void CommitReceipt(object receipt) =>
+        receipt.GetType().GetMethod("Commit").Invoke(receipt, null);
+
     private static void Acquire(object project, long spending, params (string Name, long Amount)[] items)
     {
         object[] args = { items.ToDictionary(i => i.Name, i => i.Amount), spending, null };
@@ -347,6 +496,35 @@ public class ConstructionProcurementTests
             object[] auditArgs = { 0L };
             Assert.That(Ledger.GetType().GetMethod("Audit").Invoke(Ledger, auditArgs), Is.True);
             return result;
+        }
+
+        public IReadOnlyList<object> Collect(out IDictionary budgets, params object[] projects)
+            => CollectWithAccess(CaptureAccess(), out budgets, projects);
+
+        public object CaptureAccess() =>
+            ReflectionTestHelpers.New("MarketAccessContext", "test", Products, ArgumentLedger);
+
+        public IReadOnlyList<object> CollectWithAccess(object access, out IDictionary budgets,
+            params object[] projects)
+            => CollectWithSettings(null, out budgets, projects, access);
+
+        public IReadOnlyList<object> CollectWithSettings(object settings, out IDictionary budgets,
+            object project) => CollectWithSettings(settings, out budgets, new[] { project }, CaptureAccess());
+
+        private IReadOnlyList<object> CollectWithSettings(object settings, out IDictionary budgets,
+            object[] projects, object access)
+        {
+            Type account = ReflectionTestHelpers.Find("MoneyAccount");
+            budgets = (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(account, typeof(long)));
+            budgets.Add(Buyer, Get(Buyer, "Balance"));
+            object[] arguments = settings == null
+                ? new[] { TestEconomyFactory.ListOf("ConstructionMandate", projects), access, budgets }
+                : new[] { TestEconomyFactory.ListOf("ConstructionMandate", projects), access, budgets, settings };
+            MethodInfo collect = ReflectionTestHelpers.Find("ConstructionProcurement").GetMethods()
+                .SingleOrDefault(candidate => candidate.Name == "CollectOrders" && candidate.GetParameters().Length == arguments.Length);
+            Assert.That(collect, Is.Not.Null, "Missing ConstructionProcurement.CollectOrders");
+            object result = collect.Invoke(null, arguments);
+            return ((IEnumerable)result).Cast<object>().ToList().AsReadOnly();
         }
 
         public string Snapshot(params object[] projects) => string.Join("|",

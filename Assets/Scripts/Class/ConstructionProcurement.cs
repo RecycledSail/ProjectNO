@@ -2,9 +2,102 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-// One synchronous market phase: plan every debit and acquisition before settling.
 public static class ConstructionProcurement
 {
+    public static IReadOnlyList<MarketOrder> CollectOrders(
+        IReadOnlyList<ConstructionMandate> mandates,
+        MarketAccessContext access,
+        IDictionary<MoneyAccount, long> remainingBudgets)
+        => CollectOrders(mandates, access, remainingBudgets, GlobalVariables.MARKET_PRICE_SETTINGS);
+
+    public static IReadOnlyList<MarketOrder> CollectOrders(
+        IReadOnlyList<ConstructionMandate> mandates, MarketAccessContext access,
+        IDictionary<MoneyAccount, long> remainingBudgets, MarketPriceSettings settings)
+    {
+        if (settings == null) throw new ArgumentNullException(nameof(settings));
+        if (mandates == null) throw new ArgumentNullException(nameof(mandates));
+        if (access.Products == null || access.Ledger == null)
+            throw new ArgumentException("A complete market access context is required.", nameof(access));
+        if (remainingBudgets == null) throw new ArgumentNullException(nameof(remainingBudgets));
+
+        ValidateProducts(access.Products);
+        HashSet<string> ids = new(StringComparer.Ordinal);
+        Dictionary<MoneyAccount, BuyerPlan> buyers = new();
+        foreach (ConstructionMandate mandate in mandates)
+        {
+            if (mandate == null || !mandate.IsActive || string.IsNullOrWhiteSpace(mandate.Id) ||
+                !ids.Add(mandate.Id) ||
+                !access.Ledger.OwnsAccount(mandate.Investor?.InvestmentAccount) ||
+                (mandate.EscrowAccount != null && !access.Ledger.OwnsAccount(mandate.EscrowAccount)))
+                throw new ArgumentException("Every mandate must be an active, unique participant in the supplied market.", nameof(mandates));
+
+            MoneyAccount buyer = mandate.Investor.InvestmentAccount;
+            if (!remainingBudgets.TryGetValue(buyer, out long remainingBudget) ||
+                remainingBudget < 0 || remainingBudget > buyer.Balance)
+                throw new ArgumentException("Every investor requires a valid remaining budget.", nameof(remainingBudgets));
+
+            if (!buyers.TryGetValue(buyer, out BuyerPlan buyerPlan))
+            {
+                buyerPlan = new BuyerPlan(buyer, remainingBudget);
+                buyers.Add(buyer, buyerPlan);
+            }
+            else if (buyerPlan.StartingBudget != remainingBudget)
+            {
+                throw new ArgumentException("One investor must have one starting remaining budget.", nameof(remainingBudgets));
+            }
+
+            ProjectPlan project = new(mandate);
+            foreach (KeyValuePair<string, long> material in mandate.RequiredMaterials)
+            {
+                if (!mandate.AcquiredMaterials.TryGetValue(material.Key, out long acquired) ||
+                    material.Value <= 0 || acquired < 0 || acquired > material.Value)
+                    throw new ArgumentException("A mandate contains invalid material state.", nameof(mandates));
+
+                long remaining = material.Value - acquired;
+                if (remaining == 0 || !access.Products.TryGetValue(material.Key, out ProductState product))
+                    continue;
+                if (product.Price <= 0)
+                    continue;
+
+                long valuation = checked(remaining * product.Price);
+                ItemPlan item = new(project, product, remaining, valuation);
+                buyerPlan.Items.Add(item);
+                buyerPlan.Valuation = checked(buyerPlan.Valuation + valuation);
+            }
+        }
+
+        List<MarketOrder> orders = new();
+        Dictionary<MoneyAccount, long> nextBudgets = new();
+        foreach (BuyerPlan buyer in buyers.Values)
+        {
+            long reserved = 0;
+            if (buyer.Valuation > 0 && buyer.StartingBudget > 0)
+            {
+                foreach (ItemPlan item in buyer.Items)
+                {
+                    long weightedBudget = FloorShare(buyer.StartingBudget, item.Valuation, buyer.Valuation);
+                    long quantity = Math.Min(item.Remaining, weightedBudget / item.Product.Price);
+                    quantity = Math.Min(quantity, int.MaxValue);
+                    if (quantity == 0)
+                        continue;
+
+                    int maximumUnitPrice = MarketPriceCalculator.CalculateMaximumBid(
+                        item.Product.Price, (int)quantity, weightedBudget, settings);
+                    long orderBudget = checked(quantity * maximumUnitPrice);
+                    orders.Add(new MarketOrder(OrderId(item.Project.Mandate.Id, item.Product.ProductName),
+                        buyer.Account, item.Product, checked((int)quantity), maximumUnitPrice,
+                        orderBudget, 1, item.Project.Recipient));
+                    reserved = checked(reserved + orderBudget);
+                }
+            }
+            nextBudgets.Add(buyer.Account, checked(buyer.StartingBudget - reserved));
+        }
+
+        foreach (KeyValuePair<MoneyAccount, long> budget in nextBudgets)
+            remainingBudgets[budget.Key] = budget.Value;
+        return orders.AsReadOnly();
+    }
+
     public static bool TryProcessMarket(IReadOnlyList<ConstructionMandate> mandates,
         Dictionary<string, ProductState> products, MoneyLedger ledger)
     {
@@ -14,115 +107,32 @@ public static class ConstructionProcurement
 
         try
         {
-            HashSet<ProductState> mappedProducts = new();
-            foreach (KeyValuePair<string, ProductState> item in products)
-            {
-                if (string.IsNullOrWhiteSpace(item.Key) || item.Value == null ||
-                    !string.Equals(item.Key, item.Value.ProductName, StringComparison.Ordinal) ||
-                    !mappedProducts.Add(item.Value))
-                    return false;
-            }
-
-            HashSet<string> ids = new(StringComparer.Ordinal);
-            Dictionary<MoneyAccount, List<ProjectPlan>> buyers = new();
-            List<ProjectPlan> projects = new();
+            Dictionary<MoneyAccount, long> remainingBudgets = new();
             foreach (ConstructionMandate mandate in mandates)
             {
-                if (mandate == null || !mandate.IsActive || string.IsNullOrWhiteSpace(mandate.Id) ||
-                    !ids.Add(mandate.Id) || !ReferenceEquals(mandate.TargetProvince.ActiveLedger, ledger) ||
-                    !ReferenceEquals(mandate.GetAccessibleProducts(), products) ||
-                    !ledger.OwnsAccount(mandate.Investor?.InvestmentAccount) ||
-                    (mandate.EscrowAccount != null && !ledger.OwnsAccount(mandate.EscrowAccount)))
+                if (mandate == null ||
+                    !MarketAccess.TryResolve(mandate.TargetProvince, out MarketAccessContext resolved) ||
+                    !ReferenceEquals(resolved.Products, products) ||
+                    !ReferenceEquals(resolved.Ledger, ledger))
                     return false;
 
-                ProjectPlan project = new(mandate);
-                foreach (KeyValuePair<string, long> material in mandate.RequiredMaterials)
-                {
-                    if (!mandate.AcquiredMaterials.TryGetValue(material.Key, out long acquired) ||
-                        material.Value <= 0 || acquired < 0 || acquired > material.Value)
-                        return false;
-                    long remaining = material.Value - acquired;
-                    if (remaining == 0 || !products.TryGetValue(material.Key, out ProductState product) ||
-                        product.Price <= 0 || product.Stock == 0)
-                        continue;
-
-                    long valuation = checked(remaining * product.Price);
-                    project.Items.Add(material.Key, new ItemPlan(product, remaining, valuation));
-                    project.Valuation = checked(project.Valuation + valuation);
-                }
-                projects.Add(project);
-                MoneyAccount buyer = mandate.Investor.InvestmentAccount;
-                if (!buyers.TryGetValue(buyer, out List<ProjectPlan> ownedProjects))
-                    buyers.Add(buyer, ownedProjects = new List<ProjectPlan>());
-                ownedProjects.Add(project);
+                MoneyAccount account = mandate?.Investor?.InvestmentAccount;
+                if (account != null && !remainingBudgets.ContainsKey(account))
+                    remainingBudgets.Add(account, account.Balance);
             }
-
-            Dictionary<ProductState, Dictionary<ProjectPlan, long>> requestsByProduct = new();
-            foreach (KeyValuePair<MoneyAccount, List<ProjectPlan>> buyer in buyers)
-            {
-                long valuation = 0;
-                foreach (ProjectPlan project in buyer.Value)
-                    valuation = checked(valuation + project.Valuation);
-                if (valuation == 0)
-                    continue;
-
-                long available = Math.Min(buyer.Key.Balance, valuation);
-                foreach (ProjectPlan project in buyer.Value)
-                {
-                    if (project.Valuation == 0)
-                        continue;
-                    long budget = FloorShare(available, project.Valuation, valuation);
-                    foreach (ItemPlan item in project.Items.Values)
-                    {
-                        long itemBudget = FloorShare(budget, item.Valuation, project.Valuation);
-                        long quantity = Math.Min(item.Remaining, itemBudget / item.Product.Price);
-                        if (quantity == 0)
-                            continue;
-                        if (!requestsByProduct.TryGetValue(item.Product, out Dictionary<ProjectPlan, long> requests))
-                            requestsByProduct.Add(item.Product, requests = new Dictionary<ProjectPlan, long>());
-                        requests.Add(project, quantity);
-                    }
-                }
-            }
-
-            List<MarketBuyerRequest> purchases = new();
-            foreach (KeyValuePair<ProductState, Dictionary<ProjectPlan, long>> product in requestsByProduct)
-            {
-                long requested = 0;
-                foreach (long quantity in product.Value.Values)
-                    requested = checked(requested + quantity);
-                Dictionary<ProjectPlan, long> quotas = ProportionalAllocator.Allocate(
-                    Math.Min(product.Key.Stock, requested), product.Value, project => project.Mandate.Id);
-                foreach (KeyValuePair<ProjectPlan, long> quota in quotas)
-                {
-                    if (quota.Value == 0)
-                        continue;
-                    ProjectPlan project = quota.Key;
-                    string name = product.Key.ProductName;
-                    project.Quantities.Add(name, quota.Value);
-                    project.Spending = checked(project.Spending + checked(quota.Value * product.Key.Price));
-                    // Length prefixes prevent ambiguous project/product pairs from sharing an ID.
-                    string id = project.Mandate.Id;
-                    purchases.Add(new MarketBuyerRequest($"{id.Length}:{id}{name.Length}:{name}",
-                        project.Mandate.Investor.InvestmentAccount, product.Key, checked((int)quota.Value)));
-                }
-            }
-
-            if (purchases.Count == 0)
+            MarketAccessContext access = new("construction", products, ledger);
+            IReadOnlyList<MarketOrder> orders = CollectOrders(mandates, access, remainingBudgets);
+            if (orders.Count == 0)
                 return true;
-            foreach (ProjectPlan project in projects)
-            {
-                if (project.Quantities.Count > 0 && !project.Mandate.TryPrepareMaterialAcquisition(
-                        project.Quantities, project.Spending, out project.Acquisition))
-                    return false;
-            }
-            if (!MarketSettlement.TryPurchaseBatch(purchases, ledger))
+            List<ProductState> orderedProducts = new();
+            HashSet<ProductState> seenProducts = new();
+            foreach (MarketOrder order in orders)
+                if (seenProducts.Add(order.Product))
+                    orderedProducts.Add(order.Product);
+            if (!MarketClearingEngine.TryPlan(orders, orderedProducts, ledger,
+                    GlobalVariables.MARKET_PRICE_SETTINGS, out MarketClearingPlan plan, out _))
                 return false;
-
-            foreach (ProjectPlan project in projects)
-                if (project.Acquisition != null)
-                    project.Mandate.CommitMaterialAcquisition(project.Acquisition);
-            return true;
+            return plan.TrySettle(ledger, Array.Empty<IMarketOrderRecipient>(), out _);
         }
         catch (OverflowException)
         {
@@ -134,33 +144,125 @@ public static class ConstructionProcurement
         }
     }
 
-    // Budget remainders remain in the investor account for a later phase.
+    private static void ValidateProducts(Dictionary<string, ProductState> products)
+    {
+        HashSet<ProductState> mappedProducts = new();
+        foreach (KeyValuePair<string, ProductState> item in products)
+            if (string.IsNullOrWhiteSpace(item.Key) || item.Value == null ||
+                !string.Equals(item.Key, item.Value.ProductName, StringComparison.Ordinal) ||
+                !mappedProducts.Add(item.Value))
+                throw new ArgumentException("Market product mappings must be unique and canonical.", nameof(products));
+    }
+
+    private static string OrderId(string projectId, string productName) =>
+        $"{projectId.Length}:{projectId}{productName.Length}:{productName}";
+
     private static long FloorShare(long total, long weight, long totalWeight) =>
         (long)((BigInteger)total * weight / totalWeight);
+
+    private sealed class BuyerPlan
+    {
+        public readonly MoneyAccount Account;
+        public readonly long StartingBudget;
+        public readonly List<ItemPlan> Items = new();
+        public long Valuation;
+
+        public BuyerPlan(MoneyAccount account, long startingBudget)
+        {
+            Account = account;
+            StartingBudget = startingBudget;
+        }
+    }
 
     private sealed class ProjectPlan
     {
         public readonly ConstructionMandate Mandate;
-        public readonly Dictionary<string, ItemPlan> Items = new(StringComparer.Ordinal);
-        public readonly Dictionary<string, long> Quantities = new(StringComparer.Ordinal);
-        public long Valuation;
-        public long Spending;
-        public ConstructionMaterials.Acquisition Acquisition;
+        public readonly ProjectRecipient Recipient;
 
-        public ProjectPlan(ConstructionMandate mandate) => Mandate = mandate;
+        public ProjectPlan(ConstructionMandate mandate)
+        {
+            Mandate = mandate;
+            Recipient = new ProjectRecipient(mandate);
+        }
     }
 
     private sealed class ItemPlan
     {
+        public readonly ProjectPlan Project;
         public readonly ProductState Product;
         public readonly long Remaining;
         public readonly long Valuation;
 
-        public ItemPlan(ProductState product, long remaining, long valuation)
+        public ItemPlan(ProjectPlan project, ProductState product, long remaining, long valuation)
         {
+            Project = project;
             Product = product;
             Remaining = remaining;
             Valuation = valuation;
+        }
+    }
+
+    private sealed class ProjectRecipient : IMarketOrderRecipient
+    {
+        private readonly ConstructionMandate _mandate;
+        public string Id { get; }
+
+        public ProjectRecipient(ConstructionMandate mandate)
+        {
+            _mandate = mandate;
+            Id = $"construction:{mandate.Id.Length}:{mandate.Id}";
+        }
+
+        public bool TryPrepareReceipt(IReadOnlyList<MarketOrderFill> fills,
+            out IPreparedMarketReceipt receipt)
+        {
+            receipt = null;
+            if (fills == null)
+                return false;
+            try
+            {
+                Dictionary<string, long> quantities = new(StringComparer.Ordinal);
+                long spending = 0;
+                foreach (MarketOrderFill fill in fills)
+                {
+                    if (fill == null || !ReferenceEquals(fill.Order.Recipient, this))
+                        return false;
+                    string productName = fill.Order.Product.ProductName;
+                    quantities.TryGetValue(productName, out long quantity);
+                    quantities[productName] = checked(quantity + fill.Quantity);
+                    spending = checked(spending + fill.GrossAmount);
+                }
+                if (!_mandate.TryPrepareMaterialAcquisition(quantities, spending,
+                        out ConstructionMaterials.Acquisition acquisition))
+                    return false;
+                receipt = new ProjectReceipt(_mandate, acquisition);
+                return true;
+            }
+            catch (OverflowException)
+            {
+                return false;
+            }
+        }
+    }
+
+    private sealed class ProjectReceipt : IPreparedMarketReceipt
+    {
+        private ConstructionMandate _mandate;
+        private ConstructionMaterials.Acquisition _acquisition;
+
+        public ProjectReceipt(ConstructionMandate mandate, ConstructionMaterials.Acquisition acquisition)
+        {
+            _mandate = mandate;
+            _acquisition = acquisition;
+        }
+
+        public void Commit()
+        {
+            if (_mandate == null)
+                return;
+            _mandate.TryCommitMaterialAcquisition(_acquisition);
+            _mandate = null;
+            _acquisition = null;
         }
     }
 }

@@ -117,6 +117,50 @@ public class MarketBatchPurchaseTests
     }
 
     [Test]
+    public void TryPurchaseBatch_UsesUniformExplicitPriceForBuyerSellerAndTax()
+    {
+        BatchContext context = CreateContext(100L, 100L, salesTaxBasisPoints: 1000);
+        object seller = AddAccount(context, "seller", 0L);
+        object product = NewProduct("Copper", 10, (seller, 2));
+        Seal(context);
+        long supplyBefore = GetLong(context.Ledger, "MoneySupply");
+        IList requests = Requests(
+            Request("A", context.BuyerA, product, 1, 12),
+            Request("B", context.BuyerB, product, 1, 12));
+
+        Assert.That(ReflectionTestHelpers.Get(requests[0], "UnitPrice"), Is.EqualTo(12));
+        bool success = TryPurchaseBatch(requests, context.Ledger);
+
+        Assert.That(success, Is.True);
+        Assert.That(Balance(context.BuyerA), Is.EqualTo(88L));
+        Assert.That(Balance(context.BuyerB), Is.EqualTo(88L));
+        Assert.That(Balance(seller), Is.EqualTo(22L));
+        Assert.That(Balance(context.Treasury), Is.EqualTo(2L));
+        Assert.That(GetInt(product, "Stock"), Is.Zero);
+        Assert.That(GetInt(product, "LastDemand"), Is.EqualTo(2));
+        Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(supplyBefore));
+    }
+
+    [Test]
+    public void TryPurchaseBatch_MixedPricesForOneProductChangeNothing()
+    {
+        BatchContext context = CreateContext();
+        object seller = AddAccount(context, "seller", 0L);
+        object product = NewProduct("Copper", 10, (seller, 2));
+        Seal(context);
+        BatchSnapshot before = Snapshot(
+            context, new[] { context.BuyerA, context.BuyerB, seller }, product);
+        IList requests = Requests(
+            Request("A", context.BuyerA, product, 1, 11),
+            Request("B", context.BuyerB, product, 1, 12));
+
+        bool success = TryPurchaseBatch(requests, context.Ledger);
+
+        Assert.That(success, Is.False);
+        AssertUnchanged(before, context, new[] { context.BuyerA, context.BuyerB, seller }, product);
+    }
+
+    [Test]
     public void TryPurchaseBatch_WhenSupplierBelongsToAnotherLedgerChangesNothing()
     {
         BatchContext context = CreateContext();
@@ -318,6 +362,14 @@ public class MarketBatchPurchaseTests
         int quantity) =>
         New("MarketBuyerRequest", requestId, buyer, product, quantity);
 
+    private static object Request(
+        string requestId,
+        object buyer,
+        object product,
+        int quantity,
+        int unitPrice) =>
+        New("MarketBuyerRequest", requestId, buyer, product, quantity, unitPrice);
+
     private static IList Requests(params object[] requests) =>
         (IList)TestEconomyFactory.ListOf("MarketBuyerRequest", requests);
 
@@ -336,6 +388,7 @@ public class MarketBatchPurchaseTests
         new(
             Array.ConvertAll(accounts, Balance),
             Array.ConvertAll(products, SnapshotProduct),
+            GetLong(context.Ledger, "MoneySupply"),
             GetLong(context.Ledger, "WeeklyTaxRevenue"),
             TransactionCount(context.Ledger));
 
@@ -350,6 +403,7 @@ public class MarketBatchPurchaseTests
     {
         Assert.That(Array.ConvertAll(accounts, Balance), Is.EqualTo(before.AccountBalances));
         Assert.That(Array.ConvertAll(products, SnapshotProduct), Is.EqualTo(before.Products));
+        Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(before.MoneySupply));
         Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(before.WeeklyTaxRevenue));
         Assert.That(TransactionCount(context.Ledger), Is.EqualTo(before.TransactionCount));
     }
@@ -401,17 +455,20 @@ public class MarketBatchPurchaseTests
     {
         public long[] AccountBalances { get; }
         public ProductSnapshot[] Products { get; }
+        public long MoneySupply { get; }
         public long WeeklyTaxRevenue { get; }
         public int TransactionCount { get; }
 
         public BatchSnapshot(
             long[] accountBalances,
             ProductSnapshot[] products,
+            long moneySupply,
             long weeklyTaxRevenue,
             int transactionCount)
         {
             AccountBalances = accountBalances;
             Products = products;
+            MoneySupply = moneySupply;
             WeeklyTaxRevenue = weeklyTaxRevenue;
             TransactionCount = transactionCount;
         }

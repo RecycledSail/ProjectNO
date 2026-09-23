@@ -111,12 +111,97 @@ public class ProductState
     public int LastSupply;   // 최근 턴 생산량(가격 계산용)
     public float Elasticity = 1.0f; // α: 수요/공급 변화에 대한 민감도
 
+    public int RequestedDemand;
+    public int UnmetDemand;
+    public int LastClearingPrice;
+    private object clearingRevision = new();
+
     public ProductState(string name, int basePrice)
     {
         ProductName = name;
         Price = Math.Max(1, basePrice);
         LastDemand = 0;
         LastSupply = 0;
+    }
+
+    public void BeginWeek()
+    {
+        clearingRevision = new();
+        LastPrice = Price;
+        LastSupply = 0;
+        LastDemand = 0;
+        RequestedDemand = 0;
+        UnmetDemand = 0;
+        LastClearingPrice = 0;
+    }
+
+    public void CommitClearingStatistics(
+        int requested,
+        int sold,
+        int available,
+        int clearingPrice,
+        MarketPriceSettings settings)
+    {
+        if (sold != LastDemand)
+            throw new ArgumentException("Sold quantity must match actual inventory commits.", nameof(sold));
+        if (sold < 0 || available < 0 || sold > available)
+            throw new ArgumentOutOfRangeException(nameof(sold));
+        if (requested < sold || clearingPrice < 1)
+            throw new ArgumentOutOfRangeException();
+
+        int nextPrice = MarketPriceCalculator.CalculateNextPrice(
+            Price, requested, available, Elasticity, settings);
+
+        ApplyClearingStatistics(requested, requested - sold, clearingPrice, nextPrice, new object());
+    }
+
+    private void ApplyClearingStatistics(int requested, int unmet, int clearingPrice,
+        int nextPrice, object nextRevision)
+    {
+        RequestedDemand = requested;
+        UnmetDemand = unmet;
+        LastClearingPrice = clearingPrice;
+        Price = nextPrice;
+        clearingRevision = nextRevision;
+    }
+
+    // Captured during planning, validated before financial settlement, then applied without
+    // recalculation or validation after the non-throwing recipient commits.
+    internal sealed class PreparedClearingStatistics
+    {
+        private readonly ProductState product;
+        private readonly (string Name, int Price, int LastPrice, int Demand, int Supply,
+            int Requested, int Unmet, int Clearing, float Elasticity) expected;
+        private readonly object inventoryRevision, statisticsRevision, nextRevision = new();
+        private readonly int requested, sold, available, clearingPrice, nextPrice, unmet;
+
+        internal PreparedClearingStatistics(ProductState product, int requested, int sold,
+            int available, int clearingPrice, int nextPrice)
+        {
+            this.product = product;
+            expected = Capture(product);
+            inventoryRevision = product.Inventory.Revision;
+            statisticsRevision = product.clearingRevision;
+            this.requested = requested;
+            this.sold = sold;
+            this.available = available;
+            this.clearingPrice = clearingPrice;
+            this.nextPrice = nextPrice;
+            unmet = checked(requested - sold);
+        }
+
+        internal bool IsCurrent => expected.Demand == 0 && sold >= 0 && sold <= available &&
+            requested >= sold && clearingPrice >= 1 && nextPrice >= 1 &&
+            product.Stock == available && expected.Equals(Capture(product)) &&
+            ReferenceEquals(inventoryRevision, product.Inventory.Revision) &&
+            ReferenceEquals(statisticsRevision, product.clearingRevision);
+
+        internal void Commit() => product.ApplyClearingStatistics(
+            requested, unmet, clearingPrice, nextPrice, nextRevision);
+
+        private static (string, int, int, int, int, int, int, int, float) Capture(ProductState value) =>
+            (value.ProductName, value.Price, value.LastPrice, value.LastDemand, value.LastSupply,
+                value.RequestedDemand, value.UnmetDemand, value.LastClearingPrice, value.Elasticity);
     }
 
     public void AddSupply(MoneyAccount supplier, int amount)

@@ -182,9 +182,9 @@ public sealed partial class ConstructionMandate
 
     internal Dictionary<string, ProductState> GetAccessibleProducts()
     {
-        if (TargetProvince.isConnectedToCapital && TargetProvince.nation?.market != null)
-            return TargetProvince.nation.market.Products;
-        return TargetProvince.market?.Products;
+        return MarketAccess.TryResolve(TargetProvince, out MarketAccessContext context)
+            ? context.Products
+            : null;
     }
 
     internal void CommitMaterialAcquisition(ConstructionMaterials.Acquisition acquisition)
@@ -193,6 +193,9 @@ public sealed partial class ConstructionMandate
             throw new InvalidOperationException("A terminal construction contract cannot acquire materials.");
         _materials.CommitAcquisition(acquisition);
     }
+
+    internal bool TryCommitMaterialAcquisition(ConstructionMaterials.Acquisition acquisition) =>
+        IsActive && _materials.TryCommitAcquisition(acquisition);
 
     public bool Cancel()
     {

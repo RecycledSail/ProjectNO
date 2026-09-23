@@ -130,6 +130,7 @@ public static class GlobalVariables
     /// 
     /// </summary>
     public static Dictionary<string, BuildingRecipe> BUILDING_RECIPE = new();
+    public static MarketPriceSettings MARKET_PRICE_SETTINGS = new(3000, 2500);
 
 
     /// <summary>
@@ -147,6 +148,7 @@ public static class GlobalVariables
             PRODUCTS.Clear(); PRODUCT_TO_BUILDING.Clear(); CATEGORIES.Clear();
             PROVINCES.Clear(); NATIONS.Clear(); ADJACENT_PROVINCES.Clear();
             INITIAL_PROVINCES.Clear(); INITIAL_CAPITALS.Clear();
+            LoadMarketPriceSettings();
             LoadBuff();
             LoadResearchNodes();
             LoadUnitTypes();
@@ -184,6 +186,20 @@ public static class GlobalVariables
 
         T gameData = JsonUtility.FromJson<T>(jsonFile.text);
         return gameData;
+    }
+
+    public static void LoadMarketPriceSettings()
+    {
+        GameDataFormat gameData = LoadJsonFile<GameDataFormat>("GlobalVariables");
+        if (gameData.marketSettings == null)
+        {
+            MARKET_PRICE_SETTINGS = new MarketPriceSettings(3000, 2500);
+            return;
+        }
+
+        MARKET_PRICE_SETTINGS = new MarketPriceSettings(
+            gameData.marketSettings.smoothingBasisPoints,
+            gameData.marketSettings.maxWeeklyPriceChangeBasisPoints);
     }
     public static void LoadBuff()
     {
@@ -702,6 +718,8 @@ public static class GlobalVariables
     [System.Serializable]
     public class GameDataFormat
     {
+        public MarketSettingsData marketSettings;
+
         [System.Serializable]
         public class BuffsWrapper
         {
@@ -798,6 +816,13 @@ public static class GlobalVariables
             public List<GameDataFormat.BuildingrecipeData> buildingrecipes;
         }
 
+
+        [System.Serializable]
+        public sealed class MarketSettingsData
+        {
+            public int smoothingBasisPoints;
+            public int maxWeeklyPriceChangeBasisPoints;
+        }
 
         [System.Serializable]
         public sealed class ItemData

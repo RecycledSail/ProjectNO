@@ -20,181 +20,157 @@ public class BuildingProductionEconomyTests
     }
 
     [Test]
-    public void ProduceGoodsWeekly_ClampsToBuildingFundsSettlesInputsAndRegistersOwnedOutputs()
+    public void ProduceGoodsWeekly_WithMarketStockButEmptyInputInventoryProducesNothingAndChangesNoSettlementState()
     {
         ProductionContext context = CreateContext(
             new Dictionary<string, int> { [Input] = 2 },
             new Dictionary<string, int> { [Output] = 3 });
         object supplier = AddSeller(context, "building-production-test-supplier");
         object input = AddProduct(context, Input, 5, supplier, 4);
+        int transactionsBefore = TransactionCount(context.Ledger);
         long supplyBefore = GetLong(context.Ledger, "MoneySupply");
 
         Call(context.Province, "ProduceGoodsWeekly");
 
-        object output = Products(context)[Output];
-        Assert.That(Balance(context.Building), Is.EqualTo(0L));
-        Assert.That(Balance(supplier), Is.EqualTo(9L));
-        Assert.That(Balance(context.Treasury), Is.EqualTo(1L));
-        Assert.That(GetInt(input, "Stock"), Is.EqualTo(2));
-        Assert.That(GetInt(input, "LastDemand"), Is.EqualTo(2));
-        Assert.That(GetInt(output, "Stock"), Is.EqualTo(3));
-        Assert.That(LotQuantities(output), Is.EqualTo(new Dictionary<string, int>
-        {
-            [AccountId(context.Building)] = 3,
-        }));
-        Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(supplyBefore));
-        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(1L));
-        Assert.That(ReflectionTestHelpers.Call<bool>(context.Ledger, "Audit", (object)null), Is.True);
-    }
-
-    [Test]
-    public void ProduceGoodsWeekly_WithMissingRecipeInputLeavesInputsMoneyDemandAndOutputUnchanged()
-    {
-        ProductionContext context = CreateContext(
-            new Dictionary<string, int> { [Input] = 1, [MissingInput] = 1 },
-            new Dictionary<string, int> { [Output] = 3 });
-        object supplier = AddSeller(context, "building-production-test-supplier");
-        object input = AddProduct(context, Input, 5, supplier, 2);
-        int transactionsBefore = TransactionCount(context.Ledger);
-
-        Call(context.Province, "ProduceGoodsWeekly");
-
         Assert.That(Balance(context.Building), Is.EqualTo(10L));
         Assert.That(Balance(supplier), Is.Zero);
-        Assert.That(Balance(context.Treasury), Is.Zero);
-        Assert.That(GetInt(input, "Stock"), Is.EqualTo(2));
-        Assert.That(GetInt(input, "LastDemand"), Is.Zero);
-        Assert.That(Products(context).Contains(Output), Is.False);
-        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
-        Assert.That(TransactionCount(context.Ledger), Is.EqualTo(transactionsBefore));
-    }
-
-    [Test]
-    public void ProduceGoodsWeekly_WithCrossLedgerInputSellerRejectsTheCompleteBasketWithoutMutation()
-    {
-        ProductionContext context = CreateContext(
-            new Dictionary<string, int> { [Input] = 2 },
-            new Dictionary<string, int> { [Output] = 3 });
-        object foreignSeller = CreateForeignSeller("building-production-test-foreign-seller");
-        object input = AddProduct(context, Input, 5, foreignSeller, 4);
-        int transactionsBefore = TransactionCount(context.Ledger);
-
-        Call(context.Province, "ProduceGoodsWeekly");
-
-        Assert.That(Balance(context.Building), Is.EqualTo(10L));
-        Assert.That(Balance(foreignSeller), Is.Zero);
         Assert.That(Balance(context.Treasury), Is.Zero);
         Assert.That(GetInt(input, "Stock"), Is.EqualTo(4));
         Assert.That(GetInt(input, "LastDemand"), Is.Zero);
         Assert.That(Products(context).Contains(Output), Is.False);
+        Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(supplyBefore));
         Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
         Assert.That(TransactionCount(context.Ledger), Is.EqualTo(transactionsBefore));
+        Assert.That(ReflectionTestHelpers.Call<bool>(context.Ledger, "Audit", (object)null), Is.True);
     }
 
     [Test]
-    public void ProduceGoodsWeekly_WithUnrepresentableOutputQuantitySkipsInputPurchase()
+    public void ProduceGoodsWeekly_WithMissingComplementaryStoredInputLeavesAllInputsAndOutputUnchanged()
     {
         ProductionContext context = CreateContext(
-            new Dictionary<string, int> { [Input] = 1 },
-            new Dictionary<string, int> { [Output] = int.MaxValue });
-        object supplier = AddSeller(context, "building-production-test-supplier");
-        object input = AddProduct(context, Input, 1, supplier, 2);
+            new Dictionary<string, int> { [Input] = 1, [MissingInput] = 1 },
+            new Dictionary<string, int> { [Output] = 3 });
+        RestoreInputs(context.Building, new Dictionary<string, long> { [Input] = 2L });
         int transactionsBefore = TransactionCount(context.Ledger);
 
         Call(context.Province, "ProduceGoodsWeekly");
 
         Assert.That(Balance(context.Building), Is.EqualTo(10L));
-        Assert.That(Balance(supplier), Is.Zero);
         Assert.That(Balance(context.Treasury), Is.Zero);
-        Assert.That(GetInt(input, "Stock"), Is.EqualTo(2));
-        Assert.That(GetInt(input, "LastDemand"), Is.Zero);
+        Assert.That(InputQuantities(context.Building), Is.EqualTo(new Dictionary<string, long>
+        {
+            [Input] = 2L,
+        }));
         Assert.That(Products(context).Contains(Output), Is.False);
         Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
         Assert.That(TransactionCount(context.Ledger), Is.EqualTo(transactionsBefore));
     }
 
     [Test]
-    public void ProduceGoodsWeekly_WithZeroInputsRegistersOutputUnderTheBuildingAccount()
+    public void ProduceGoodsWeekly_ConsumesCompleteStoredRecipeAndLeavesRemainders()
     {
         ProductionContext context = CreateContext(
-            new Dictionary<string, int>(),
-            new Dictionary<string, int> { [Output] = 2 });
+            new Dictionary<string, int> { [Input] = 2, [SecondInput] = 3 },
+            new Dictionary<string, int> { [Output] = 4 },
+            currentWorkers: 1L);
+        RestoreInputs(context.Building, new Dictionary<string, long>
+        {
+            [Input] = 3L,
+            [SecondInput] = 5L,
+        });
+        int transactionsBefore = TransactionCount(context.Ledger);
 
         Call(context.Province, "ProduceGoodsWeekly");
 
         object output = Products(context)[Output];
         Assert.That(Balance(context.Building), Is.EqualTo(10L));
+        Assert.That(Balance(context.Treasury), Is.Zero);
+        Assert.That(InputQuantities(context.Building), Is.EqualTo(new Dictionary<string, long>
+        {
+            [Input] = 1L,
+            [SecondInput] = 2L,
+        }));
         Assert.That(GetInt(output, "Stock"), Is.EqualTo(4));
         Assert.That(LotQuantities(output), Is.EqualTo(new Dictionary<string, int>
         {
             [AccountId(context.Building)] = 4,
         }));
         Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
+        Assert.That(TransactionCount(context.Ledger), Is.EqualTo(transactionsBefore));
     }
 
     [Test]
-    public void ProduceGoodsWeekly_WhenFundsCoverOnlyFractionalInputScaleProducesNothing()
+    public void ProduceGoodsWeekly_WithUnrepresentableOutputQuantityPreservesStoredInputs()
     {
         ProductionContext context = CreateContext(
-            new Dictionary<string, int> { [Input] = 2 },
-            new Dictionary<string, int> { [Output] = 2 });
-        object supplier = AddSeller(context, "building-production-test-fractional-supplier");
-        object input = AddProduct(context, Input, 6, supplier, 4);
+            new Dictionary<string, int> { [Input] = 1 },
+            new Dictionary<string, int> { [Output] = int.MaxValue });
+        RestoreInputs(context.Building, new Dictionary<string, long> { [Input] = 2L });
         int transactionsBefore = TransactionCount(context.Ledger);
 
         Call(context.Province, "ProduceGoodsWeekly");
 
         Assert.That(Balance(context.Building), Is.EqualTo(10L));
-        Assert.That(Balance(supplier), Is.Zero);
         Assert.That(Balance(context.Treasury), Is.Zero);
-        Assert.That(GetInt(input, "Stock"), Is.EqualTo(4));
-        Assert.That(GetInt(input, "LastDemand"), Is.Zero);
+        Assert.That(InputQuantities(context.Building), Is.EqualTo(new Dictionary<string, long>
+        {
+            [Input] = 2L,
+        }));
         Assert.That(Products(context).Contains(Output), Is.False);
         Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
         Assert.That(TransactionCount(context.Ledger), Is.EqualTo(transactionsBefore));
     }
 
     [Test]
-    public void ProduceGoodsWeekly_WithTwoCompleteInputQuantaSettlesEveryInputAndOutputExactly()
+    public void ProduceGoodsWeekly_WithZeroInputsRetainsContinuousProduction()
     {
         ProductionContext context = CreateContext(
-            new Dictionary<string, int> { [Input] = 1, [SecondInput] = 2 },
+            new Dictionary<string, int>(),
             new Dictionary<string, int> { [Output] = 3 },
-            40L,
-            2L);
-        object firstSupplier = AddSeller(context, "building-production-test-first-supplier");
-        object secondSupplier = AddSeller(context, "building-production-test-second-supplier");
-        object firstInput = AddProduct(context, Input, 10, firstSupplier, 2);
-        object secondInput = AddProduct(context, SecondInput, 5, secondSupplier, 4);
-        long supplyBefore = GetLong(context.Ledger, "MoneySupply");
+            currentWorkers: 2L,
+            workerNeeded: 4L);
 
         Call(context.Province, "ProduceGoodsWeekly");
 
         object output = Products(context)[Output];
-        Assert.That(Balance(context.Building), Is.Zero);
-        Assert.That(Balance(firstSupplier), Is.EqualTo(18L));
-        Assert.That(Balance(secondSupplier), Is.EqualTo(18L));
-        Assert.That(Balance(context.Treasury), Is.EqualTo(4L));
-        Assert.That(GetInt(firstInput, "Stock"), Is.Zero);
-        Assert.That(GetInt(firstInput, "LastDemand"), Is.EqualTo(2));
-        Assert.That(GetInt(secondInput, "Stock"), Is.Zero);
-        Assert.That(GetInt(secondInput, "LastDemand"), Is.EqualTo(4));
-        Assert.That(GetInt(output, "Stock"), Is.EqualTo(6));
+        Assert.That(Balance(context.Building), Is.EqualTo(10L));
+        Assert.That(GetInt(output, "Stock"), Is.EqualTo(1));
         Assert.That(LotQuantities(output), Is.EqualTo(new Dictionary<string, int>
         {
-            [AccountId(context.Building)] = 6,
+            [AccountId(context.Building)] = 1,
         }));
-        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.EqualTo(4L));
-        Assert.That(GetLong(context.Ledger, "MoneySupply"), Is.EqualTo(supplyBefore));
-        Assert.That(ReflectionTestHelpers.Call<bool>(
-            context.Ledger, "Audit", (object)null), Is.True);
+        Assert.That(GetLong(context.Ledger, "WeeklyTaxRevenue"), Is.Zero);
+    }
+
+    [Test]
+    public void ProduceGoodsWeekly_InputRecipeUsesExactIntegerLaborCapacityAtLongBoundary()
+    {
+        ProductionContext context = CreateContext(
+            new Dictionary<string, int> { [Input] = 1 },
+            new Dictionary<string, int> { [Output] = 1 },
+            currentWorkers: 7_999_999_999_999_999_999L,
+            workerNeeded: 4_000_000_000L);
+        RestoreInputs(context.Building, new Dictionary<string, long>
+        {
+            [Input] = 2_000_000_000L,
+        });
+
+        Call(context.Province, "ProduceGoodsWeekly");
+
+        object output = Products(context)[Output];
+        Assert.That(GetInt(output, "Stock"), Is.EqualTo(1_999_999_999));
+        Assert.That(InputQuantities(context.Building), Is.EqualTo(new Dictionary<string, long>
+        {
+            [Input] = 1L,
+        }));
     }
 
     private static ProductionContext CreateContext(
         Dictionary<string, int> requiredItems,
         Dictionary<string, int> producedItems,
         long initialCapital = 10L,
-        long currentWorkers = 2L)
+        long currentWorkers = 2L,
+        long workerNeeded = 1L)
     {
         object nation = TestEconomyFactory.NewNation(
             "BuildingProductionNation", initialCapital);
@@ -207,7 +183,7 @@ public class BuildingProductionEconomyTests
         object type = ReflectionTestHelpers.New("BuildingType", BuildingName);
         ReflectionTestHelpers.Set(type, "requireItems", requiredItems);
         ReflectionTestHelpers.Set(type, "produceItems", producedItems);
-        ReflectionTestHelpers.Set(type, "workerNeeded", 1L);
+        ReflectionTestHelpers.Set(type, "workerNeeded", workerNeeded);
         object recipe = ReflectionTestHelpers.New("BuildingRecipe", BuildingName);
         ReflectionTestHelpers.Set(recipe, "InitialCapital", initialCapital);
         Recipes[BuildingName] = recipe;
@@ -234,16 +210,20 @@ public class BuildingProductionEconomyTests
         return seller;
     }
 
-    private static object CreateForeignSeller(string id)
+    private static void RestoreInputs(object building, IReadOnlyDictionary<string, long> quantities)
     {
-        object treasury = ReflectionTestHelpers.New("MoneyAccount", "building-production-test-foreign-treasury", 0L);
-        object seller = ReflectionTestHelpers.New("MoneyAccount", id, 0L);
-        object ledger = ReflectionTestHelpers.New("MoneyLedger", "building-production-test-foreign", new object(), treasury);
-        Assert.That(ReflectionTestHelpers.Call<bool>(ledger, "RegisterInitialAccount", treasury), Is.True);
-        Assert.That(ReflectionTestHelpers.Call<bool>(ledger, "RegisterInitialAccount", seller), Is.True);
-        Call(ledger, "SealInitialization");
-        return seller;
+        MethodInfo method = building.GetType().GetMethod("RestoreInputInventory",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(method, Is.Not.Null, "Missing Building.RestoreInputInventory");
+        method.Invoke(building, new object[] { quantities });
     }
+
+    private static Dictionary<string, long> InputQuantities(object building) =>
+        ((IEnumerable)ReflectionTestHelpers.Get(building, "InputInventory"))
+            .Cast<object>()
+            .ToDictionary(
+                entry => (string)ReflectionTestHelpers.Get(entry, "Key"),
+                entry => (long)ReflectionTestHelpers.Get(entry, "Value"));
 
     private static object AddProduct(
         ProductionContext context,

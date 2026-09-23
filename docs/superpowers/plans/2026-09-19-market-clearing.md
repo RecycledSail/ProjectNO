@@ -844,7 +844,7 @@ git commit -m "feat: persist clearing prices and factory inputs"
 - No new runtime interface.
 - Completion evidence: 52-week invariant result, 5,000-order measurement, full EditMode result, and manual PlayMode status recorded separately.
 
-- [ ] **Step 1: Add a 52-week invariant test**
+- [x] **Step 1: Add a 52-week invariant test**
 
 Build a deterministic small world containing connected and isolated markets, multiple populations, a multi-input factory and a construction project. For each week assert:
 
@@ -857,23 +857,23 @@ Assert.That(buildings.SelectMany(b => b.InputInventory.Values).All(q => q >= 0),
 
 Run the same initial world twice with reversed enumerable order and compare week-by-week balances, inventories, prices and fills.
 
-- [ ] **Step 2: Add a 5,000-order performance characterization**
+- [x] **Step 2: Add a 5,000-order performance characterization**
 
 Construct 18 products, registered supplier/buyer accounts, and 5,000 valid orders distributed deterministically. Measure planning and settlement separately with `Stopwatch`; assert result correctness, money audit and exact order count, but log elapsed milliseconds instead of using a hardware-sensitive time assertion.
 
-- [ ] **Step 3: Run long-run and performance tests**
+- [x] **Step 3: Run long-run and performance tests**
 
 Run `Invoke-UnityEditMode -testFilter 'MarketLongRunTests' -resultName 'task11-longrun'` and `Invoke-UnityEditMode -testFilter 'MarketClearingPerformanceTests' -resultName 'task11-performance'`.
 
 Expected: invariant tests PASS; performance log reports order count, sorted count, plan time and settlement time.
 
-- [ ] **Step 4: Run the full EditMode suite**
+- [x] **Step 4: Run the full EditMode suite**
 
 Run: `Invoke-UnityEditMode -testFilter '' -resultName 'market-clearing-full'`.
 
 Expected: result `Passed`, failed `0`, skipped `0`. Record the actual total rather than assuming the previous 217 count.
 
-- [ ] **Step 5: Inspect compilation and runtime diagnostics**
+- [x] **Step 5: Inspect compilation and runtime diagnostics**
 
 ```powershell
 Select-String -LiteralPath 'TestResults\market-clearing-full.log' -Pattern 'error CS|warning CS|Unhandled|Test run completed' | ForEach-Object { $_.Line }
@@ -883,7 +883,7 @@ git status --short
 
 Expected: no C# compiler errors; any pre-existing warning is identified separately from new warnings; no whitespace errors.
 
-- [ ] **Step 6: Update durable documentation with measured evidence**
+- [x] **Step 6: Update durable documentation with measured evidence**
 
 Document:
 
@@ -899,14 +899,14 @@ Document:
 
 Set the spec status to implemented only after full verification succeeds, and check plan boxes only for completed work.
 
-- [ ] **Step 7: Commit tests and documentation**
+- [x] **Step 7: Commit tests and documentation**
 
 ```powershell
 git add -- Assets/Tests/EditMode/MarketLongRunTests.cs Assets/Tests/EditMode/MarketLongRunTests.cs.meta Assets/Tests/EditMode/MarketClearingPerformanceTests.cs Assets/Tests/EditMode/MarketClearingPerformanceTests.cs.meta 'obsedian documentry/화폐 순환 및 경제 시스템 구현 현황.md' 'obsedian documentry/국가 공유시장 경매와 가격 형성.md' 'obsedian documentry/국가 공유시장 경매와 가격 형성.md.meta docs/superpowers/specs/2026-09-19-market-clearing-design.md docs/superpowers/plans/2026-09-19-market-clearing.md
 git commit -m "test: verify unified market clearing"
 ```
 
-- [ ] **Step 8: Request final review and verify the reviewed head**
+- [x] **Step 8: Request final review and verify the reviewed head**
 
 Use `superpowers:requesting-code-review` against the complete branch. Fix validated findings with targeted tests, then invoke `superpowers:verification-before-completion` and rerun the full EditMode command on the final reviewed commit.
 

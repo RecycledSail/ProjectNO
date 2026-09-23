@@ -25,6 +25,11 @@ public sealed partial class MoneyLedger
     }
 }
 
+public partial class Building
+{
+    internal List<AmountData> CaptureInputInventory() => GameSaveState.Amounts(InputInventory);
+}
+
 public partial class GovernmentBudget
 {
     internal BudgetData CaptureBudget() => new()

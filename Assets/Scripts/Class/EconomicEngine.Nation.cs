@@ -16,7 +16,7 @@ public partial class EconomicEngine
 
         foreach (ProductState ps in nation.market.Products.Values)
         {
-            gdp += (long)ps.LastSupply * ps.Price;
+            gdp += (long)ps.LastSupply * MarketPriceCalculator.ObservedPrice(ps);
         }
 
         return gdp;

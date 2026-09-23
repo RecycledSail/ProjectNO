@@ -10,6 +10,8 @@ internal sealed partial class ConstructionMaterials
     private Dictionary<string, long> _consumed = new(StringComparer.Ordinal);
     private readonly int _startBasisPoints;
     private long _version;
+    private long _nextReceiptToken;
+    private long _currentReceiptToken;
 
     public IReadOnlyDictionary<string, long> Required { get; }
     public IReadOnlyDictionary<string, long> Acquired => new ReadOnlyDictionary<string, long>(_acquired);
@@ -59,14 +61,16 @@ internal sealed partial class ConstructionMaterials
     {
         internal readonly ConstructionMaterials Owner;
         internal readonly long Version;
+        internal readonly long ReceiptToken;
         internal readonly Dictionary<string, long> Quantities;
         internal readonly long Spending;
 
-        internal Acquisition(ConstructionMaterials owner, long version,
+        internal Acquisition(ConstructionMaterials owner, long version, long receiptToken,
             Dictionary<string, long> quantities, long spending)
         {
             Owner = owner;
             Version = version;
+            ReceiptToken = receiptToken;
             Quantities = quantities;
             Spending = spending;
         }
@@ -90,7 +94,10 @@ internal sealed partial class ConstructionMaterials
                     return false;
                 next[item.Key] = total;
             }
-            acquisition = new Acquisition(this, _version, next, checked(Spending + spending));
+            long receiptToken = checked(_nextReceiptToken + 1);
+            acquisition = new Acquisition(this, _version, receiptToken, next, checked(Spending + spending));
+            _nextReceiptToken = receiptToken;
+            _currentReceiptToken = receiptToken;
             return true;
         }
         catch (OverflowException)
@@ -99,15 +106,24 @@ internal sealed partial class ConstructionMaterials
         }
     }
 
-    // The procurement phase prepares every project before settling the market,
-    // then commits each token once without intervening project mutations.
-    internal void CommitAcquisition(Acquisition acquisition)
+    // Preparation is allowed to be retried before settlement. Only the latest
+    // receipt for this unchanged material version may apply its snapshot.
+    internal bool TryCommitAcquisition(Acquisition acquisition)
     {
-        if (acquisition == null || acquisition.Owner != this || acquisition.Version != _version)
-            throw new InvalidOperationException("The material acquisition is stale or belongs to another project.");
+        if (acquisition == null || acquisition.Owner != this || acquisition.Version != _version ||
+            acquisition.ReceiptToken != _currentReceiptToken)
+            return false;
         _acquired = acquisition.Quantities;
         Spending = acquisition.Spending;
-        _version++;
+        unchecked { _version++; }
+        _currentReceiptToken = 0;
+        return true;
+    }
+
+    internal void CommitAcquisition(Acquisition acquisition)
+    {
+        if (!TryCommitAcquisition(acquisition))
+            throw new InvalidOperationException("The material acquisition is stale or belongs to another project.");
     }
 
     internal Dictionary<string, long> PrepareConsumption(decimal progress)

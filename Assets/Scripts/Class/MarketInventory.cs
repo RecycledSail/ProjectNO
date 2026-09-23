@@ -22,6 +22,7 @@ public sealed class ProductInventory
     private readonly Dictionary<MoneyAccount, int> _lots = new();
     private readonly ReadOnlyDictionary<MoneyAccount, int> _readOnlyLots;
     private int _totalQuantity;
+    internal object Revision { get; private set; } = new();
 
     public ProductInventory()
     {
@@ -37,8 +38,10 @@ public sealed class ProductInventory
         _lots.TryGetValue(supplier, out int current);
         int next = checked(current + amount);
         int nextTotal = checked(_totalQuantity + amount);
+        object nextRevision = new();
         _lots[supplier] = next;
         _totalQuantity = nextTotal;
+        Revision = nextRevision;
     }
 
     internal IReadOnlyList<SupplierSale> PlanSale(int amount)
@@ -89,6 +92,7 @@ public sealed class ProductInventory
             }
         }
 
+        object nextRevision = new();
         foreach (SupplierSale entry in expected)
         {
             int remaining = _lots[entry.Supplier] - entry.Quantity;
@@ -99,6 +103,7 @@ public sealed class ProductInventory
         }
 
         _totalQuantity -= totalRemoved;
+        Revision = nextRevision;
     }
 
     internal void ValidateCanReceive(IReadOnlyDictionary<MoneyAccount, int> incoming)
@@ -117,8 +122,10 @@ public sealed class ProductInventory
 
     internal void Clear()
     {
+        object nextRevision = new();
         _lots.Clear();
         _totalQuantity = 0;
+        Revision = nextRevision;
     }
 
     private void ValidateAddition(MoneyAccount supplier, int amount)

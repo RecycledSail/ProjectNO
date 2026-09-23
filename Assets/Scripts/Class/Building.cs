@@ -23,7 +23,7 @@ public class BuildingType
 /// <summary>
 /// 실제 프로빈스 위에 얹혀지는 빌딩 클래스
 /// </summary>
-public class Building
+public partial class Building
 {
     public BuildingType buildingType;
     public Province province;

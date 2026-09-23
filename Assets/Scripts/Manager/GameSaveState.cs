@@ -30,7 +30,18 @@ public sealed class GameSaveState
     internal static bool Finite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
     internal static List<AmountData> Amounts(IEnumerable<KeyValuePair<string, long>> values) =>
         values.Select(p => new AmountData { key = p.Key, value = p.Value }).ToList();
-    internal static Dictionary<string, long> AmountMap(List<AmountData> values) => values.ToDictionary(p => p.key, p => p.value);
+    internal static Dictionary<string, long> AmountMap(List<AmountData> values)
+    {
+        Require(values != null, "Missing amount collection.");
+        var result = new Dictionary<string, long>();
+        foreach (AmountData value in values)
+        {
+            Require(value != null && !string.IsNullOrWhiteSpace(value.key), "Invalid amount entry.");
+            Require(!result.ContainsKey(value.key), "Duplicate amount key: " + value.key);
+            result.Add(value.key, value.value);
+        }
+        return result;
+    }
 
     public static void ValidateHeader(SaveDataFormat data)
     {
@@ -138,6 +149,7 @@ public sealed class GameSaveState
                 {
                     type = b.buildingType.name, owner = b.Owner?.InvestmentAccount.Id,
                     level = b.level, previousGain = b.previousGain, manhoursLeft = b.manhoursLeft,
+                    inputInventory = b.CaptureInputInventory(),
                     slots = b is ConstructionCompanyBuilding company ? company.CaptureSlots() : new List<CompanySlotData>()
                 }).ToList(),
                 specialBuildings = province.specialBuildings.Values.Select(b => new SpecialBuildingData
@@ -159,13 +171,15 @@ public sealed class GameSaveState
         new ProductData
         {
             name = p.ProductName, price = p.Price, lastPrice = p.LastPrice, demand = p.LastDemand,
-            supply = p.LastSupply, elasticity = p.Elasticity,
+            supply = p.LastSupply, requestedDemand = p.RequestedDemand, unmetDemand = p.UnmetDemand,
+            lastClearingPrice = p.LastClearingPrice, elasticity = p.Elasticity,
             lots = p.Inventory.Lots.Select(l => new AmountData { key = l.Key.Id, value = l.Value }).ToList()
         }).ToList();
 
     public static GameSaveState Restore(SaveDataFormat data)
     {
         ValidateHeader(data);
+        ValidateTask10NestedCollections(data);
         var state = new GameSaveState { data = data };
         state.BuildActors();
         state.BuildEconomy();
@@ -175,6 +189,29 @@ public sealed class GameSaveState
         Require(state.users.Select(u => u.id).Distinct().Count() == state.users.Count, "Duplicate user ID.");
         state.player = state.users.Single(u => u.id == data.playerId);
         return state;
+    }
+
+    private static void ValidateTask10NestedCollections(SaveDataFormat data)
+    {
+        foreach (NationData nation in data.nations)
+        {
+            Require(nation != null && nation.market != null, "Missing national market.");
+            ValidateMarketProducts(nation.market);
+        }
+        foreach (ProvinceData province in data.provinces)
+        {
+            Require(province != null && province.market != null && province.buildings != null,
+                "Missing province market or buildings.");
+            ValidateMarketProducts(province.market);
+            foreach (BuildingData building in province.buildings)
+                Require(building != null && building.inputInventory != null, "Missing building input inventory.");
+        }
+    }
+
+    private static void ValidateMarketProducts(List<ProductData> products)
+    {
+        foreach (ProductData product in products)
+            Require(product != null && product.lots != null, "Missing market product or inventory lots.");
     }
 
     private void BuildActors()
@@ -243,6 +280,7 @@ public sealed class GameSaveState
                 var building = BuildingFactory.Create(type, province, b.level);
                 building.previousGain = b.previousGain;
                 building.manhoursLeft = b.manhoursLeft;
+                RestoreInputInventory(building, b.inputInventory);
                 province.buildings.Add(type, building);
                 buildings.Add(building.Account.Id, building);
                 Bind(building.Account);
@@ -332,19 +370,56 @@ public sealed class GameSaveState
         var result = new Dictionary<string, ProductState>();
         foreach (var p in products)
         {
-            Require(PRODUCTS.ContainsKey(p.name) && p.price > 0 && p.lastPrice >= 0 && p.demand >= 0 && p.supply >= 0 &&
-                Finite(p.elasticity), "Invalid market product: " + p.name);
+            Require(p != null && PRODUCTS.ContainsKey(p.name) && p.price > 0 && p.lastPrice >= 0 && p.demand >= 0 && p.supply >= 0 &&
+                p.requestedDemand >= 0 && p.unmetDemand >= 0 && p.unmetDemand <= p.requestedDemand &&
+                p.lastClearingPrice >= 0 && Finite(p.elasticity), "Invalid market product: " + p?.name);
             var product = new ProductState(p.name, p.price)
-            { LastPrice = p.lastPrice, LastDemand = p.demand, LastSupply = p.supply, Elasticity = p.elasticity };
+            {
+                LastPrice = p.lastPrice, LastDemand = p.demand, LastSupply = p.supply,
+                RequestedDemand = p.requestedDemand, UnmetDemand = p.unmetDemand,
+                LastClearingPrice = p.lastClearingPrice, Elasticity = p.elasticity
+            };
             foreach (var lot in AmountMap(p.lots))
             {
-                var supplier = accounts[lot.Key];
-                Require(ledger.OwnsAccount(supplier), "Inventory supplier belongs to the wrong currency.");
-                product.Inventory.Add(supplier, checked((int)lot.Value));
+                Require(lot.Value > 0, "Invalid market inventory quantity.");
+                try
+                {
+                    Require(accounts.TryGetValue(lot.Key, out MoneyAccount supplier) && ledger.OwnsAccount(supplier),
+                        "Inventory supplier belongs to the wrong currency.");
+                    product.Inventory.Add(supplier, checked((int)lot.Value));
+                }
+                catch (OverflowException exception)
+                {
+                    throw new InvalidDataException("Invalid market inventory quantity.", exception);
+                }
+                catch (ArgumentException exception)
+                {
+                    throw new InvalidDataException("Invalid market inventory quantity.", exception);
+                }
             }
+            Require(!result.ContainsKey(p.name), "Duplicate market product: " + p.name);
             result.Add(p.name, product);
         }
         return result;
+    }
+
+    private static void RestoreInputInventory(Building building, List<AmountData> savedInventory)
+    {
+        try
+        {
+            Require(savedInventory != null, "Missing building input inventory.");
+            Dictionary<string, long> inventory = AmountMap(savedInventory);
+            Require(inventory.Values.All(quantity => quantity >= 0), "Invalid building input inventory.");
+            building.RestoreInputInventory(inventory);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new InvalidDataException("Invalid building input inventory.", exception);
+        }
+        catch (OverflowException exception)
+        {
+            throw new InvalidDataException("Invalid building input inventory.", exception);
+        }
     }
 
     private void BuildConstruction()
