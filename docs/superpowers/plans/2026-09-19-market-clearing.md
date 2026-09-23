@@ -906,7 +906,7 @@ git add -- Assets/Tests/EditMode/MarketLongRunTests.cs Assets/Tests/EditMode/Mar
 git commit -m "test: verify unified market clearing"
 ```
 
-- [ ] **Step 8: Request final review and verify the reviewed head**
+- [x] **Step 8: Request final review and verify the reviewed head**
 
 Use `superpowers:requesting-code-review` against the complete branch. Fix validated findings with targeted tests, then invoke `superpowers:verification-before-completion` and rerun the full EditMode command on the final reviewed commit.
 
