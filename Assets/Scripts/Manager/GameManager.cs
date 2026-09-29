@@ -112,8 +112,25 @@ public partial class GameManager : MonoBehaviour
         }
         else
         {
-            // 게임 새로 시작 (기본 국가 코드 "Nation1")
-            StartNewGame("Nation1");
+            // 메인 메뉴에서 선택한 국가로 새 게임 시작
+            string nationCode = GlobalVariables.newGameNationCode;
+            if (string.IsNullOrWhiteSpace(nationCode) ||
+                !GlobalVariables.NATIONS.ContainsKey(nationCode))
+            {
+                nationCode = GlobalVariables.NATIONS.Values
+                    .OrderBy(nation => nation.id)
+                    .Select(nation => nation.name)
+                    .FirstOrDefault();
+            }
+
+            if (nationCode == null)
+            {
+                Debug.LogError("Cannot start a new game because no nations are defined.");
+                UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene");
+                return;
+            }
+
+            StartNewGame(nationCode);
             paused = false;
         }
 

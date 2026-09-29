@@ -47,11 +47,13 @@ public class SelectProvince : MonoBehaviour
 
     private TerrainCollider terrainCollider;
     private readonly Dictionary<Color32, string> colorToProvinceName = new();
+    private readonly Dictionary<string, Vector3> provinceWorldPositions = new();
     private bool isBuildRoadMode;
     private Nation previousNation;
     private Province previousProvince;
     private bool warnedAboutMissingColorMap;
     private Color32 hoveredColor;
+    private bool overlayInitializationPending;
 
     private void Awake()
     {
@@ -70,12 +72,19 @@ public class SelectProvince : MonoBehaviour
         terrainCollider = GetComponent<TerrainCollider>();
         BuildColorLookup();
 
-        if (Application.isPlaying)
-            InitializeOverlay();
+        // Unity does not allow creating GameObjects or adding components from
+        // OnValidate. Defer the overlay rebuild until the next Update instead.
+        overlayInitializationPending = Application.isPlaying;
     }
 
     private void Update()
     {
+        if (overlayInitializationPending)
+        {
+            overlayInitializationPending = false;
+            InitializeOverlay();
+        }
+
         UpdateVisualMode();
         HandleHoverAndSelection();
         RefreshOverlay();
@@ -117,6 +126,7 @@ public class SelectProvince : MonoBehaviour
     private void BuildColorLookup()
     {
         colorToProvinceName.Clear();
+        provinceWorldPositions.Clear();
         foreach (ProvinceColorBinding binding in provinceColors)
         {
             if (string.IsNullOrWhiteSpace(binding.provinceName))
@@ -125,6 +135,62 @@ public class SelectProvince : MonoBehaviour
             if (!colorToProvinceName.TryAdd(binding.color, binding.provinceName))
                 Debug.LogWarning($"SelectProvince: duplicate ColorMap color {binding.color}.", this);
         }
+    }
+
+    public bool TryGetProvinceWorldPosition(string provinceName, out Vector3 worldPosition)
+    {
+        if (provinceWorldPositions.TryGetValue(provinceName, out worldPosition))
+            return true;
+
+        worldPosition = default;
+        if (terrain == null || terrain.terrainData == null || colorMap == null || !colorMap.isReadable)
+            return false;
+
+        Color32 provinceColor = default;
+        bool foundBinding = false;
+        foreach (KeyValuePair<Color32, string> binding in colorToProvinceName)
+        {
+            if (binding.Value != provinceName)
+                continue;
+
+            provinceColor = binding.Key;
+            foundBinding = true;
+            break;
+        }
+
+        if (!foundBinding)
+            return false;
+
+        Color32[] pixels = colorMap.GetPixels32();
+        long xTotal = 0;
+        long yTotal = 0;
+        int count = 0;
+        for (int index = 0; index < pixels.Length; index++)
+        {
+            if (!pixels[index].Equals(provinceColor))
+                continue;
+
+            xTotal += index % colorMap.width;
+            yTotal += index / colorMap.width;
+            count++;
+        }
+
+        if (count == 0)
+            return false;
+
+        float pixelX = xTotal / (float)count;
+        float pixelY = yTotal / (float)count;
+        if (flipColorMapY)
+            pixelY = colorMap.height - 1 - pixelY;
+
+        float u = (pixelX + 0.5f) / colorMap.width;
+        float v = (pixelY + 0.5f) / colorMap.height;
+        Vector3 terrainSize = terrain.terrainData.size;
+        float height = terrain.terrainData.GetInterpolatedHeight(u, v);
+        worldPosition = terrain.transform.TransformPoint(
+            new Vector3(u * terrainSize.x, height, v * terrainSize.z));
+        provinceWorldPositions[provinceName] = worldPosition;
+        return true;
     }
 
     private void UpdateVisualMode()

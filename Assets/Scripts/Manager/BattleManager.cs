@@ -13,6 +13,7 @@ public partial class BattleManager : MonoBehaviour
     private Dictionary<Province, Battle> battleInProvinces;
     private readonly Dictionary<Regiment, GameObject> regimentMarkers = new();
     private Transform provinceRoot;
+    private SelectProvince terrainProvinceSelector;
     private GameObject regimentPrefab;
     private float markerGroundClearance = 10f;
     private float sameProvinceMarkerPadding = 10f;
@@ -109,7 +110,7 @@ public partial class BattleManager : MonoBehaviour
         ClearRegimentMarkers();
         ResolveMarkerDependencies();
 
-        if (provinceRoot == null || regimentPrefab == null)
+        if ((provinceRoot == null && terrainProvinceSelector == null) || regimentPrefab == null)
         {
             Debug.LogWarning("Regiment map markers could not initialize. Province root or regiment prefab was not found.");
             return;
@@ -130,7 +131,11 @@ public partial class BattleManager : MonoBehaviour
         }
 
         Transform provinceTransform = FindProvinceTransform(regiment.location.name);
-        if (provinceTransform == null)
+        Vector3 terrainPosition = default;
+        bool hasTerrainPosition = terrainProvinceSelector != null &&
+            terrainProvinceSelector.TryGetProvinceWorldPosition(
+                regiment.location.name, out terrainPosition);
+        if (provinceTransform == null && !hasTerrainPosition)
         {
             Debug.LogWarning("Could not find province object for regiment marker: " + regiment.location.name);
             return;
@@ -149,7 +154,9 @@ public partial class BattleManager : MonoBehaviour
         marker.name = regiment.name + " Marker";
         marker.SetActive(true);
         marker.transform.rotation = Quaternion.identity;
-        marker.transform.position = GetRegimentMarkerPosition(provinceTransform, marker, provinceIndex);
+        marker.transform.position = provinceTransform != null
+            ? GetRegimentMarkerPosition(provinceTransform, marker, provinceIndex)
+            : GetRegimentMarkerPosition(terrainPosition, marker, provinceIndex);
 
         RegimentUI regimentUI = marker.GetComponent<RegimentUI>();
         if (regimentUI != null)
@@ -196,6 +203,21 @@ public partial class BattleManager : MonoBehaviour
         Bounds markerBounds = GetWorldBounds(marker.transform);
         Vector3 position = provinceBounds.center;
         position.y = provinceBounds.max.y + markerBounds.extents.y + markerGroundClearance;
+
+        return OffsetRegimentMarker(position, markerBounds, provinceIndex);
+    }
+
+    private Vector3 GetRegimentMarkerPosition(Vector3 terrainPosition, GameObject marker, int provinceIndex)
+    {
+        Bounds markerBounds = GetWorldBounds(marker.transform);
+        Vector3 position = terrainPosition;
+        position.y += markerBounds.extents.y + markerGroundClearance;
+
+        return OffsetRegimentMarker(position, markerBounds, provinceIndex);
+    }
+
+    private Vector3 OffsetRegimentMarker(Vector3 position, Bounds markerBounds, int provinceIndex)
+    {
 
         int side = provinceIndex % 2 == 0 ? 1 : -1;
         int ring = (provinceIndex + 1) / 2;
@@ -270,6 +292,9 @@ public partial class BattleManager : MonoBehaviour
             }
         }
 
+        if (provinceRoot == null)
+            terrainProvinceSelector = FindFirstObjectByType<SelectProvince>();
+
         if (regimentPrefab == null)
         {
             regimentPrefab = Resources.Load<GameObject>("RegimentMarker");
@@ -310,7 +335,9 @@ public partial class BattleManager : MonoBehaviour
 #else
         string prefabPath = regimentPrefab == null ? "null" : regimentPrefab.name;
 #endif
-        string rootName = provinceRoot == null ? "null" : provinceRoot.name;
+        string rootName = provinceRoot != null
+            ? provinceRoot.name
+            : terrainProvinceSelector != null ? terrainProvinceSelector.name : "null";
         Debug.Log("Regiment marker dependencies resolved. provinceRoot=" + rootName + ", prefab=" + prefabPath);
     }
 

@@ -1,10 +1,10 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
     public GameObject loadPanel;
     [SerializeField] private SettingsPanelUI settingsPanel;
+    [SerializeField] private GameObject nationSelectPanel;
 
     private void Awake()
     {
@@ -13,8 +13,13 @@ public class MainMenu : MonoBehaviour
 
     public void OnNewGameClicked()
     {
-        GlobalVariables.saveFileName = null;
-        SceneManager.LoadScene("PlayScene");
+        if (GlobalVariables.NATIONS.Count == 0)
+            GlobalVariables.LoadData();
+
+        if (nationSelectPanel != null)
+            nationSelectPanel.SetActive(true);
+        else
+            Debug.LogError("NationSelectPanel reference is missing on MainMenu.");
     }
 
     public void OnLoadClicked()

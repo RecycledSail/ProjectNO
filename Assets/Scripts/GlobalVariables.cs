@@ -84,6 +84,12 @@ public static class GlobalVariables
     public static string saveFileName = null;
 
     /// <summary>
+    /// 메인 메뉴에서 새 게임을 시작할 때 선택한 국가 코드입니다.
+    /// 저장 게임을 불러올 때는 사용하지 않습니다.
+    /// </summary>
+    public static string newGameNationCode = null;
+
+    /// <summary>
     /// 유닛 타입을 저장하는 Dictionary
     /// Key: string (유닛 타입의 name), Value: 유닛 타입의 값
     /// </summary>
