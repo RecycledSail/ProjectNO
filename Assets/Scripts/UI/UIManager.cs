@@ -40,6 +40,11 @@ public class UIManager : MonoBehaviour
     public TMP_Text GDPText;
 
     /// <summary>
+    /// 현재 플레이어가 조종하는 국가 이름을 표시하는 텍스트 UI
+    /// </summary>
+    public TMP_Text NationNameText;
+
+    /// <summary>
     /// 게임 내 날짜 및 시간 속도를 표기하는 텍스트 UI
     /// </summary>
     public TMP_Text dateText;
@@ -66,6 +71,10 @@ public class UIManager : MonoBehaviour
     {
         popUpVisited = new Stack<GameObject>();
         GameManager.Instance.dayUIEvent.AddListener(UpdateTopUI);
+
+        // GameManager가 먼저 초기화된 경우에도 첫 프레임부터 값을 표시합니다.
+        if (GameManager.Instance.player?.nation != null)
+            UpdateTopUI();
     }
 
     private void OnDestroy()
@@ -94,6 +103,7 @@ public class UIManager : MonoBehaviour
         UpdateCurrencyText();  // 재산(화폐) UI 업데이트
         UpdatePopulation();    // 인구 UI 업데이트
         UpdateGDP();
+        UpdateNationName();
         UpdateUIDate();        // 날짜 및 시간 속도 UI 업데이트
     }
 
@@ -149,6 +159,12 @@ public class UIManager : MonoBehaviour
         long gdp = GameManager.Instance.player.nation.GDP;
         string gdpText = ShortenValue(gdp);
         GDPText.text = "GDP: " + gdpText;
+    }
+
+    private void UpdateNationName()
+    {
+        if (NationNameText != null && GameManager.Instance.player?.nation != null)
+            NationNameText.text = GameManager.Instance.player.nation.name;
     }
 
     /// <summary>
