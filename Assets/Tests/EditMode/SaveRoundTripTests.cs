@@ -506,6 +506,30 @@ public class SaveRoundTripTests
     }
 
     [Test]
+    public void SaveSummaryAndDelete_UsePlayerNationAndRemoveAllSlotFiles()
+    {
+        string slot = NewSlot();
+        Set(Nation, "GDP", 123456L);
+        Set(game, "year", 1901);
+        Assert.That(Static("SaveManager", "TrySave", slot), Is.True);
+
+        object[] summaryArguments = { slot, null };
+        MethodInfo summaryMethod = Find("SaveManager").GetMethod("TryGetSummary");
+        Assert.That((bool)summaryMethod.Invoke(null, summaryArguments), Is.True);
+        Assert.That(Get(summaryArguments[1], "NationName"), Is.EqualTo("Nation1"));
+        Assert.That(Get(summaryArguments[1], "GDP"), Is.EqualTo(123456L));
+        Assert.That(Get(summaryArguments[1], "Year"), Is.EqualTo(1901));
+
+        File.WriteAllText(files.Last() + ".bak", "backup");
+        File.WriteAllText(files.Last() + ".tmp", "temporary");
+        Assert.That(Static("SaveManager", "TryDelete", slot), Is.True);
+        Assert.That(File.Exists(files.Last()), Is.False);
+        Assert.That(File.Exists(files.Last() + ".bak"), Is.False);
+        Assert.That(File.Exists(files.Last() + ".tmp"), Is.False);
+        Assert.That(Find("GlobalVariables").GetField("saveFileName").GetValue(null), Is.Null);
+    }
+
+    [Test]
     public void FailedSave_PreservesExistingFileAndSelectedSlot()
     {
         string slot = NewSlot();

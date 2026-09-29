@@ -8,7 +8,7 @@ public class LoadSelectUI : MonoBehaviour
 {
     public Transform content;
     public GameObject buttonPrefab;
-    // ½Ì±ÛÅæ ÀÎ½ºÅÏ½º (´Ù¸¥ ½ºÅ©¸³Æ®¿¡¼­ ½±°Ô Á¢±Ù °¡´É)
+    // ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤ (ë‹¤ë¥¸ ìŠ¤í¬ë¦½íŠ¸ì—ì„œ ì‰½ê²Œ ì ‘ê·¼ ê°€ëŠ¥)
     private static LoadSelectUI _instance;
     public static LoadSelectUI Instance
     {
@@ -22,22 +22,27 @@ public class LoadSelectUI : MonoBehaviour
     }
 
     /// <summary>
-    /// °ÔÀÓ ½ÃÀÛ Àü ÃÊ±âÈ­ ¸Ş¼­µå (½Ì±ÛÅæ Áßº¹¹æÁö Ã³¸®)
+    /// ê²Œì„ ì‹œì‘ ì „ ì´ˆê¸°í™” ë©”ì„œë“œ (ì‹±ê¸€í†¤ ì¤‘ë³µë°©ì§€ ì²˜ë¦¬)
     /// </summary>
     private void Awake()
     {
-        // ½Ì±ÛÅæ Áßº¹ ¹æÁö ·ÎÁ÷
+        // ì‹±ê¸€í†¤ ì¤‘ë³µ ë°©ì§€ ë¡œì§
         if (_instance == null)
         {
             _instance = this;
         }
         else if (_instance != this)
         {
-            Destroy(gameObject);  // Áßº¹ ½Ã Á¦°Å
+            Destroy(gameObject);  // ì¤‘ë³µ ì‹œ ì œê±°
         }
     }
 
     private void OnEnable()
+    {
+        RefreshSaveList();
+    }
+
+    public void RefreshSaveList()
     {
         for (int i = content.childCount - 1; i >= 0; i--)
         {
@@ -49,7 +54,7 @@ public class LoadSelectUI : MonoBehaviour
         foreach(string name in names)
         {
             GameObject newButton = Instantiate(buttonPrefab, content);
-            newButton.GetComponent<LoadButtonUI>().SetProvinceData(name);
+            newButton.GetComponent<LoadButtonUI>().SetSaveData(name, this);
         }
     }
 

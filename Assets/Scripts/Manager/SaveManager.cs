@@ -1,12 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 public static class SaveManager
 {
     public const int CurrentVersion = 2;
     public static string LastError { get; private set; }
+
+    public readonly struct SaveSummary
+    {
+        public readonly string NationName;
+        public readonly long GDP;
+        public readonly int Year;
+
+        public SaveSummary(string nationName, long gdp, int year)
+        {
+            NationName = nationName;
+            GDP = gdp;
+            Year = year;
+        }
+    }
 
     public static string GetSavePath(string name)
     {
@@ -83,6 +98,56 @@ public static class SaveManager
     {
         try { Read(name); LastError = null; return true; }
         catch (Exception exception) { return Fail("불러오기 실패", exception); }
+    }
+
+    public static bool TryGetSummary(string name, out SaveSummary summary)
+    {
+        summary = default;
+        try
+        {
+            SaveDataFormat data = Read(name);
+            UserData player = data.users.FirstOrDefault(user => user.id == data.playerId);
+            NationData nation = player == null
+                ? null
+                : data.nations.FirstOrDefault(item => item.name == player.nation);
+            if (player == null || nation == null)
+                throw new InvalidDataException("The save does not contain the player's nation.");
+
+            summary = new SaveSummary(nation.name, nation.gdp, data.year);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public static bool TryDelete(string name)
+    {
+        try
+        {
+            string path = GetSavePath(name);
+            if (!File.Exists(path))
+                throw new FileNotFoundException("Save file was not found.", path);
+
+            File.Delete(path);
+            DeleteIfPresent(path + ".bak");
+            DeleteIfPresent(path + ".tmp");
+            if (GlobalVariables.saveFileName == name)
+                GlobalVariables.saveFileName = null;
+            LastError = null;
+            return true;
+        }
+        catch (Exception exception)
+        {
+            return Fail("Delete failed", exception);
+        }
+    }
+
+    private static void DeleteIfPresent(string path)
+    {
+        if (File.Exists(path))
+            File.Delete(path);
     }
 
     private static SaveDataFormat Read(string name)

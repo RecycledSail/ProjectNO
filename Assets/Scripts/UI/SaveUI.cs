@@ -11,7 +11,7 @@ public class SaveUI : MonoBehaviour
     public Button exitButton;
 
     public TMP_InputField input;
-    // ½Ì±ÛÅæ ÀÎ½ºÅÏ½º (´Ù¸¥ ½ºÅ©¸³Æ®¿¡¼­ ½±°Ô Á¢±Ù °¡´É)
+    // ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤ (ë‹¤ë¥¸ ìŠ¤í¬ë¦½íŠ¸ì—ì„œ ì‰½ê²Œ ì ‘ê·¼ ê°€ëŠ¥)
     private static SaveUI _instance;
     public static SaveUI Instance
     {
@@ -30,35 +30,48 @@ public class SaveUI : MonoBehaviour
     }
 
     /// <summary>
-    /// °ÔÀÓ ½ÃÀÛ Àü ÃÊ±âÈ­ ¸Ş¼­µå (½Ì±ÛÅæ Áßº¹¹æÁö Ã³¸®)
+    /// ê²Œì„ ì‹œì‘ ì „ ì´ˆê¸°í™” ë©”ì„œë“œ (ì‹±ê¸€í†¤ ì¤‘ë³µë°©ì§€ ì²˜ë¦¬)
     /// </summary>
     private void Awake()
     {
-        // ½Ì±ÛÅæ Áßº¹ ¹æÁö ·ÎÁ÷
+        // ì‹±ê¸€í†¤ ì¤‘ë³µ ë°©ì§€ ë¡œì§
         if (_instance == null)
         {
             _instance = this;
         }
         else if (_instance != this)
         {
-            Destroy(gameObject);  // Áßº¹ ½Ã Á¦°Å
+            Destroy(gameObject);  // ì¤‘ë³µ ì‹œ ì œê±°
         }
     }
     private void OnEnable()
     {
+        RefreshSaveList();
+    }
+
+    public void RefreshSaveList()
+    {
+        ClearSaveList();
         List<string> names = GlobalVariables.GetAllJsonFileNames();
         foreach (string name in names)
         {
             GameObject newButton = Instantiate(buttonPrefab, content);
-            newButton.GetComponent<SaveButtonUI>().SetName(name);
+            newButton.GetComponent<SaveButtonUI>().SetSaveData(name, this);
         }
     }
 
     private void OnDisable()
     {
+        ClearSaveList();
+    }
+
+    private void ClearSaveList()
+    {
         for (int i = content.transform.childCount - 1; i >= 0; i--)
         {
-            Destroy(content.transform.GetChild(i).gameObject);
+            GameObject child = content.transform.GetChild(i).gameObject;
+            child.SetActive(false);
+            Destroy(child);
         }
     }
 
